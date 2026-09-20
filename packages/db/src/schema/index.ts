@@ -6,3 +6,6 @@ export type { Memory, NewMemory } from './memories'
 
 export { memoryPhotos } from './memory-photos'
 export type { MemoryPhoto, NewMemoryPhoto } from './memory-photos'
+
+export { memoryPeople } from './memory-people'
+export type { MemoryPerson, NewMemoryPerson } from './memory-people'
