@@ -12,3 +12,13 @@ export type { MemoryPerson, NewMemoryPerson } from './memory-people'
 
 export { memoryTags } from './memory-tags'
 export type { MemoryTag, NewMemoryTag } from './memory-tags'
+
+export { session, account, verification } from './auth'
+export type {
+  Session,
+  NewSession,
+  Account,
+  NewAccount,
+  Verification,
+  NewVerification,
+} from './auth'
