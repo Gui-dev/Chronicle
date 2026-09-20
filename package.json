@@ -1,6 +1,7 @@
 {
   "name": "chronicle",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "concurrently \"pnpm:dev:*\"",
     "dev:infra": "podman compose up -d",
