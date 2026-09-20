@@ -9,3 +9,6 @@ export type { MemoryPhoto, NewMemoryPhoto } from './memory-photos'
 
 export { memoryPeople } from './memory-people'
 export type { MemoryPerson, NewMemoryPerson } from './memory-people'
+
+export { memoryTags } from './memory-tags'
+export type { MemoryTag, NewMemoryTag } from './memory-tags'
