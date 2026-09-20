@@ -6,3 +6,6 @@ export type { UpdateMemoryInput } from './update-memory'
 
 export { memoryFiltersSchema } from './memory-filters'
 export type { MemoryFiltersInput } from './memory-filters'
+
+export { registerSchema, loginSchema } from './auth'
+export type { RegisterInput, LoginInput } from './auth'
