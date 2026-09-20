@@ -1,1 +1,30 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build
+dist/
+.next/
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Infra
+postgres-data/
+minio-data/
