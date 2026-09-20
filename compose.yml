@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chronicle-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: chronicle
+      POSTGRES_USER: chronicle
+      POSTGRES_PASSWORD: chronicle
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronicle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: chronicle-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: chronicle
+      MINIO_ROOT_PASSWORD: chronicle123
+    volumes:
+      - minio-data:/data
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: chronicle-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres-data:
+  minio-data:
