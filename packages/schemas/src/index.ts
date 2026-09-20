@@ -3,3 +3,6 @@ export type { CreateMemoryInput } from './create-memory'
 
 export { updateMemorySchema } from './update-memory'
 export type { UpdateMemoryInput } from './update-memory'
+
+export { memoryFiltersSchema } from './memory-filters'
+export type { MemoryFiltersInput } from './memory-filters'
