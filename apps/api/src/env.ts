@@ -14,6 +14,8 @@ const envSchema = z.object({
   MINIO_ACCESS_KEY: z.string().default('minioadmin'),
   MINIO_SECRET_KEY: z.string().default('minioadmin'),
   MINIO_BUCKET: z.string().default('chronicle-uploads'),
+  SPOTIFY_CLIENT_ID: z.string().default(''),
+  SPOTIFY_CLIENT_SECRET: z.string().default(''),
 })
 
 export const env = envSchema.parse(process.env)

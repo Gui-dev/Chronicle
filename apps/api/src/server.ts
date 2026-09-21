@@ -3,6 +3,7 @@ import Fastify from 'fastify'
 import { env } from './env'
 import { handleError } from './errors/error-handler'
 import { authRoutes } from './modules/auth'
+import { integrationsRoutes } from './modules/integrations'
 import { memoriesRoutes } from './modules/memories'
 import { photosRoutes } from './modules/photos'
 import { authPlugin } from './plugins/auth'
@@ -44,6 +45,7 @@ export function buildServer() {
   server.register(authRoutes)
   server.register(memoriesRoutes)
   server.register(photosRoutes)
+  server.register(integrationsRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
