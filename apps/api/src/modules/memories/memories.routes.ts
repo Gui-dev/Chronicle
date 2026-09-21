@@ -1,5 +1,5 @@
 import { auth } from '@chronicle/auth'
-import { createMemorySchema } from '@chronicle/schemas'
+import { createMemorySchema, memoryFiltersSchema } from '@chronicle/schemas'
 import type { FastifyInstance } from 'fastify'
 import { memoriesService } from './memories.service'
 
@@ -40,5 +40,49 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
     })
 
     return reply.status(201).send({ data: memory })
+  })
+
+  // GET /api/memories
+  fastify.get('/api/memories', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    const filters = memoryFiltersSchema.parse(request.query)
+
+    const result = await memoriesService.findAll(session.user.id, filters)
+
+    return reply.send(result)
+  })
+
+  // GET /api/memories/:id
+  fastify.get('/api/memories/:id', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    const { id } = request.params as { id: string }
+
+    const memory = await memoriesService.findById(id, session.user.id)
+
+    return reply.send({ data: memory })
   })
 }
