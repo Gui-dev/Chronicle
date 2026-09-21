@@ -1,8 +1,10 @@
+import multipart from '@fastify/multipart'
 import Fastify from 'fastify'
 import { env } from './env'
 import { handleError } from './errors/error-handler'
 import { authRoutes } from './modules/auth'
 import { memoriesRoutes } from './modules/memories'
+import { photosRoutes } from './modules/photos'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
 import { swaggerPlugin } from './plugins/swagger'
@@ -32,10 +34,16 @@ export function buildServer() {
   server.register(corsPlugin)
   server.register(swaggerPlugin)
   server.register(authPlugin)
+  server.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024,
+    },
+  })
 
   // Register routes
   server.register(authRoutes)
   server.register(memoriesRoutes)
+  server.register(photosRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
