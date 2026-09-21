@@ -124,4 +124,26 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
 
     return reply.send({ data: memory })
   })
+
+  // DELETE /api/memories/:id
+  fastify.delete('/api/memories/:id', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    const { id } = request.params as { id: string }
+
+    await memoriesService.delete(id, session.user.id)
+
+    return reply.status(204).send()
+  })
 }
