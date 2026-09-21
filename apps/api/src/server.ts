@@ -1,6 +1,7 @@
 import Fastify from 'fastify'
 import { env } from './env'
 import { authPlugin } from './plugins/auth'
+import { swaggerPlugin } from './plugins/swagger'
 
 export function buildServer() {
   const server = Fastify({
@@ -8,6 +9,7 @@ export function buildServer() {
   })
 
   // Register plugins
+  server.register(swaggerPlugin)
   server.register(authPlugin)
 
   server.get('/health', async () => {
@@ -23,6 +25,8 @@ export async function startServer() {
   try {
     await server.listen({ port: env.PORT, host: env.HOST })
     console.log(`🚀 Server running at http://${env.HOST}:${env.PORT}`)
+    console.log(`📚 Swagger UI: http://${env.HOST}:${env.PORT}/docs`)
+    console.log(`📖 Scalar: http://${env.HOST}:${env.PORT}/reference`)
   } catch (err) {
     server.log.error(err)
     process.exit(1)
