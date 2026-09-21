@@ -70,24 +70,24 @@
 - [x] Testes de integração (MSW)
 
 ### 2.4 Módulo: Photos
-- [ ] Configurar MinIO client
-- [ ] Rota POST /api/memories/:id/photos (upload)
-- [ ] Rota DELETE /api/memories/:id/photos/:photoId
-- [ ] Testes unitários (in-memory)
-- [ ] Testes de integração (MSW)
+- [x] Configurar MinIO client
+- [x] Rota POST /api/memories/:id/photos (upload)
+- [x] Rota DELETE /api/memories/:id/photos/:photoId
+- [x] Testes unitários (in-memory)
+- [x] Testes de integração (MSW)
 
 ### 2.5 Módulo: Integrations
-- [ ] Rota GET /api/spotify/search (proxy Spotify API)
-- [ ] Rota GET /api/weather (proxy Open-Meteo)
-- [ ] Rota GET /api/geocoding (proxy Open-Meteo)
-- [ ] Testes unitários (in-memory)
-- [ ] Testes de integração (MSW)
+- [x] Rota GET /api/spotify/search (proxy Spotify API)
+- [x] Rota GET /api/weather (proxy Open-Meteo)
+- [x] Rota GET /api/geocoding (proxy Open-Meteo)
+- [x] Testes unitários (in-memory)
+- [x] Testes de integração (MSW)
 
 ### 2.6 Módulo: AI Narrative
-- [ ] Rota POST /api/memories/:id/generate-narrative
-- [ ] Definir provedor AI (OpenAI/Anthropic/Groq)
-- [ ] Implementar geração de narrativa
-- [ ] Testes unitários (in-memory)
+- [x] Rota POST /api/memories/:id/generate-narrative
+- [x] Definir provedor AI (OpenAI/Anthropic/Groq)
+- [x] Implementar geração de narrativa
+- [x] Testes unitários (in-memory)
 - [ ] Testes de integração (MSW)
 
 ---
