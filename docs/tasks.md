@@ -3,70 +3,71 @@
 ## Fase 1: Fundação do Monorepo
 
 ### 1.1 Setup Inicial
-- [ ] Inicializar projeto com `pnpm init`
-- [ ] Configurar `turbo.json`
-- [ ] Configurar `biome.json` (lint + format)
-- [ ] Configurar `lefthook` (pre-commit: biome, pre-push: test)
-- [ ] Criar `podman-compose.yml` (postgres, minio, mailpit)
-- [ ] Criar script `dev:infra` e `dev`
+- [x] Inicializar projeto com `pnpm init`
+- [x] Configurar `turbo.json`
+- [x] Configurar `biome.json` (lint + format)
+- [x] Configurar `lefthook` (pre-commit: biome, pre-push: test)
+- [x] Criar `compose.yml` (postgres, minio, mailpit)
+- [x] Criar script `dev:infra` e `dev`
+- [x] Criar `.env.example` e `.gitignore`
 
 ### 1.2 Package: DB
-- [ ] Setup Drizzle ORM com PostgreSQL
-- [ ] Criar schema `users` (Better Auth)
-- [ ] Criar schema `memories`
-- [ ] Criar schema `memory_photos`
-- [ ] Criar schema `memory_people`
-- [ ] Criar schema `memory_tags`
-- [ ] Configurar migrations
-- [ ] Testes unitários do schema (in-memory SQLite)
+- [x] Setup Drizzle ORM com PostgreSQL
+- [x] Criar schema `users` (Better Auth)
+- [x] Criar schema `memories`
+- [x] Criar schema `memory_photos`
+- [x] Criar schema `memory_people`
+- [x] Criar schema `memory_tags`
+- [x] Configurar migrations
+- [x] Testes unitários do schema (in-memory SQLite)
 
 ### 1.3 Package: Schemas
-- [ ] Criar Zod schema para `create-memory`
-- [ ] Criar Zod schema para `update-memory`
-- [ ] Criar Zod schema para `memory-filters`
-- [ ] Criar Zod schema para `auth` (register, login)
-- [ ] Testes dos schemas
+- [x] Criar Zod schema para `create-memory`
+- [x] Criar Zod schema para `update-memory`
+- [x] Criar Zod schema para `memory-filters`
+- [x] Criar Zod schema para `auth` (register, login)
+- [x] Testes dos schemas
 
 ### 1.4 Package: Auth
-- [ ] Configurar Better Auth com email/senha
-- [ ] Integrar com Drizzle
-- [ ] Testes de autenticação
+- [x] Configurar Better Auth com email/senha
+- [x] Integrar com Drizzle
+- [x] Testes de autenticação
 
 ### 1.5 Package: UI
-- [ ] Setup Shadcn UI
-- [ ] Configurar Storybook
-- [ ] Criar tokens de cores (paleta do layout)
-- [ ] Configurar globals.css com variáveis CSS
-- [ ] Componentes base: button, card, input, badge, avatar, dialog
-- [ ] Stories de cada componente
+- [x] Setup Shadcn UI
+- [x] Configurar Storybook
+- [x] Criar tokens de cores (paleta do layout)
+- [x] Configurar globals.css com variáveis CSS
+- [x] Componentes base: button, card, input, badge, avatar, dialog
+- [x] Stories de cada componente
 
 ---
 
 ## Fase 2: API (Fastify)
 
 ### 2.1 Setup API
-- [ ] Inicializar Fastify
-- [ ] Integrar Better Auth
-- [ ] Configurar Swagger/Scalar
-- [ ] Configurar CORS
-- [ ] Configurar error handling padronizado
-- [ ] Testes de setup
+- [x] Inicializar Fastify
+- [x] Integrar Better Auth
+- [x] Configurar Swagger/Scalar
+- [x] Configurar CORS
+- [x] Configurar error handling padronizado
+- [x] Testes de setup
 
 ### 2.2 Módulo: Auth
-- [ ] Rota POST /api/auth/register
-- [ ] Rota POST /api/auth/login
-- [ ] Rota GET /api/auth/me
-- [ ] Testes unitários (in-memory)
-- [ ] Testes de integração (MSW)
+- [x] Rota POST /api/auth/register
+- [x] Rota POST /api/auth/login
+- [x] Rota GET /api/auth/me
+- [x] Testes unitários (in-memory)
+- [x] Testes de integração (MSW)
 
 ### 2.3 Módulo: Memories
-- [ ] Rota POST /api/memories (criar)
-- [ ] Rota GET /api/memories (listar com filtros)
-- [ ] Rota GET /api/memories/:id (detalhe)
-- [ ] Rota PUT /api/memories/:id (atualizar)
-- [ ] Rota DELETE /api/memories/:id (deletar)
-- [ ] Testes unitários (in-memory)
-- [ ] Testes de integração (MSW)
+- [x] Rota POST /api/memories (criar)
+- [x] Rota GET /api/memories (listar com filtros)
+- [x] Rota GET /api/memories/:id (detalhe)
+- [x] Rota PUT /api/memories/:id (atualizar)
+- [x] Rota DELETE /api/memories/:id (deletar)
+- [x] Testes unitários (in-memory)
+- [x] Testes de integração (MSW)
 
 ### 2.4 Módulo: Photos
 - [ ] Configurar MinIO client

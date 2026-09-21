@@ -28,3 +28,6 @@ coverage/
 # Infra
 postgres-data/
 minio-data/
+
+# Storybook
+storybook-static/

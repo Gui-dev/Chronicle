@@ -1,4 +1,4 @@
 export { db } from './drizzle'
 export { env } from './env'
 export { memories, memoryPeople, memoryTags } from './schema'
-export { eq } from 'drizzle-orm'
+export { eq, and, ilike, sql, desc, asc } from 'drizzle-orm'

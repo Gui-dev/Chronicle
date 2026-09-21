@@ -9,9 +9,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:unit": "vitest run",
-    "test:watch": "vitest"
+    "test": "dotenv -e .env -- vitest run",
+    "test:unit": "dotenv -e .env -- vitest run",
+    "test:watch": "dotenv -e .env -- vitest"
   },
   "dependencies": {
     "@better-auth/cli": "^1.2.0",
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "dotenv-cli": "^11.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

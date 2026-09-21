@@ -8,7 +8,11 @@ export async function errorHandlerPlugin(fastify: FastifyInstance) {
 
     const response = handleError(error)
 
-    const statusCode = error instanceof AppError ? error.statusCode : error.statusCode || 500
+    let statusCode = error instanceof AppError ? error.statusCode : error.statusCode || 500
+
+    if (error.name === 'ZodError') {
+      statusCode = 400
+    }
 
     reply.status(statusCode).send(response)
   })
