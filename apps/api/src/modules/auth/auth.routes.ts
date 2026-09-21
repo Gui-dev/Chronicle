@@ -41,4 +41,26 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     })
   })
+
+  // GET /api/auth/me
+  fastify.get('/api/auth/me', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    return reply.send({
+      data: {
+        user: session.user,
+      },
+    })
+  })
 }
