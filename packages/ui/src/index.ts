@@ -1,2 +1,4 @@
+import './styles/globals.css'
+
 // Component exports will be added in task 1.5.5
-export {}
+export { cn } from './lib/utils'
