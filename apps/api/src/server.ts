@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import { env } from './env'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
+import { errorHandlerPlugin } from './plugins/error-handler'
 import { swaggerPlugin } from './plugins/swagger'
 
 export function buildServer() {
@@ -10,6 +11,7 @@ export function buildServer() {
   })
 
   // Register plugins
+  server.register(errorHandlerPlugin)
   server.register(corsPlugin)
   server.register(swaggerPlugin)
   server.register(authPlugin)
