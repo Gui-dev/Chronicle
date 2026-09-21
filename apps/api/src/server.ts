@@ -5,6 +5,7 @@ import { handleError } from './errors/error-handler'
 import { authRoutes } from './modules/auth'
 import { integrationsRoutes } from './modules/integrations'
 import { memoriesRoutes } from './modules/memories'
+import { narrativeRoutes } from './modules/narrative'
 import { photosRoutes } from './modules/photos'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
@@ -46,6 +47,7 @@ export function buildServer() {
   server.register(memoriesRoutes)
   server.register(photosRoutes)
   server.register(integrationsRoutes)
+  server.register(narrativeRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
