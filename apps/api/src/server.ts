@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { env } from './env'
+import { authRoutes } from './modules/auth'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
 import { errorHandlerPlugin } from './plugins/error-handler'
@@ -15,6 +16,9 @@ export function buildServer() {
   server.register(corsPlugin)
   server.register(swaggerPlugin)
   server.register(authPlugin)
+
+  // Register routes
+  server.register(authRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
