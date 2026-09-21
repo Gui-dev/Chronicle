@@ -1,5 +1,5 @@
 import { auth } from '@chronicle/auth'
-import { registerSchema } from '@chronicle/schemas'
+import { loginSchema, registerSchema } from '@chronicle/schemas'
 import type { FastifyInstance } from 'fastify'
 
 export async function authRoutes(fastify: FastifyInstance) {
@@ -16,6 +16,25 @@ export async function authRoutes(fastify: FastifyInstance) {
     })
 
     return reply.status(201).send({
+      data: {
+        user: result.user,
+        token: result.token,
+      },
+    })
+  })
+
+  // POST /api/auth/login
+  fastify.post('/api/auth/login', async (request, reply) => {
+    const body = loginSchema.parse(request.body)
+
+    const result = await auth.api.signInEmail({
+      body: {
+        email: body.email,
+        password: body.password,
+      },
+    })
+
+    return reply.send({
       data: {
         user: result.user,
         token: result.token,
