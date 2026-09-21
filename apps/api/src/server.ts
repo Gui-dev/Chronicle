@@ -1,9 +1,10 @@
 import Fastify from 'fastify'
 import { env } from './env'
+import { handleError } from './errors/error-handler'
 import { authRoutes } from './modules/auth'
+import { memoriesRoutes } from './modules/memories'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
-import { errorHandlerPlugin } from './plugins/error-handler'
 import { swaggerPlugin } from './plugins/swagger'
 
 export function buildServer() {
@@ -11,14 +12,30 @@ export function buildServer() {
     logger: true,
   })
 
+  // Set error handler on root scope so it catches errors from all registered plugins
+  server.setErrorHandler((error: any, request, reply) => {
+    request.log.error(error)
+
+    const response = handleError(error)
+
+    const statusCode =
+      error.name === 'ZodError'
+        ? 400
+        : typeof error.statusCode === 'number'
+          ? error.statusCode
+          : 500
+
+    reply.status(statusCode).send(response)
+  })
+
   // Register plugins
-  server.register(errorHandlerPlugin)
   server.register(corsPlugin)
   server.register(swaggerPlugin)
   server.register(authPlugin)
 
   // Register routes
   server.register(authRoutes)
+  server.register(memoriesRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
