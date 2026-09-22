@@ -121,13 +121,13 @@
 - [x] Hook use-filters
 
 ### 3.5 Páginas: Criar Memória
-- [ ] Formulário de criação
-- [ ] Upload de fotos
-- [ ] Busca de música (Spotify)
-- [ ] Busca de localização (geocoding)
-- [ ] Seleção de clima (auto-preenchimento)
-- [ ] Adição de pessoas e tags
-- [ ] Hook use-create-memory
+- [x] Formulário de criação
+- [x] Upload de fotos
+- [x] Busca de música (Spotify)
+- [x] Busca de localização (geocoding)
+- [x] Seleção de clima (auto-preenchimento)
+- [x] Adição de pessoas e tags
+- [x] Hook use-create-memory
 
 ### 3.6 Páginas: Detalhe Memória
 - [ ] Exibição completa da memória
