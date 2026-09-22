@@ -43,16 +43,16 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-card bg-card p-8">
+      <Card className="relative w-full max-w-md border-card bg-card p-8">
         <div className="mb-8 flex flex-col items-center gap-4">
           <Link
             href="/"
-            className="mb-2 text-sm text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
           >
-            ← Voltar para Home
+            ←
           </Link>
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
+            <Disc3 className="h-10 w-10 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
           </div>
           <h1 className="text-2xl font-bold text-text">Criar Conta</h1>
           <p className="text-sm text-muted">Comece a registrar suas memórias</p>
