@@ -1,0 +1,131 @@
+'use client'
+
+import { signUp } from '@/lib/auth-client'
+import { Button } from '@chronicle/ui/components/ui/button'
+import { Card } from '@chronicle/ui/components/ui/card'
+import { Input } from '@chronicle/ui/components/ui/input'
+import { Label } from '@chronicle/ui/components/ui/label'
+import { Disc3 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+export default function RegisterPage() {
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const result = await signUp.email({
+        name,
+        email,
+        password,
+      })
+
+      if (result.error) {
+        setError(result.error.message || 'Erro ao criar conta')
+        return
+      }
+
+      router.push('/')
+      router.refresh()
+    } catch {
+      setError('Erro ao criar conta')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-card bg-card p-8">
+        <div className="mb-8 flex flex-col items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
+            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+          </div>
+          <h1 className="text-2xl font-bold text-text">Criar Conta</h1>
+          <p className="text-sm text-muted">Comece a registrar suas memórias</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-500">{error}</div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-text">
+              Nome
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Seu nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border-card bg-background text-text placeholder:text-muted"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-text">
+              Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border-card bg-background text-text placeholder:text-muted"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-text">
+              Senha
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border-card bg-background text-text placeholder:text-muted"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Criando conta...' : 'Criar Conta'}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted">
+            Já tem uma conta?{' '}
+            <Link
+              href="/login"
+              className="text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            >
+              Entrar
+            </Link>
+          </p>
+        </div>
+      </Card>
+    </div>
+  )
+}
