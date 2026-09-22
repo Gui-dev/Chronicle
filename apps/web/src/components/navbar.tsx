@@ -31,8 +31,10 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === link.href ? 'text-primary' : 'text-muted'
+              className={`text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] ${
+                pathname === link.href
+                  ? 'text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
+                  : 'text-muted'
               }`}
             >
               {link.label}
@@ -47,7 +49,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => signOut()}
-                className="text-sm text-muted transition-colors hover:text-text"
+                className="text-sm text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
               >
                 Sair
               </button>
@@ -55,7 +57,7 @@ export function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-secondary"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
             >
               Entrar
             </Link>
