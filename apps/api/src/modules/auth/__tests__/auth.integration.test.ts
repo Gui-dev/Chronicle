@@ -22,7 +22,7 @@ vi.mock('../../../env', () => ({
   },
 }))
 
-const { auth: mockAuth } = (await import('@chronicle/auth')) as {
+const { auth: mockAuth } = (await import('@chronicle/auth')) as unknown as {
   auth: {
     api: {
       signUpEmail: ReturnType<typeof vi.fn>

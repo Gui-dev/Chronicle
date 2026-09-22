@@ -5,7 +5,7 @@ import { Input, Label } from '@chronicle/ui'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepBasicInfoProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryInput, any>
 }
 
 export function StepBasicInfo({ form }: StepBasicInfoProps) {

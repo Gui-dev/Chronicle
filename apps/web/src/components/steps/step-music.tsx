@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepMusicProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryInput, any>
 }
 
 export function StepMusic({ form }: StepMusicProps) {

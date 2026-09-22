@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepLocationProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryInput, any>
 }
 
 export function StepLocation({ form }: StepLocationProps) {

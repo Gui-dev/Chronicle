@@ -37,6 +37,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", ".next", "dist", "*.config.*"]
+    "ignore": ["node_modules", ".next", "dist", "*.config.*", "next-env.d.ts"]
   }
 }

@@ -35,7 +35,7 @@ export function CreateMemoryWizard() {
     defaultValues: {
       title: '',
       content: '',
-      memoryDate: new Date().toISOString().split('T')[0],
+      memoryDate: new Date(),
     },
   })
 

@@ -5,7 +5,7 @@ import type { CreateMemoryInput } from '@chronicle/schemas'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepPeopleProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryInput, any>
   people: string[]
   onPeopleChange: (people: string[]) => void
   tags: string[]
