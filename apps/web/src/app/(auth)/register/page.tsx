@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { refetch } = useAuth()
+  const { invalidateSession } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -34,7 +34,7 @@ export default function RegisterPage() {
         return
       }
 
-      await refetch()
+      await invalidateSession()
       router.push('/')
       router.refresh()
     } catch (err: unknown) {

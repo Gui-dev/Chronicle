@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { refetch } = useAuth()
+  const { invalidateSession } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -32,7 +32,7 @@ export default function LoginPage() {
         return
       }
 
-      await refetch()
+      await invalidateSession()
       router.push('/')
       router.refresh()
     } catch (err: unknown) {

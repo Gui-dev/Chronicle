@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface SessionData {
   user?: {
@@ -18,11 +18,11 @@ interface SessionData {
 }
 
 export function useAuth() {
+  const queryClient = useQueryClient()
   const {
     data: session,
     isPending,
     error,
-    refetch,
   } = useQuery<SessionData | null>({
     queryKey: ['session'],
     queryFn: async () => {
@@ -44,12 +44,16 @@ export function useAuth() {
     gcTime: 0,
   })
 
+  const invalidateSession = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['session'] })
+  }
+
   return {
     user: session?.user ?? null,
     session: session?.session ?? null,
     isAuthenticated: !!session?.user,
     isLoading: isPending,
     error,
-    refetch,
+    invalidateSession,
   }
 }

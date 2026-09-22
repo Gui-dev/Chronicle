@@ -15,14 +15,14 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user, isAuthenticated, refetch } = useAuth()
+  const { user, isAuthenticated, invalidateSession } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
     try {
       await signOut()
-      await refetch()
+      await invalidateSession()
     } finally {
       setSigningOut(false)
     }
