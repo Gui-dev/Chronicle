@@ -35,6 +35,8 @@ export function useAuth() {
     retry: false,
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    gcTime: 0,
   })
 
   return {
