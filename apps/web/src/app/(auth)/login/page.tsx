@@ -49,8 +49,8 @@ export default function LoginPage() {
           >
             ←
           </Link>
-          <div className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-            <Disc3 className="h-10 w-10 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+          <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
+            <Disc3 className="h-16 w-16 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
           </div>
           <h1 className="text-2xl font-bold text-text">Entrar no Chronicle</h1>
           <p className="text-sm text-muted">Acesse sua conta para continuar</p>
