@@ -85,27 +85,27 @@
 
 ### 2.6 Módulo: AI Narrative
 - [x] Rota POST /api/memories/:id/generate-narrative
-- [x] Definir provedor AI (OpenAI/Anthropic/Groq)
+- [x] Definir provedor AI (Google AI Studio - Gemini Flash)
 - [x] Implementar geração de narrativa
 - [x] Testes unitários (in-memory)
-- [ ] Testes de integração (MSW)
+- [x] Testes de integração (MSW)
 
 ---
 
 ## Fase 3: Frontend (Next.js)
 
 ### 3.1 Setup Frontend
-- [ ] Inicializar Next.js (App Router)
-- [ ] Integrar Tanstack Query
-- [ ] Configurar API client (para Fastify)
-- [ ] Integrar Better Auth (client side)
-- [ ] Configurar estilos globais (paleta do layout)
+- [x] Inicializar Next.js (App Router)
+- [x] Integrar Tanstack Query
+- [x] Configurar API client (para Fastify)
+- [x] Integrar Better Auth (client side)
+- [x] Configurar estilos globais (paleta do layout)
 
 ### 3.2 Layout
-- [ ] Criar layout raiz (dark theme)
-- [ ] Criar navbar (logo, nav links)
-- [ ] Criar layout do dashboard (navbar + player fixo)
-- [ ] Criar componente audio-player (fixo no rodapé)
+- [x] Criar layout raiz (dark theme)
+- [x] Criar navbar (logo, nav links)
+- [x] Criar layout do dashboard (navbar + player fixo)
+- [x] Criar componente audio-player (fixo no rodapé)
 
 ### 3.3 Páginas: Auth
 - [ ] Página de login
