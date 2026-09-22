@@ -113,12 +113,12 @@
 - [x] Proteção de rotas (auth guard)
 
 ### 3.4 Páginas: Timeline
-- [ ] Página principal (timeline cinematográfica)
-- [ ] Componente memory-card
-- [ ] Componente timeline-marker
-- [ ] Componente memory-filters (ano, clima, local, tag)
-- [ ] Hook use-memories (Tanstack Query)
-- [ ] Hook use-filters
+- [x] Página principal (timeline cinematográfica)
+- [x] Componente memory-card
+- [x] Componente timeline-marker
+- [x] Componente memory-filters (ano, clima, local, tag)
+- [x] Hook use-memories (Tanstack Query)
+- [x] Hook use-filters
 
 ### 3.5 Páginas: Criar Memória
 - [ ] Formulário de criação
