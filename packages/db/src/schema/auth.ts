@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
-export const session = pgTable('session', {
+export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
   userId: uuid('user_id')
     .notNull()
@@ -14,7 +14,7 @@ export const session = pgTable('session', {
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })
 
-export const account = pgTable('account', {
+export const accounts = pgTable('accounts', {
   id: text('id').primaryKey(),
   userId: uuid('user_id')
     .notNull()
@@ -32,7 +32,7 @@ export const account = pgTable('account', {
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })
 
-export const verification = pgTable('verification', {
+export const verifications = pgTable('verifications', {
   id: text('id').primaryKey(),
   identifier: text('identifier').notNull(),
   value: text('value').notNull(),
@@ -41,11 +41,11 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })
 
-export type Session = typeof session.$inferSelect
-export type NewSession = typeof session.$inferInsert
+export type Session = typeof sessions.$inferSelect
+export type NewSession = typeof sessions.$inferInsert
 
-export type Account = typeof account.$inferSelect
-export type NewAccount = typeof account.$inferInsert
+export type Account = typeof accounts.$inferSelect
+export type NewAccount = typeof accounts.$inferInsert
 
-export type Verification = typeof verification.$inferSelect
-export type NewVerification = typeof verification.$inferInsert
+export type Verification = typeof verifications.$inferSelect
+export type NewVerification = typeof verifications.$inferInsert

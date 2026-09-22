@@ -13,7 +13,7 @@ export type { MemoryPerson, NewMemoryPerson } from './memory-people'
 export { memoryTags } from './memory-tags'
 export type { MemoryTag, NewMemoryTag } from './memory-tags'
 
-export { session, account, verification } from './auth'
+export { sessions, accounts, verifications } from './auth'
 export type {
   Session,
   NewSession,
