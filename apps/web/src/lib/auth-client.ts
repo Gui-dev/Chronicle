@@ -5,6 +5,11 @@ export const authClient = createAuthClient({
   fetchOptions: {
     credentials: 'include',
   },
+  sessionOptions: {
+    refetchInterval: 30,
+    refetchOnWindowFocus: true,
+    refetchWhenOffline: false,
+  },
 })
 
 export const { signIn, signUp, signOut, useSession } = authClient
