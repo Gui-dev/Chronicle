@@ -1,14 +1,5 @@
 @import "tailwindcss";
 
-:root {
-  --background: #0a0a0f;
-  --card: #1a1a2e;
-  --primary: #f0c040;
-  --secondary: #ff8c00;
-  --text: #ffffff;
-  --muted: #a0a0b0;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-card: var(--card);
@@ -16,11 +7,42 @@
   --color-secondary: var(--secondary);
   --color-text: var(--text);
   --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+}
+
+:root {
+  --background: #0a0a0f;
+  --foreground: #ffffff;
+  --card: #1a1a2e;
+  --card-foreground: #ffffff;
+  --primary: #f0c040;
+  --primary-foreground: #0a0a0f;
+  --secondary: #ff8c00;
+  --secondary-foreground: #ffffff;
+  --muted: #a0a0b0;
+  --muted-foreground: #666680;
+  --accent: #ff8c00;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a3e;
+  --input: #2a2a3e;
+  --ring: #f0c040;
+  --radius: 0.5rem;
 }
 
 body {
   background-color: var(--background);
-  color: var(--text);
+  color: var(--foreground);
 }
 
 ::-webkit-scrollbar {
