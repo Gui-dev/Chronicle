@@ -2,7 +2,7 @@
 
 import { signUp } from '@/lib/auth-client'
 import { Button, Card, Input, Label } from '@chronicle/ui'
-import { Disc3 } from 'lucide-react'
+import { ArrowLeft, Disc3 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -49,10 +49,10 @@ export default function RegisterPage() {
             href="/"
             className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
           >
-            ←
+            <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-            <Disc3 className="h-16 w-16 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
+            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
           </div>
           <h1 className="text-2xl font-bold text-text">Criar Conta</h1>
           <p className="text-sm text-muted">Comece a registrar suas memórias</p>
