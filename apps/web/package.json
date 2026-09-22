@@ -10,13 +10,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.5",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "@chronicle/auth": "workspace:*",
     "@chronicle/db": "workspace:*",
     "@chronicle/schemas": "workspace:*",
-    "@chronicle/auth": "workspace:*",
-    "@chronicle/ui": "workspace:*"
+    "@chronicle/ui": "workspace:*",
+    "@tanstack/react-query": "^5.103.2",
+    "@tanstack/react-query-devtools": "^5.103.2",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
