@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/hooks/use-auth'
 import { signUp } from '@/lib/auth-client'
 import { Button, Card, Input, Label } from '@chronicle/ui'
 import { ArrowLeft, Disc3 } from 'lucide-react'
@@ -9,6 +10,7 @@ import { useState } from 'react'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { refetch } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,6 +34,7 @@ export default function RegisterPage() {
         return
       }
 
+      await refetch()
       router.push('/')
       router.refresh()
     } catch (err: unknown) {

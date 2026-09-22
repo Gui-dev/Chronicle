@@ -5,6 +5,7 @@ import { signOut } from '@/lib/auth-client'
 import { Disc3 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 const navLinks = [
   { href: '/', label: 'Timeline' },
@@ -14,7 +15,18 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, refetch } = useAuth()
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    try {
+      await signOut()
+      await refetch()
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-card bg-background/80 backdrop-blur-sm">
@@ -48,10 +60,11 @@ export function Navbar() {
               <span className="text-sm text-muted">{user?.name}</span>
               <button
                 type="button"
-                onClick={() => signOut()}
+                onClick={handleSignOut}
+                disabled={signingOut}
                 className="text-sm text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
               >
-                Sair
+                {signingOut ? 'Saindo...' : 'Sair'}
               </button>
             </div>
           ) : (

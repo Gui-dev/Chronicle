@@ -1,5 +1,6 @@
 'use client'
 
+import { api } from '@/lib/api-client'
 import { useQuery } from '@tanstack/react-query'
 
 interface SessionData {
@@ -22,15 +23,16 @@ export function useAuth() {
     data: session,
     isPending,
     error,
+    refetch,
   } = useQuery<SessionData | null>({
     queryKey: ['session'],
-    queryFn: async (): Promise<SessionData | null> => {
-      const res = await fetch('/api/auth/get-session', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      if (!res.ok) return null
-      return (await res.json()) as SessionData
+    queryFn: async () => {
+      try {
+        const data = await api.get<SessionData>('/api/auth/get-session')
+        return data
+      } catch {
+        return null
+      }
     },
     retry: false,
     refetchInterval: 30000,
@@ -45,5 +47,6 @@ export function useAuth() {
     isAuthenticated: !!session?.user,
     isLoading: isPending,
     error,
+    refetch,
   }
 }
