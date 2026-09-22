@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { invalidateSession } = useAuth()
+  const { invalidateSession, setSession } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signIn.email({
+      const { data, error } = await signIn.email({
         email,
         password,
       })
@@ -32,9 +32,11 @@ export default function LoginPage() {
         return
       }
 
-      // Yield to event loop to ensure session cookie is committed
-      await new Promise((resolve) => queueMicrotask(resolve))
-      await invalidateSession()
+      if (data) {
+        setSession(data as any)
+      } else {
+        await invalidateSession()
+      }
       router.push('/')
       router.refresh()
     } catch (err: unknown) {

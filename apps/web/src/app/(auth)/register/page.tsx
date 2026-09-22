@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { invalidateSession } = useAuth()
+  const { invalidateSession, setSession } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +23,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signUp.email({
+      const { data, error } = await signUp.email({
         name,
         email,
         password,
@@ -34,9 +34,11 @@ export default function RegisterPage() {
         return
       }
 
-      // Yield to event loop to ensure session cookie is committed
-      await new Promise((resolve) => queueMicrotask(resolve))
-      await invalidateSession()
+      if (data) {
+        setSession(data as any)
+      } else {
+        await invalidateSession()
+      }
       router.push('/')
       router.refresh()
     } catch (err: unknown) {

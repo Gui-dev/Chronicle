@@ -44,6 +44,10 @@ export function useAuth() {
     gcTime: 0,
   })
 
+  const setSession = (session: SessionData | null) => {
+    queryClient.setQueryData(['session'], session)
+  }
+
   const invalidateSession = async () => {
     await queryClient.invalidateQueries({ queryKey: ['session'] })
   }
@@ -55,5 +59,6 @@ export function useAuth() {
     isLoading: isPending,
     error,
     invalidateSession,
+    setSession,
   }
 }
