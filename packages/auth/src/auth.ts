@@ -7,6 +7,9 @@ import { plugins } from './plugins'
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
+    modelName: {
+      user: 'users',
+    },
   }),
   emailAndPassword: {
     enabled: true,
