@@ -32,6 +32,8 @@ export default function LoginPage() {
         return
       }
 
+      // Yield to event loop to ensure session cookie is committed
+      await new Promise((resolve) => queueMicrotask(resolve))
       await invalidateSession()
       router.push('/')
       router.refresh()
