@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
+import { Disc3 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -19,7 +20,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-card bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">●</span>
+          <Disc3 className="h-8 w-8 animate-spin text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
           <span className="text-xl font-bold text-text">Chronicle</span>
         </Link>
 
