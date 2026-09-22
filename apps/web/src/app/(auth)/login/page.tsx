@@ -20,20 +20,22 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn.email({
+      const { error } = await signIn.email({
         email,
         password,
       })
 
-      if (result.error) {
-        setError(result.error.message || 'Erro ao fazer login')
+      if (error) {
+        setError(error.message || 'Erro ao fazer login')
         return
       }
 
       router.push('/')
       router.refresh()
-    } catch {
-      setError('Erro ao fazer login')
+    } catch (err: unknown) {
+      console.error('Sign in error:', err)
+      const message = err instanceof Error ? err.message : 'Erro ao fazer login'
+      setError(message)
     } finally {
       setIsLoading(false)
     }

@@ -21,21 +21,23 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const result = await signUp.email({
+      const { error } = await signUp.email({
         name,
         email,
         password,
       })
 
-      if (result.error) {
-        setError(result.error.message || 'Erro ao criar conta')
+      if (error) {
+        setError(error.message || 'Erro ao criar conta')
         return
       }
 
       router.push('/')
       router.refresh()
-    } catch {
-      setError('Erro ao criar conta')
+    } catch (err: unknown) {
+      console.error('Sign up error:', err)
+      const message = err instanceof Error ? err.message : 'Erro ao criar conta'
+      setError(message)
     } finally {
       setIsLoading(false)
     }
