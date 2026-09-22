@@ -108,9 +108,9 @@
 - [x] Criar componente audio-player (fixo no rodapé)
 
 ### 3.3 Páginas: Auth
-- [ ] Página de login
-- [ ] Página de registro
-- [ ] Proteção de rotas (auth guard)
+- [x] Página de login
+- [x] Página de registro
+- [x] Proteção de rotas (auth guard)
 
 ### 3.4 Páginas: Timeline
 - [ ] Página principal (timeline cinematográfica)
