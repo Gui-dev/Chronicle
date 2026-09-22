@@ -1,5 +1,3 @@
-'use client'
-
 interface TimelineMarkerProps {
   date: string
   isLast?: boolean

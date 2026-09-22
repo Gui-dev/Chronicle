@@ -62,6 +62,17 @@ Pre-commit: `lefthook` runs `biome check --no-errors-on-unmatched --staged {stag
 4. After login/signup, `useQuery` in `use-auth.ts` must re-fetch session. `refetchOnMount: true` + `gcTime: 0` ensures this
 5. **SESSION COOKIES**: Auth plugin MUST copy `Set-Cookie` from Better Auth response headers. If `Set-Cookie` is missing, session is lost and `isAuthenticated` stays false
 
+## Server Components
+
+- **Prioritize Server Components** over client components
+- Use Server Components for: layouts, pages that fetch data, static rendering, SEO-critical content
+- Use Client Components (`'use client'`) only when: hooks are needed, event handlers, browser-only APIs, interactivity
+- **Avoid `useEffect`** — use `useQuery`, `useAction`, or Next.js Server Actions instead
+- **Prefer Next.js Actions** for form submissions and mutations — avoid creating custom client-side API calls
+- Check each component: if it only renders JSX and receives props, it should be a server component
+- Known server components: `timeline-marker.tsx`, `memory-filters.tsx`
+- Known client components (must have `'use client'`): `navbar.tsx`, `memory-card.tsx`, `audio-player.tsx`, `auth-guard.tsx`, all hooks files, all page components using hooks
+
 ## UI Conventions
 
 - kebab-case for ALL files including React components (e.g., `memory-card.tsx`, `create-memory.ts`)

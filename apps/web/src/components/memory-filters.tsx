@@ -1,5 +1,3 @@
-'use client'
-
 import type { MemoryFiltersInput } from '@chronicle/schemas'
 import { Button, Input } from '@chronicle/ui'
 import { Search, X } from 'lucide-react'
