@@ -1,10 +1,7 @@
 'use client'
 
 import { signIn } from '@/lib/auth-client'
-import { Button } from '@chronicle/ui/components/ui/button'
-import { Card } from '@chronicle/ui/components/ui/card'
-import { Input } from '@chronicle/ui/components/ui/input'
-import { Label } from '@chronicle/ui/components/ui/label'
+import { Button, Card, Input, Label } from '@chronicle/ui'
 import { Disc3 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
