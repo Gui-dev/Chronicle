@@ -21,20 +21,14 @@ export async function authPlugin(fastify: FastifyInstance) {
 
         const response = await auth.handler(req)
 
-        if (response.status >= 400) {
-          const body = response.body ? await response.text() : null
-          fastify.log.error({ status: response.status, body }, 'Auth handler error response')
-          reply.status(response.status)
-          reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
-          reply.header('Access-Control-Allow-Credentials', 'true')
-          reply.header('Content-Type', 'application/json')
-          return reply.send(body || 'null')
-        }
-
         reply.status(response.status)
         reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
         reply.header('Access-Control-Allow-Credentials', 'true')
-        reply.header('Content-Type', 'application/json')
+        response.headers.forEach((value, key) => {
+          if (key.toLowerCase() !== 'access-control-allow-origin') {
+            reply.header(key, value)
+          }
+        })
         return reply.send(response.body ? await response.text() : 'null')
       } catch (error) {
         fastify.log.error(error as Error, 'Authentication Error:')
