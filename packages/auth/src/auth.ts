@@ -15,6 +15,7 @@ export const auth = betterAuth({
   },
   plugins,
   baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: ['http://localhost:3000'],
 })
 
 export type Session = typeof auth.$Infer.Session
