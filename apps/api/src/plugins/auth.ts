@@ -21,6 +21,14 @@ export async function authPlugin(fastify: FastifyInstance) {
 
         const response = await auth.handler(req)
 
+        if (response.status >= 400) {
+          const body = response.body ? await response.text() : null
+          fastify.log.error({ status: response.status, body }, 'Auth handler error response')
+          reply.status(response.status)
+          response.headers.forEach((value, key) => reply.header(key, value))
+          return reply.send(body || null)
+        }
+
         reply.status(response.status)
         response.headers.forEach((value, key) => reply.header(key, value))
         return reply.send(response.body ? await response.text() : null)
@@ -29,6 +37,7 @@ export async function authPlugin(fastify: FastifyInstance) {
         return reply.status(500).send({
           error: 'Internal authentication error',
           code: 'AUTH_FAILURE',
+          details: (error as Error).message,
         })
       }
     },
