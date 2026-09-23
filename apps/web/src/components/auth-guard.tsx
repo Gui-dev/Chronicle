@@ -10,16 +10,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login')
+      router.replace('/login')
     }
   }, [isAuthenticated, isLoading, router])
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-text">Carregando...</div>
-      </div>
-    )
+    return null
   }
 
   if (!isAuthenticated) {
