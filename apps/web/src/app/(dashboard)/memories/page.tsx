@@ -41,12 +41,6 @@ export default function MemoriesPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-card py-20">
           <p className="text-lg text-muted">Nenhuma memória encontrada</p>
           <p className="mt-2 text-sm text-muted">Comece criando sua primeira memória!</p>
-          <Link href="/memories/new" className="mt-4">
-            <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary">
-              <Plus className="h-5 w-5" />
-              Criar Memória
-            </Button>
-          </Link>
         </div>
       ) : (
         <div className="space-y-4">

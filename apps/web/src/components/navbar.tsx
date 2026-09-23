@@ -4,11 +4,26 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { Disc3 } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
 export function Navbar() {
   const { user, isAuthenticated, invalidateSession } = useAuth()
+  const pathname = usePathname()
   const [signingOut, setSigningOut] = useState(false)
+
+  const links = [
+    { href: '/', label: 'Timeline' },
+    { href: '/memories', label: 'Memorias' },
+    { href: '/search', label: 'Buscar' },
+  ]
+
+  const linkClass = (href: string) =>
+    `text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] ${
+      isActive(href) ? 'text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]' : 'text-text'
+    }`
+
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -31,30 +46,11 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <Link
-            href="/"
-            className={
-              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
-            }
-          >
-            Timeline
-          </Link>
-          <Link
-            href="/memories"
-            className={
-              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
-            }
-          >
-            Memorias
-          </Link>
-          <Link
-            href="/search"
-            className={
-              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
-            }
-          >
-            Buscar
-          </Link>
+          {links.map(({ href, label }) => (
+            <Link key={href} href={href} className={linkClass(href)}>
+              {label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-4">
