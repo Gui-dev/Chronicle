@@ -41,12 +41,14 @@ export function useAuth() {
     retry: false,
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 
   const invalidateSession = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['session'] })
+    queryClient.setQueryData(['session'], null)
+    await queryClient.refetchQueries({ queryKey: ['session'] })
   }
 
   return {
