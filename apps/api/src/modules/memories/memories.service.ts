@@ -1,4 +1,15 @@
-import { and, db, desc, eq, ilike, memories, memoryPeople, memoryTags, sql } from '@chronicle/db'
+import {
+  and,
+  db,
+  desc,
+  eq,
+  ilike,
+  memories,
+  memoryPeople,
+  memoryPhotos,
+  memoryTags,
+  sql,
+} from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
 import { AppError } from '../../errors/app-error'
 
@@ -140,7 +151,22 @@ export class MemoriesService {
       throw AppError.forbidden('Acesso negado')
     }
 
-    return memory
+    const peopleRows = await db.select().from(memoryPeople).where(eq(memoryPeople.memoryId, id))
+
+    const tagRows = await db.select().from(memoryTags).where(eq(memoryTags.memoryId, id))
+
+    const photoRows = await db
+      .select()
+      .from(memoryPhotos)
+      .where(eq(memoryPhotos.memoryId, id))
+      .orderBy(memoryPhotos.orderIndex)
+
+    return {
+      ...memory,
+      people: peopleRows,
+      tags: tagRows,
+      photos: photoRows,
+    }
   }
 
   async update(
