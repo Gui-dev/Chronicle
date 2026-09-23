@@ -6,6 +6,7 @@ import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Button, Card } from '@chronicle/ui'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { StepBasicInfo } from './steps/step-basic-info'
@@ -145,42 +146,54 @@ export function CreateMemoryWizard() {
         {renderStep()}
 
         <div className="mt-8 flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 0}
-            className="gap-2 border-card text-text hover:border-primary hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Anterior
-          </Button>
-
-          {currentStep < STEPS.length - 1 ? (
+          <Link href="/">
             <Button
               type="button"
-              onClick={handleNext}
-              className="gap-2 bg-primary text-background hover:bg-secondary"
+              variant="outline"
+              className="border-card text-text hover:border-primary hover:text-primary"
             >
-              Próximo
-              <ArrowRight className="h-4 w-4" />
+              Cancelar
             </Button>
-          ) : (
+          </Link>
+
+          <div className="flex gap-2">
             <Button
-              type="submit"
-              disabled={createMemory.isPending}
-              className="gap-2 bg-primary text-background hover:bg-secondary"
+              type="button"
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className="inline-flex items-center gap-2 border-card text-text hover:border-primary hover:text-primary"
             >
-              {createMemory.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Criando...
-                </>
-              ) : (
-                'Criar Memória'
-              )}
+              <ArrowLeft className="h-4 w-4" />
+              Anterior
             </Button>
-          )}
+
+            {currentStep < STEPS.length - 1 ? (
+              <Button
+                type="button"
+                onClick={handleNext}
+                className="inline-flex items-center gap-2 bg-primary text-background hover:bg-secondary"
+              >
+                Próximo
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={createMemory.isPending}
+                className="inline-flex items-center gap-2 bg-primary text-background hover:bg-secondary"
+              >
+                {createMemory.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  'Criar Memória'
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </Card>

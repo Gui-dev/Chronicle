@@ -23,6 +23,7 @@ export function useAuth() {
     data: session,
     isPending,
     error,
+    refetch: refreshSession,
   } = useQuery<SessionData | null>({
     queryKey: ['session'],
     queryFn: async () => {
@@ -41,12 +42,8 @@ export function useAuth() {
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    gcTime: 0,
+    gcTime: 5 * 60 * 1000,
   })
-
-  const setSession = (session: SessionData | null) => {
-    queryClient.setQueryData(['session'], session)
-  }
 
   const invalidateSession = async () => {
     await queryClient.invalidateQueries({ queryKey: ['session'] })
@@ -59,6 +56,6 @@ export function useAuth() {
     isLoading: isPending,
     error,
     invalidateSession,
-    setSession,
+    refreshSession,
   }
 }

@@ -43,7 +43,7 @@ export default function DashboardPage() {
           <p className="mt-2 text-muted">Suas memórias, sua trilha sonora</p>
         </div>
         <Link href="/memories/new">
-          <Button className="gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+          <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
             <Plus className="h-5 w-5" />
             Nova Memória
           </Button>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
           <p className="text-lg text-muted">Nenhuma memória encontrada</p>
           <p className="mt-2 text-sm text-muted">Comece criando sua primeira memória!</p>
           <Link href="/memories/new" className="mt-4">
-            <Button className="gap-2 rounded-lg bg-primary text-background hover:bg-secondary">
+            <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary">
               <Plus className="h-5 w-5" />
               Criar Memória
             </Button>
