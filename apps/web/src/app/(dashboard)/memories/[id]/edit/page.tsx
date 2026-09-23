@@ -6,11 +6,10 @@ import { updateMemorySchema } from '@chronicle/schemas'
 import { Button } from '@chronicle/ui'
 import { ArrowLeft, Calendar, Cloud, Loader2, MapPin, Music, Save, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function EditMemoryPage() {
-  const router = useRouter()
   const params = useParams()
   const id = params.id as string
 
