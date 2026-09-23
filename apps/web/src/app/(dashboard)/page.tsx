@@ -1,13 +1,33 @@
 'use client'
 
-import { MemoryCard } from '@/components/memory-card'
+import { MemoryCardFull } from '@/components/memory-card'
 import { MemoryFilters } from '@/components/memory-filters'
-import { TimelineMarker } from '@/components/timeline-marker'
 import { useFilters } from '@/hooks/use-filters'
 import { useMemories } from '@/hooks/use-memories'
 import { Button } from '@chronicle/ui'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+
+function formatElapsed(dateA: string, dateB: string): string {
+  const a = new Date(dateA)
+  const b = new Date(dateB)
+  const diffMs = b.getTime() - a.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 1) return 'No mesmo dia'
+  if (diffDays === 1) return '1 dia depois'
+  if (diffDays < 7) return `${diffDays} dias depois`
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    return `${weeks} ${weeks === 1 ? 'semana' : 'semanas'} depois`
+  }
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30)
+    return `${months} ${months === 1 ? 'mês' : 'meses'} depois`
+  }
+  const years = Math.floor(diffDays / 365)
+  return `${years} ${years === 1 ? 'ano' : 'anos'} depois`
+}
 
 export default function DashboardPage() {
   const { filters, setFilter, resetFilters, setPage } = useFilters()
@@ -16,27 +36,8 @@ export default function DashboardPage() {
   const memories = data?.data || []
   const pagination = data?.pagination
 
-  // Group memories by month/year for timeline markers
-  const groupedMemories = memories.reduce(
-    (acc, memory) => {
-      const date = new Date(memory.memoryDate)
-      const key = `${date.getFullYear()}-${date.getMonth()}`
-      if (!acc[key]) {
-        acc[key] = {
-          date: memory.memoryDate,
-          memories: [],
-        }
-      }
-      acc[key].memories.push(memory)
-      return acc
-    },
-    {} as Record<string, { date: string; memories: typeof memories }>,
-  )
-
-  const groups = Object.values(groupedMemories)
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-text">Sua Timeline</h1>
@@ -66,19 +67,25 @@ export default function DashboardPage() {
           <p className="mt-2 text-sm text-muted">Comece criando sua primeira memória!</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {groups.map((group, groupIndex) => (
-            <div key={group.date} className="flex gap-6">
-              <div className="hidden w-24 shrink-0 md:block">
-                <TimelineMarker date={group.date} isLast={groupIndex === groups.length - 1} />
+        <div className="relative pl-6 sm:pl-10">
+          <div className="absolute left-[7px] sm:left-[11px] top-0 bottom-0 w-0.5 bg-card" />
+
+          <div className="space-y-8">
+            {memories.map((memory, index) => (
+              <div key={memory.id}>
+                {index > 0 && (
+                  <div className="my-6 flex items-center gap-3 pl-4">
+                    <div className="h-px flex-1 bg-card" />
+                    <span className="rounded-full border border-primary/30 bg-card px-3 py-1 font-mono text-xs font-bold text-primary">
+                      ⏳ {formatElapsed(memories[index - 1].memoryDate, memory.memoryDate)}
+                    </span>
+                    <div className="h-px flex-1 bg-card" />
+                  </div>
+                )}
+                <MemoryCardFull memory={memory} />
               </div>
-              <div className="flex-1 space-y-4">
-                {group.memories.map((memory) => (
-                  <MemoryCard key={memory.id} memory={memory} />
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-8">
