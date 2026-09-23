@@ -1,7 +1,7 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SessionData {
   user?: {
@@ -19,51 +19,50 @@ interface SessionData {
 }
 
 let cachedSession: SessionData | null | undefined = undefined
+let fetchPromise: Promise<SessionData | null> | null = null
+
+async function fetchSession(): Promise<SessionData | null> {
+  if (fetchPromise) return fetchPromise
+
+  fetchPromise = (async () => {
+    try {
+      const res = await fetch('http://localhost:3333/api/auth/get-session', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (!res.ok) return null
+      return (await res.json()) as SessionData
+    } catch {
+      return null
+    } finally {
+      fetchPromise = null
+    }
+  })()
+
+  return fetchPromise
+}
 
 export function useAuth() {
   const queryClient = useQueryClient()
-  const [session, setSession] = useState<SessionData | null | undefined>(() => cachedSession)
-  const [isLoading, setIsLoading] = useState(() => cachedSession === undefined)
+  const mountedRef = useRef(false)
+  const [session, setSession] = useState<SessionData | null | undefined>(cachedSession)
+  const [isLoading, setIsLoading] = useState(cachedSession === undefined)
 
   useEffect(() => {
+    if (mountedRef.current) return
+    mountedRef.current = true
+
     if (cachedSession !== undefined) {
       setSession(cachedSession)
       setIsLoading(false)
       return
     }
 
-    let cancelled = false
-
-    const fetchSession = async () => {
-      try {
-        const res = await fetch('http://localhost:3333/api/auth/get-session', {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        if (cancelled) return
-        if (!res.ok) {
-          setSession(null)
-          cachedSession = null
-        } else {
-          const data = (await res.json()) as SessionData
-          setSession(data)
-          cachedSession = data
-        }
-      } catch {
-        if (!cancelled) {
-          setSession(null)
-          cachedSession = null
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
-    }
-
-    fetchSession()
-
-    return () => {
-      cancelled = true
-    }
+    fetchSession().then((data) => {
+      cachedSession = data
+      setSession(data)
+      setIsLoading(false)
+    })
   }, [])
 
   const invalidateSession = useCallback(async () => {
@@ -71,26 +70,11 @@ export function useAuth() {
     setSession(undefined)
     setIsLoading(true)
 
-    try {
-      const res = await fetch('http://localhost:3333/api/auth/get-session', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      if (!res.ok) {
-        setSession(null)
-        cachedSession = null
-      } else {
-        const data = (await res.json()) as SessionData
-        setSession(data)
-        cachedSession = data
-      }
-    } catch {
-      setSession(null)
-      cachedSession = null
-    } finally {
-      setIsLoading(false)
-      queryClient.invalidateQueries({ queryKey: ['memories'] })
-    }
+    const data = await fetchSession()
+    cachedSession = data
+    setSession(data)
+    setIsLoading(false)
+    queryClient.invalidateQueries({ queryKey: ['memories'] })
   }, [queryClient])
 
   return {

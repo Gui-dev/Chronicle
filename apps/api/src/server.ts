@@ -29,6 +29,8 @@ export function buildServer() {
           ? error.statusCode
           : 500
 
+    reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
+    reply.header('Access-Control-Allow-Credentials', 'true')
     reply.status(statusCode).send(response)
   })
 
@@ -40,6 +42,12 @@ export function buildServer() {
     limits: {
       fileSize: 10 * 1024 * 1024,
     },
+  })
+
+  // Ensure CORS headers on every response
+  server.addHook('onSend', async (_request, reply) => {
+    reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
+    reply.header('Access-Control-Allow-Credentials', 'true')
   })
 
   // Register routes
