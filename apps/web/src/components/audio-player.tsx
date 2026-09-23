@@ -101,19 +101,25 @@ export function AudioPlayer() {
         {/* Controls */}
         <div className="flex flex-1 flex-col items-center gap-2">
           <div className="flex items-center gap-4">
-            <button type="button" className="text-muted transition-colors hover:text-text">
+            <button
+              type="button"
+              className="cursor-pointer text-muted transition-colors hover:text-text"
+            >
               <SkipBack className="h-5 w-5" />
             </button>
 
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-background transition-colors hover:bg-secondary"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary text-background transition-colors hover:bg-secondary"
             >
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
             </button>
 
-            <button type="button" className="text-muted transition-colors hover:text-text">
+            <button
+              type="button"
+              className="cursor-pointer text-muted transition-colors hover:text-text"
+            >
               <SkipForward className="h-5 w-5" />
             </button>
           </div>
@@ -137,7 +143,7 @@ export function AudioPlayer() {
           <button
             type="button"
             onClick={toggleMute}
-            className="text-muted transition-colors hover:text-text"
+            className="cursor-pointer text-muted transition-colors hover:text-text"
           >
             {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
           </button>

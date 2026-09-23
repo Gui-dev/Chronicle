@@ -71,7 +71,7 @@ export function StepMusic({ form }: StepMusicProps) {
                 key={`${track.url}-${index}`}
                 type="button"
                 onClick={() => selectTrack(track)}
-                className="flex w-full items-center gap-3 rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
               >
                 {track.cover && (
                   <img

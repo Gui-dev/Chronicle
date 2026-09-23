@@ -78,7 +78,7 @@ export function ChipInput({
               <button
                 type="button"
                 onClick={() => removeChip(chip)}
-                className="ml-1 hover:text-secondary"
+                className="ml-1 cursor-pointer hover:text-secondary"
               >
                 <X className="h-3 w-3" />
               </button>

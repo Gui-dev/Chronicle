@@ -4,17 +4,9 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { Disc3 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-const navLinks = [
-  { href: '/', label: 'Timeline' },
-  { href: '/memories', label: 'Memórias' },
-  { href: '/search', label: 'Buscar' },
-]
-
 export function Navbar() {
-  const pathname = usePathname()
   const { user, isAuthenticated, invalidateSession } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
@@ -39,19 +31,30 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] ${
-                pathname === link.href
-                  ? 'text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
-                  : 'text-muted'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          <Link
+            href="/"
+            className={
+              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
+            }
+          >
+            Timeline
+          </Link>
+          <Link
+            href="/memories"
+            className={
+              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
+            }
+          >
+            Memorias
+          </Link>
+          <Link
+            href="/search"
+            className={
+              'text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]'
+            }
+          >
+            Buscar
+          </Link>
         </div>
 
         <div className="flex items-center gap-4">
@@ -62,7 +65,7 @@ export function Navbar() {
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="text-sm text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+                className="cursor-pointer text-sm text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
               >
                 {signingOut ? 'Saindo...' : 'Sair'}
               </button>

@@ -81,7 +81,7 @@ export function StepLocation({ form }: StepLocationProps) {
                 key={`${loc.latitude}-${loc.longitude}-${index}`}
                 type="button"
                 onClick={() => selectLocation(loc)}
-                className="w-full rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
+                className="w-full cursor-pointer rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
               >
                 <p className="font-medium text-text">{loc.name}</p>
                 <p className="text-sm text-muted">

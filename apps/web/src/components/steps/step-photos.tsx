@@ -112,7 +112,7 @@ export function StepPhotos({ photos, onPhotosChange }: StepPhotosProps) {
               <button
                 type="button"
                 onClick={() => removePhoto(index)}
-                className="absolute right-2 top-2 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute right-2 top-2 cursor-pointer rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <X className="h-4 w-4 text-text" />
               </button>
