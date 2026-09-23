@@ -2,21 +2,16 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
-import { Disc3 } from 'lucide-react'
+import { Disc3, Search } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export function Navbar() {
   const { user, isAuthenticated, invalidateSession } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
-
-  const links = [
-    { href: '/', label: 'Timeline' },
-    { href: '/memories', label: 'Memorias' },
-    { href: '/search', label: 'Buscar' },
-  ]
 
   const linkClass = (href: string) =>
     `text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] ${
@@ -46,14 +41,21 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {links.map(({ href, label }) => (
-            <Link key={href} href={href} className={linkClass(href)}>
-              {label}
-            </Link>
-          ))}
+          <Link href="/" className={linkClass('/')}>
+            Timeline
+          </Link>
         </div>
 
         <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => router.push('/search')}
+            className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            aria-label="Buscar"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted">{user?.name}</span>
