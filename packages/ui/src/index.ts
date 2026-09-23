@@ -1,5 +1,3 @@
-import './styles/globals.css'
-
 export { cn } from './lib/utils'
 export { Button, buttonVariants } from './components/ui/button'
 export type { ButtonProps } from './components/ui/button'
