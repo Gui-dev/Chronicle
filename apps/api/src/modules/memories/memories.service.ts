@@ -124,13 +124,24 @@ export class MemoriesService {
       .limit(limit)
       .offset(offset)
 
+    const enrichedResults = await Promise.all(
+      results.map(async (memory) => {
+        const photos = await db
+          .select()
+          .from(memoryPhotos)
+          .where(eq(memoryPhotos.memoryId, memory.id))
+          .orderBy(memoryPhotos.orderIndex)
+        return { ...memory, photos }
+      }),
+    )
+
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(memories)
       .where(and(...conditions))
 
     return {
-      data: results,
+      data: enrichedResults,
       pagination: {
         page,
         limit,

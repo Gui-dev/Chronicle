@@ -68,7 +68,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="relative pl-6 sm:pl-10">
-          <div className="absolute left-[7px] sm:left-[11px] top-0 bottom-0 w-0.5 bg-card" />
+          <div className="absolute left-[7px] sm:left-[11px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-primary opacity-80" />
 
           <div className="space-y-8">
             {memories.map((memory, index) => (

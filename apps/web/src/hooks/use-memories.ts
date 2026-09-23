@@ -23,6 +23,14 @@ interface Memory {
   aiNarrative: string | null
   createdAt: string
   updatedAt: string
+  photos: Array<{
+    id: string
+    url: string
+    filename: string | null
+    mimetype: string | null
+    size: number | null
+    orderIndex: number
+  }>
 }
 
 interface PaginatedResponse {

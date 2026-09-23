@@ -132,6 +132,25 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
             )}
           </div>
 
+          {memory.photos.length > 0 && (
+            <div
+              className={`grid gap-3 pt-2 ${memory.photos.length === 1 ? 'grid-cols-1' : memory.photos.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'}`}
+            >
+              {memory.photos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative h-44 overflow-hidden rounded-2xl border border-card group/img"
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.filename || 'Foto da memória'}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           {memory.aiNarrative && (
             <div className="border-t border-card/60 pt-4">
               <button
