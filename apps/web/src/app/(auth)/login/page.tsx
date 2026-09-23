@@ -5,12 +5,10 @@ import { signIn } from '@/lib/auth-client'
 import { Button, Card, Input, Label } from '@chronicle/ui'
 import { ArrowLeft, Disc3 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { invalidateSession, setSession } = useAuth()
+  const { invalidateSession } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -22,7 +20,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { data, error } = await signIn.email({
+      const { error } = await signIn.email({
         email,
         password,
       })
@@ -32,13 +30,8 @@ export default function LoginPage() {
         return
       }
 
-      if (data) {
-        setSession(data as any)
-      } else {
-        await invalidateSession()
-      }
-      router.push('/')
-      router.refresh()
+      await invalidateSession()
+      window.location.replace('/')
     } catch (err: unknown) {
       console.error('Sign in error:', err)
       const message = err instanceof Error ? err.message : 'Erro ao fazer login'

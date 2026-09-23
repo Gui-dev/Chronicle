@@ -5,12 +5,10 @@ import { signUp } from '@/lib/auth-client'
 import { Button, Card, Input, Label } from '@chronicle/ui'
 import { ArrowLeft, Disc3 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const { invalidateSession, setSession } = useAuth()
+  const { invalidateSession } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +21,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { data, error } = await signUp.email({
+      const { error } = await signUp.email({
         name,
         email,
         password,
@@ -34,13 +32,8 @@ export default function RegisterPage() {
         return
       }
 
-      if (data) {
-        setSession(data as any)
-      } else {
-        await invalidateSession()
-      }
-      router.push('/')
-      router.refresh()
+      await invalidateSession()
+      window.location.replace('/')
     } catch (err: unknown) {
       console.error('Sign up error:', err)
       const message = err instanceof Error ? err.message : 'Erro ao criar conta'
