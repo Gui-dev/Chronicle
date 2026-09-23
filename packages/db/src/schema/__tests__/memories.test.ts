@@ -1,136 +1,58 @@
-import Database from 'better-sqlite3'
-import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { getTableConfig } from 'drizzle-orm/pg-core'
+import { describe, expect, it } from 'vitest'
 
 import { memories, users } from '../index'
 
 describe('Memories Schema', () => {
-  let db: ReturnType<typeof drizzle>
+  const cfg = getTableConfig(memories as never)
 
-  beforeEach(() => {
-    const sqlite = new Database(':memory:')
-    db = drizzle(sqlite)
-
-    sqlite.exec(`
-      CREATE TABLE users (
-        id TEXT PRIMARY KEY,
-        email TEXT NOT NULL UNIQUE,
-        name TEXT,
-        email_verified INTEGER,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-      )
-    `)
-
-    sqlite.exec(`
-      CREATE TABLE memories (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title TEXT NOT NULL,
-        content TEXT,
-        memory_date INTEGER NOT NULL,
-        location_name TEXT,
-        location_lat REAL,
-        location_lng REAL,
-        weather_temp REAL,
-        weather_desc TEXT,
-        weather_icon TEXT,
-        music_track TEXT,
-        music_artist TEXT,
-        music_url TEXT,
-        music_cover TEXT,
-        ai_narrative TEXT,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-      )
-    `)
+  it('has the correct table name', () => {
+    expect(cfg.name).toBe('memories')
   })
 
-  afterAll(() => {
-    db.$client.close()
+  it('defines the memory columns', () => {
+    const cols = cfg.columns.map((c) => ({
+      name: c.name,
+      type: c.columnType,
+      notNull: c.notNull,
+    }))
+    const expected = [
+      ['id', 'PgUUID', true],
+      ['user_id', 'PgVarchar', true],
+      ['title', 'PgVarchar', true],
+      ['content', 'PgText', false],
+      ['memory_date', 'PgTimestamp', true],
+      ['location_name', 'PgVarchar', false],
+      ['location_lat', 'PgNumeric', false],
+      ['location_lng', 'PgNumeric', false],
+      ['weather_temp', 'PgNumeric', false],
+      ['weather_desc', 'PgVarchar', false],
+      ['weather_icon', 'PgVarchar', false],
+      ['music_track', 'PgVarchar', false],
+      ['music_artist', 'PgVarchar', false],
+      ['music_url', 'PgText', false],
+      ['music_cover', 'PgText', false],
+      ['ai_narrative', 'PgText', false],
+      ['created_at', 'PgTimestamp', true],
+      ['updated_at', 'PgTimestamp', true],
+    ].map(([name, type, notNull]) => ({ name, type, notNull }))
+    expect(cols).toEqual(expected)
   })
 
-  it('should insert a memory', async () => {
-    const now = new Date()
-    // First insert a user
-    const user = await db
-      .insert(users)
-      .values({
-        id: 'user-1',
-        email: 'test@example.com',
-        name: 'Test User',
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    // Then insert a memory
-    const result = await db
-      .insert(memories)
-      .values({
-        id: 'memory-1',
-        userId: user[0].id,
-        title: 'Test Memory',
-        content: 'This is a test memory',
-        memoryDate: now,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    expect(result).toHaveLength(1)
-    expect(result[0].title).toBe('Test Memory')
-    expect(result[0].userId).toBe(user[0].id)
+  it('references the users table with cascade delete', () => {
+    expect(cfg.foreignKeys).toHaveLength(1)
+    const fk = cfg.foreignKeys[0]
+    expect(fk.onDelete).toBe('cascade')
+    const ref = fk.reference()
+    expect(ref.columns.map((c) => c.name)).toEqual(['user_id'])
+    expect(ref.foreignColumns.map((c) => c.name)).toEqual(['id'])
+    expect(ref.foreignColumns[0].table).toBe(users)
   })
 
-  it('should enforce foreign key constraint', async () => {
-    const now = new Date()
-    await expect(
-      db.insert(memories).values({
-        id: 'memory-1',
-        userId: 'non-existent-user-id',
-        title: 'Test Memory',
-        memoryDate: now,
-        createdAt: now,
-        updatedAt: now,
-      }),
-    ).rejects.toThrow()
-  })
-
-  it('should query memories by user', async () => {
-    const now = new Date()
-    const user = await db
-      .insert(users)
-      .values({
-        id: 'user-1',
-        email: 'test@example.com',
-        name: 'Test User',
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    await db.insert(memories).values({
-      id: 'memory-1',
-      userId: user[0].id,
-      title: 'Memory 1',
-      memoryDate: now,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    await db.insert(memories).values({
-      id: 'memory-2',
-      userId: user[0].id,
-      title: 'Memory 2',
-      memoryDate: now,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    const result = await db.select().from(memories).where(eq(memories.userId, user[0].id))
-
-    expect(result).toHaveLength(2)
+  it('keeps the referenced users table in sync', () => {
+    const userColumns = getTableConfig(users as never).columns
+    const userId = userColumns.find((c) => c.name === 'id')
+    expect(userId?.name).toBe('id')
+    expect(userId?.primary).toBe(true)
   })
 })

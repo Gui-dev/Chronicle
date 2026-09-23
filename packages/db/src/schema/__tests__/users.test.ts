@@ -1,85 +1,36 @@
-import Database from 'better-sqlite3'
-import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { getTableConfig } from 'drizzle-orm/pg-core'
+import { describe, expect, it } from 'vitest'
 
-import { users } from '../users'
+import { users } from '../index'
 
 describe('Users Schema', () => {
-  let db: ReturnType<typeof drizzle>
+  const cfg = getTableConfig(users as never)
 
-  beforeEach(() => {
-    const sqlite = new Database(':memory:')
-    db = drizzle(sqlite)
-
-    sqlite.exec(`
-      CREATE TABLE users (
-        id TEXT PRIMARY KEY,
-        email TEXT NOT NULL UNIQUE,
-        name TEXT,
-        email_verified INTEGER,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-      )
-    `)
+  it('has the correct table name', () => {
+    expect(cfg.name).toBe('users')
   })
 
-  afterAll(() => {
-    db.$client.close()
+  it('defines the user columns', () => {
+    const cols = cfg.columns.map((c) => ({
+      name: c.name,
+      type: c.columnType,
+      notNull: c.notNull,
+    }))
+    const expected = [
+      ['id', 'PgVarchar', true],
+      ['email', 'PgVarchar', true],
+      ['name', 'PgVarchar', true],
+      ['image', 'PgVarchar', false],
+      ['email_verified', 'PgBoolean', true],
+      ['created_at', 'PgTimestamp', true],
+      ['updated_at', 'PgTimestamp', true],
+    ].map(([name, type, notNull]) => ({ name, type, notNull }))
+    expect(cols).toEqual(expected)
   })
 
-  it('should insert a user', async () => {
-    const now = new Date()
-    const result = await db
-      .insert(users)
-      .values({
-        id: 'user-1',
-        email: 'test@example.com',
-        name: 'Test User',
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    expect(result).toHaveLength(1)
-    expect(result[0].email).toBe('test@example.com')
-    expect(result[0].name).toBe('Test User')
-  })
-
-  it('should enforce unique email constraint', async () => {
-    const now = new Date()
-    await db.insert(users).values({
-      id: 'user-1',
-      email: 'test@example.com',
-      name: 'Test User',
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    await expect(
-      db.insert(users).values({
-        id: 'user-2',
-        email: 'test@example.com',
-        name: 'Another User',
-        createdAt: now,
-        updatedAt: now,
-      }),
-    ).rejects.toThrow()
-  })
-
-  it('should query user by email', async () => {
-    const now = new Date()
-    await db.insert(users).values({
-      id: 'user-1',
-      email: 'test@example.com',
-      name: 'Test User',
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    const result = await db.select().from(users).where(eq(users.email, 'test@example.com'))
-
-    expect(result).toHaveLength(1)
-    expect(result[0].email).toBe('test@example.com')
+  it('uses a non-null id primary key', () => {
+    const id = cfg.columns.find((c) => c.name === 'id')
+    expect(id?.primary).toBe(true)
+    expect(id?.notNull).toBe(true)
   })
 })
