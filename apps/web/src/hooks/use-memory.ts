@@ -25,8 +25,8 @@ export function useMemory(id: string) {
   return useQuery<MemoryDetail>({
     queryKey: ['memory', id],
     queryFn: async () => {
-      const response = await api.get<MemoryDetailResponse>(`/api/memories/${id}`)
-      return response.data
+      const { data } = await api.get<MemoryDetailResponse>(`/api/memories/${id}`)
+      return data
     },
     enabled: !!id,
   })
