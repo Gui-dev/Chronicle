@@ -169,7 +169,7 @@
 ## Fase 5: Polish e Deploy
 
 ### 5.1 UX
-- [ ] Loading states
+- [x] Loading states (skeleton cards, spinners)
 - [ ] Error states
 - [ ] Empty states
 - [ ] Toasts/notificações
