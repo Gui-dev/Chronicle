@@ -1,7 +1,7 @@
 'use client'
 
 import type { Memory } from '@/hooks/use-memories'
-import { Music, Pause, Play } from 'lucide-react'
+import { MapPin, Music, Pause, Play, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -75,7 +75,7 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
 
   return (
     <article className="relative group">
-      <div className="absolute -left-6 sm:-left-[35px] top-6 h-5 w-5 rounded-full border-4 border-background bg-primary shadow-[0_0_8px_rgba(240,192,64,0.5)] z-10" />
+      <div className="absolute -left-6 sm:-left-8.75 top-6 h-5 w-5 rounded-full border-4 border-background bg-primary shadow-[0_0_8px_rgba(240,192,64,0.5)] z-10" />
 
       <div className="mb-3 flex items-center gap-3">
         <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-bold text-primary">
@@ -133,15 +133,32 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
           <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
             {memory.weatherTemp && (
               <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-amber-300">
-                {memory.weatherIcon || '🌤️'} {memory.weatherTemp}°C
+                {memory.weatherIcon || '🌤'} {memory.weatherTemp}°C
                 {memory.weatherDesc ? ` ${memory.weatherDesc}` : ''}
               </span>
             )}
             {memory.locationName && (
               <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
-                📍 {memory.locationName}
+                <MapPin className="h-3 w-3" />
+                {memory.locationName}
               </span>
             )}
+            {memory.people.length > 0 && (
+              <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
+                <Users className="h-3 w-3" />
+                {memory.people.map((p) => p.name).join(', ')}
+              </span>
+            )}
+            {memory.tags.length > 0 &&
+              memory.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-primary"
+                >
+                  <Tag className="h-3 w-3" />
+                  {tag.name}
+                </span>
+              ))}
           </div>
 
           {(memory.photos ?? []).length > 0 && (

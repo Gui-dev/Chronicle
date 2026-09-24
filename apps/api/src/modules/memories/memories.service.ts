@@ -126,12 +126,16 @@ export class MemoriesService {
 
     const enrichedResults = await Promise.all(
       results.map(async (memory) => {
-        const photos = await db
-          .select()
-          .from(memoryPhotos)
-          .where(eq(memoryPhotos.memoryId, memory.id))
-          .orderBy(memoryPhotos.orderIndex)
-        return { ...memory, photos }
+        const [photos, people, tags] = await Promise.all([
+          db
+            .select()
+            .from(memoryPhotos)
+            .where(eq(memoryPhotos.memoryId, memory.id))
+            .orderBy(memoryPhotos.orderIndex),
+          db.select().from(memoryPeople).where(eq(memoryPeople.memoryId, memory.id)),
+          db.select().from(memoryTags).where(eq(memoryTags.memoryId, memory.id)),
+        ])
+        return { ...memory, photos, people, tags }
       }),
     )
 

@@ -23,6 +23,8 @@ interface Memory {
   aiNarrative: string | null
   createdAt: string
   updatedAt: string
+  people: Array<{ id: string; memoryId: string; name: string }>
+  tags: Array<{ id: string; memoryId: string; name: string }>
   photos: Array<{
     id: string
     url: string

@@ -130,12 +130,12 @@
 - [x] Hook use-create-memory
 
 ### 3.6 Páginas: Detalhe Memória
-- [ ] Exibição completa da memória
-- [ ] Galeria de fotos
-- [ ] Player de música associada
-- [ ] Narrativa IA (gerar/exibir)
-- [ ] Edição de memória
-- [ ] Hook use-update-memory
+- [x] Exibição completa da memória
+- [x] Galeria de fotos
+- [x] Player de música associada
+- [x] Narrativa IA (gerar/exibir)
+- [x] Edição de memória
+- [x] Hook use-update-memory
 
 ### 3.7 Storybook
 - [ ] Documentar todos os componentes
