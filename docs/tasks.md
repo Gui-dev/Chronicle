@@ -150,9 +150,9 @@
 ## Fase 4: Testes E2E
 
 ### 4.1 Setup Playwright
-- [ ] Configurar Playwright
-- [ ] Criar fixtures de teste
-- [ ] Configurar variáveis de ambiente para E2E
+- [x] Configurar Playwright
+- [x] Criar fixtures de teste
+- [x] Configurar variáveis de ambiente para E2E
 
 ### 4.2 Fluxos E2E
 - [ ] Teste: Registro + Login

@@ -18,7 +18,8 @@ export function ChipInput({
   value,
   onChange,
   maxLength = 100,
-}: ChipInputProps) {
+  'data-testid': testId = '',
+}: ChipInputProps & { 'data-testid'?: string }) {
   const [inputValue, setInputValue] = useState('')
 
   const addChip = useCallback(() => {
@@ -55,6 +56,7 @@ export function ChipInput({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
+          data-testid={testId ? `${testId}-input` : undefined}
           className="flex-1 border-card bg-background text-text placeholder:text-muted"
         />
         <Button
@@ -62,6 +64,7 @@ export function ChipInput({
           variant="outline"
           onClick={addChip}
           disabled={!inputValue.trim()}
+          data-testid={testId ? `${testId}-add` : undefined}
           className="border-card text-text hover:border-primary hover:text-primary"
         >
           Adicionar

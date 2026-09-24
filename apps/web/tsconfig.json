@@ -28,7 +28,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "src/__tests__/**/*.ts"
   ],
   "exclude": ["node_modules", "src/stories"]
 }

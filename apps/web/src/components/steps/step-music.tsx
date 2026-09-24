@@ -2,13 +2,14 @@
 
 import { useSpotifySearch } from '@/hooks/use-spotify-search'
 import type { SpotifyTrack } from '@/hooks/use-spotify-search'
+import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import { Music } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepMusicProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<CreateMemoryInput>
 }
 
 export function StepMusic({ form }: StepMusicProps) {
@@ -58,6 +59,7 @@ export function StepMusic({ form }: StepMusicProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Digite nome da música ou artista..."
+              data-testid="musicInput"
               className="border-card bg-background pl-10 text-text placeholder:text-muted"
             />
           </div>

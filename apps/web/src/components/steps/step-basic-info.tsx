@@ -1,9 +1,10 @@
 'use client'
+import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepBasicInfoProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<CreateMemoryInput>
 }
 
 export function StepBasicInfo({ form }: StepBasicInfoProps) {
@@ -28,6 +29,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             id="title"
             {...register('title')}
             placeholder="Ex: Pôr do sol na praia"
+            data-testid="title"
             className="border-card bg-background text-text placeholder:text-muted"
           />
           {errors.title && <p className="text-sm text-red-500">{String(errors.title.message)}</p>}
@@ -41,6 +43,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             id="memoryDate"
             type="date"
             {...register('memoryDate')}
+            data-testid="memoryDate"
             className="border-card bg-background text-text"
           />
           {errors.memoryDate && (
@@ -56,6 +59,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             id="content"
             {...register('content')}
             placeholder="Descreva este momento..."
+            data-testid="content"
             rows={4}
             className="w-full rounded-lg border-2 border-card bg-background px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />

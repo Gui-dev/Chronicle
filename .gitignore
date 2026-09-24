@@ -31,3 +31,4 @@ minio-data/
 
 # Storybook
 storybook-static/
+.env.example

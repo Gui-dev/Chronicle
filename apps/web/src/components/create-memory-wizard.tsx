@@ -64,7 +64,7 @@ export function CreateMemoryWizard() {
     }
   }
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CreateMemoryInput) => {
     const memoryData: CreateMemoryInput = {
       ...data,
       memoryDate: new Date(`${data.memoryDate}T00:00:00`),
@@ -186,6 +186,7 @@ export function CreateMemoryWizard() {
               <Button
                 type="submit"
                 disabled={createMemory.isPending}
+                data-testid="submit-memory"
                 className="inline-flex items-center gap-2 bg-primary text-background hover:bg-secondary"
               >
                 {createMemory.isPending ? (

@@ -3,13 +3,14 @@
 import { useGeocoding } from '@/hooks/use-geocoding'
 import type { GeocodingResult } from '@/hooks/use-geocoding'
 import { useWeather } from '@/hooks/use-weather'
+import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import { Cloud, MapPin } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepLocationProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<CreateMemoryInput>
 }
 
 export function StepLocation({ form }: StepLocationProps) {
@@ -68,6 +69,7 @@ export function StepLocation({ form }: StepLocationProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Digite o nome do local..."
+              data-testid="locationInput"
               className="border-card bg-background pl-10 text-text placeholder:text-muted"
             />
           </div>

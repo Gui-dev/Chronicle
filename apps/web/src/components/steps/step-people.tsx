@@ -1,10 +1,11 @@
 'use client'
 
 import { ChipInput } from '@/components/chip-input'
+import type { CreateMemoryInput } from '@chronicle/schemas'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepPeopleProps {
-  form: UseFormReturn<any>
+  form: UseFormReturn<CreateMemoryInput>
   people: string[]
   onPeopleChange: (people: string[]) => void
   tags: string[]
@@ -34,6 +35,7 @@ export function StepPeople({
           value={people}
           onChange={onPeopleChange}
           maxLength={255}
+          data-testid="people"
         />
 
         <ChipInput
@@ -42,6 +44,7 @@ export function StepPeople({
           value={tags}
           onChange={onTagsChange}
           maxLength={100}
+          data-testid="tags"
         />
       </div>
     </div>
