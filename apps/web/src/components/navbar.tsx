@@ -4,21 +4,13 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { Disc3, Search } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export function Navbar() {
   const { user, isAuthenticated, invalidateSession } = useAuth()
-  const pathname = usePathname()
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
-
-  const linkClass = (href: string) =>
-    `text-sm font-medium transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] ${
-      isActive(href) ? 'text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]' : 'text-text'
-    }`
-
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -39,12 +31,6 @@ export function Navbar() {
           </div>
           <span className="text-xl font-bold text-text">Chronicle</span>
         </Link>
-
-        <div className="hidden items-center gap-8 md:flex">
-          <Link href="/" className={linkClass('/')}>
-            Timeline
-          </Link>
-        </div>
 
         <div className="flex items-center gap-4">
           <button
