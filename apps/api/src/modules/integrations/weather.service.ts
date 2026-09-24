@@ -13,6 +13,7 @@ interface WeatherResult {
   weatherCode: number
   windSpeed: number
   description: string
+  icon: string
 }
 
 const WMO_CODES: Record<number, string> = {
@@ -39,6 +40,30 @@ const WMO_CODES: Record<number, string> = {
   99: 'Tempestade com granizo forte',
 }
 
+const WMO_ICONS: Record<number, string> = {
+  0: '\u2600\uFE0F',
+  1: '\uD83C\uDF24',
+  2: '\u26C5',
+  3: '\u2601\uFE0F',
+  45: '\uD83C\uDF2B',
+  48: '\uD83C\uDF2B',
+  51: '\uD83C\uDF26',
+  53: '\uD83C\uDF26',
+  55: '\uD83C\uDF27',
+  61: '\uD83C\uDF27',
+  63: '\uD83C\uDF27',
+  65: '\uD83C\uDF27',
+  71: '\u2744\uFE0F',
+  73: '\u2744\uFE0F',
+  75: '\u2744\uFE0F',
+  80: '\uD83C\uDF26',
+  81: '\uD83C\uDF27',
+  82: '\u26C8',
+  95: '\u26C8',
+  96: '\u26C8',
+  99: '\u26C8',
+}
+
 export class WeatherService {
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherResult> {
     const response = await fetch(
@@ -57,6 +82,7 @@ export class WeatherService {
       weatherCode: data.current.weather_code,
       windSpeed: data.current.wind_speed_10m,
       description: WMO_CODES[data.current.weather_code] || 'Unknown',
+      icon: WMO_ICONS[data.current.weather_code] || '\uD83C\uDF24',
     }
   }
 }

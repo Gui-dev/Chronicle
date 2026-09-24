@@ -13,6 +13,7 @@ export function handleError(error: FastifyError) {
 
   // Zod validation errors
   if (error.name === 'ZodError') {
+    console.error('[ZodError]', error.message)
     return {
       error: {
         code: 'VALIDATION_ERROR',
