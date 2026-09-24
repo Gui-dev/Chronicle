@@ -6,6 +6,7 @@ import { NarrativeSection } from '@/components/narrative-section'
 import { PhotoGallery } from '@/components/photo-gallery'
 import { useMemory } from '@/hooks/use-memory'
 import { Button } from '@chronicle/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { Cloud, Loader2, MapPin, Tag, Users } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -35,6 +36,7 @@ export default function MemoryDetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const queryClient = useQueryClient()
 
   const { data: memory, isLoading, error } = useMemory(id)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -44,6 +46,7 @@ export default function MemoryDetailPage() {
     try {
       const { api } = await import('@/lib/api-client')
       await api.delete(`/api/memories/${id}`)
+      await queryClient.invalidateQueries({ queryKey: ['memories'] })
       router.push('/')
     } catch (err) {
       console.error('Failed to delete memory:', err)
