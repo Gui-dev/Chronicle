@@ -342,6 +342,7 @@ export default function EditMemoryPage() {
           <Button
             type="submit"
             disabled={updateMutation.isPending}
+            data-testid="save-button"
             className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-background hover:bg-secondary"
           >
             {updateMutation.isPending ? (

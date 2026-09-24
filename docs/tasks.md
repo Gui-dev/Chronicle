@@ -155,14 +155,14 @@
 - [x] Configurar variáveis de ambiente para E2E
 
 ### 4.2 Fluxos E2E
-- [ ] Teste: Registro + Login
-- [ ] Teste: Criar memória completa
-- [ ] Teste: Visualizar timeline
-- [ ] Teste: Filtrar memórias
-- [ ] Teste: Editar memória
-- [ ] Teste: Deletar memória
-- [ ] Teste: Upload de fotos
-- [ ] Teste: Buscar música
+- [x] Teste: Registro + Login
+- [x] Teste: Criar memória completa
+- [x] Teste: Visualizar timeline
+- [x] Teste: Filtrar memórias
+- [x] Teste: Editar memória
+- [x] Teste: Deletar memória
+- [x] Teste: Upload de fotos
+- [x] Teste: Buscar música
 
 ---
 

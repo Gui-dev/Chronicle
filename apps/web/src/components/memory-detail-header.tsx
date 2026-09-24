@@ -37,7 +37,7 @@ export function MemoryDetailHeader({
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link href={`/memories/${memory.id}/edit`}>
+          <Link href={`/memories/${memory.id}/edit`} data-testid="edit-button">
             <Button
               variant="outline"
               size="sm"
@@ -52,6 +52,7 @@ export function MemoryDetailHeader({
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={isDeleting}
+            data-testid="delete-button"
             className="inline-flex items-center gap-2 border-card text-red-500 hover:border-red-500 hover:text-red-600"
           >
             {isDeleting ? (

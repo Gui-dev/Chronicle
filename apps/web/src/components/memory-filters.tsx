@@ -54,6 +54,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           onChange={(e) =>
             onFilterChange('year', e.target.value ? Number(e.target.value) : undefined)
           }
+          data-testid="year"
           className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Ano</option>

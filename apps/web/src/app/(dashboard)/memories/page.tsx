@@ -21,7 +21,7 @@ export default function MemoriesPage() {
           <h1 className="text-3xl font-bold text-text">Memórias</h1>
           <p className="mt-2 text-muted">Todas as suas memórias</p>
         </div>
-        <Link href="/memories/new">
+        <Link href="/memories/new" data-testid="new-memory-button">
           <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
             <Plus className="h-5 w-5" />
             Nova Memória

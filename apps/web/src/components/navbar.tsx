@@ -52,6 +52,7 @@ export function Navbar() {
             onClick={() => router.push('/search')}
             className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
             aria-label="Buscar"
+            data-testid="search-button"
           >
             <Search className="h-5 w-5" />
           </button>

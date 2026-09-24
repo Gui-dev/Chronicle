@@ -10,7 +10,7 @@ export async function createMemory(
     people?: string[]
     tags?: string[]
   },
-) {
+): Promise<string> {
   await page.goto('/memories/new')
   await page.fill('[data-testid="title"]', data.title)
 
@@ -40,4 +40,5 @@ export async function createMemory(
 
   await page.click('[data-testid="submit-memory"]')
   await page.waitForURL(/\/memories\/\w+/, { timeout: 10000 })
+  return page.url()
 }

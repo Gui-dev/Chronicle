@@ -73,6 +73,7 @@ export default function RegisterPage() {
               id="name"
               type="text"
               placeholder="Seu nome"
+              data-testid="register-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -88,6 +89,7 @@ export default function RegisterPage() {
               id="email"
               type="email"
               placeholder="seu@email.com"
+              data-testid="register-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -103,6 +105,7 @@ export default function RegisterPage() {
               id="password"
               type="password"
               placeholder="••••••••"
+              data-testid="register-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -114,6 +117,7 @@ export default function RegisterPage() {
             type="submit"
             className="h-10 w-full rounded-lg bg-primary font-medium text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
             disabled={isLoading}
+            data-testid="register-button"
           >
             {isLoading ? 'Criando conta...' : 'Criar Conta'}
           </Button>
