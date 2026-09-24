@@ -8,6 +8,7 @@ import { useMemory } from '@/hooks/use-memory'
 import { Button } from '@chronicle/ui'
 import { Cloud, Loader2, MapPin, Tag, Users } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr)
@@ -36,16 +37,18 @@ export default function MemoryDetailPage() {
   const id = params.id as string
 
   const { data: memory, isLoading, error } = useMemory(id)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja deletar esta memória?')) return
-
+    setIsDeleting(true)
     try {
       const { api } = await import('@/lib/api-client')
       await api.delete(`/api/memories/${id}`)
+      await import('@/hooks/use-memories')
       router.push('/')
-    } catch {
-      // Error handled silently
+    } catch (err) {
+      console.error('Failed to delete memory:', err)
+      setIsDeleting(false)
     }
   }
 
@@ -78,7 +81,7 @@ export default function MemoryDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <MemoryDetailHeader memory={memory} onDelete={handleDelete} />
+      <MemoryDetailHeader memory={memory} onDelete={handleDelete} isDeleting={isDeleting} />
 
       <div className="mb-2 text-sm text-muted">
         {formattedDate} há {relativeDate}
