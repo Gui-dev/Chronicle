@@ -7,7 +7,15 @@ const emptyToUndefined = z
   .nullable()
   .transform((v) => v || undefined)
 
-const nullToUndefined = z
+const coordinate = z
+  .number()
+  .min(-90)
+  .max(90)
+  .optional()
+  .nullable()
+  .transform((v) => v ?? undefined)
+
+const nullableNumber = z
   .number()
   .optional()
   .nullable()
@@ -18,9 +26,9 @@ export const createMemorySchema = z.object({
   content: emptyToUndefined,
   memoryDate: localDate,
   locationName: emptyToUndefined,
-  locationLat: nullToUndefined,
-  locationLng: nullToUndefined,
-  weatherTemp: nullToUndefined,
+  locationLat: coordinate,
+  locationLng: coordinate,
+  weatherTemp: nullableNumber,
   weatherDesc: emptyToUndefined,
   weatherIcon: emptyToUndefined,
   musicTrack: emptyToUndefined,
