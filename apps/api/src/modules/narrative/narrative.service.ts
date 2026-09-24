@@ -1,4 +1,5 @@
 import { db, eq, memories, memoryPeople, memoryTags } from '@chronicle/db'
+import type { GenerateContentResult } from '@google/generative-ai'
 import { AppError } from '../../errors/app-error'
 import { geminiModel } from '../../plugins/ai'
 
@@ -54,10 +55,31 @@ Respond in JSON format:
   "themes": ["friendship", "summer", "adventure"]
 }`
 
-    const result = await geminiModel.generateContent(prompt)
+    const result = await this.generateWithRetry(prompt)
     const response = result.response
     const text = response.text()
 
+    return this.parseNarrative(text)
+  }
+
+  private async generateWithRetry(prompt: string, attempts = 3): Promise<GenerateContentResult> {
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        return await geminiModel.generateContent(prompt)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : ''
+        const isTransient = /50[0-9]|429/.test(message)
+        const isLast = attempt === attempts - 1
+        if (!isTransient || isLast) {
+          throw err
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)))
+      }
+    }
+    throw new Error('Unexpected retry exhaustion')
+  }
+
+  private parseNarrative(text: string): NarrativeResult {
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {

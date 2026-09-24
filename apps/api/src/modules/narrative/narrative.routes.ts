@@ -19,8 +19,18 @@ export async function narrativeRoutes(fastify: FastifyInstance) {
 
     const { id } = request.params as { id: string }
 
-    const narrative = await narrativeService.generate(id, session.user.id)
-
-    return reply.send({ data: narrative })
+    try {
+      const narrative = await narrativeService.generate(id, session.user.id)
+      return reply.send({ data: narrative })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      fastify.log.error({ err }, 'Narrative generation failed')
+      return reply.status(500).send({
+        error: {
+          code: 'GENERATION_FAILED',
+          message,
+        },
+      })
+    }
   })
 }
