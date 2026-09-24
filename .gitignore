@@ -32,3 +32,4 @@ minio-data/
 # Storybook
 storybook-static/
 .env.example
+apps/web/test-results/

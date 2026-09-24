@@ -30,8 +30,27 @@ export default function MemoriesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-muted">Carregando memórias...</div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+          </div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-20">

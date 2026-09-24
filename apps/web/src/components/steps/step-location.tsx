@@ -22,8 +22,11 @@ export function StepLocation({ form }: StepLocationProps) {
   const locationLat = watch('locationLat')
   const locationLng = watch('locationLng')
 
-  const { data: geocodingData } = useGeocoding(debouncedSearch)
-  const { data: weatherData } = useWeather(locationLat ?? null, locationLng ?? null)
+  const { data: geocodingData, isLoading: geocodingLoading } = useGeocoding(debouncedSearch)
+  const { data: weatherData, isLoading: weatherLoading } = useWeather(
+    locationLat ?? null,
+    locationLng ?? null,
+  )
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -75,6 +78,12 @@ export function StepLocation({ form }: StepLocationProps) {
           </div>
         </div>
 
+        {geocodingLoading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-card border-t-primary" />
+          </div>
+        )}
+
         {locations.length > 0 && (
           <div className="space-y-2">
             {locations.map((loc, index) => (
@@ -97,6 +106,12 @@ export function StepLocation({ form }: StepLocationProps) {
         {locationName && (
           <div className="rounded-lg bg-primary/10 p-3">
             <p className="text-sm font-medium text-primary">{locationName}</p>
+          </div>
+        )}
+
+        {weatherLoading && (
+          <div className="flex items-center justify-center py-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-card border-t-primary" />
           </div>
         )}
 

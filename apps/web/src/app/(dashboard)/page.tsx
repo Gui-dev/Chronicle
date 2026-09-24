@@ -54,8 +54,64 @@ export default function DashboardPage() {
       <MemoryFilters filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-muted">Carregando memórias...</div>
+        <div className="space-y-8">
+          <div className="relative">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+              <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+            </div>
+            <div className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 sm:p-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex-1 space-y-3">
+                  <div className="h-8 w-48 animate-pulse rounded-lg bg-card" />
+                  <div className="h-4 w-64 animate-pulse rounded bg-card" />
+                </div>
+                <div className="h-20 w-20 animate-pulse rounded-xl bg-card" />
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <div className="h-6 w-20 animate-pulse rounded-xl bg-card" />
+                <div className="h-6 w-16 animate-pulse rounded-xl bg-card" />
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+              <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+            </div>
+            <div className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 sm:p-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex-1 space-y-3">
+                  <div className="h-8 w-48 animate-pulse rounded-lg bg-card" />
+                  <div className="h-4 w-64 animate-pulse rounded bg-card" />
+                </div>
+                <div className="h-20 w-20 animate-pulse rounded-xl bg-card" />
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <div className="h-6 w-20 animate-pulse rounded-xl bg-card" />
+                <div className="h-6 w-16 animate-pulse rounded-xl bg-card" />
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-4 w-16 animate-pulse rounded-full bg-card" />
+              <div className="h-3 w-20 animate-pulse rounded-full bg-card" />
+            </div>
+            <div className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 sm:p-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex-1 space-y-3">
+                  <div className="h-8 w-48 animate-pulse rounded-lg bg-card" />
+                  <div className="h-4 w-64 animate-pulse rounded bg-card" />
+                </div>
+                <div className="h-20 w-20 animate-pulse rounded-xl bg-card" />
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <div className="h-6 w-20 animate-pulse rounded-xl bg-card" />
+                <div className="h-6 w-16 animate-pulse rounded-xl bg-card" />
+              </div>
+            </div>
+          </div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-20">

@@ -20,7 +20,7 @@ export function StepMusic({ form }: StepMusicProps) {
   const musicTrack = watch('musicTrack')
   const musicArtist = watch('musicArtist')
 
-  const { data: spotifyData } = useSpotifySearch(debouncedSearch)
+  const { data: spotifyData, isLoading: spotifyLoading } = useSpotifySearch(debouncedSearch)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -64,6 +64,12 @@ export function StepMusic({ form }: StepMusicProps) {
             />
           </div>
         </div>
+
+        {spotifyLoading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-card border-t-primary" />
+          </div>
+        )}
 
         {tracks.length > 0 && (
           <div className="space-y-2">
