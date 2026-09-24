@@ -4,16 +4,23 @@ import { localDate } from './local-date'
 const emptyToUndefined = z
   .string()
   .optional()
+  .nullable()
   .transform((v) => v || undefined)
+
+const nullToUndefined = z
+  .number()
+  .optional()
+  .nullable()
+  .transform((v) => v ?? undefined)
 
 export const createMemorySchema = z.object({
   title: z.string().min(1).max(255),
   content: emptyToUndefined,
   memoryDate: localDate,
   locationName: emptyToUndefined,
-  locationLat: z.number().min(-90).max(90).optional(),
-  locationLng: z.number().min(-180).max(180).optional(),
-  weatherTemp: z.number().min(-50).max(60).optional(),
+  locationLat: nullToUndefined,
+  locationLng: nullToUndefined,
+  weatherTemp: nullToUndefined,
   weatherDesc: emptyToUndefined,
   weatherIcon: emptyToUndefined,
   musicTrack: emptyToUndefined,
@@ -23,12 +30,14 @@ export const createMemorySchema = z.object({
     .url()
     .or(z.literal(''))
     .optional()
+    .nullable()
     .transform((v) => v || undefined),
   musicCover: z
     .string()
     .url()
     .or(z.literal(''))
     .optional()
+    .nullable()
     .transform((v) => v || undefined),
   people: z.array(z.string().max(255)).optional(),
   tags: z.array(z.string().max(100)).optional(),

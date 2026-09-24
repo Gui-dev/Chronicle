@@ -33,7 +33,11 @@ class ApiClient {
       const error = await response.json().catch(() => ({
         error: { message: 'Unknown error' },
       }))
-      throw new Error(error.error?.message || `API error: ${response.status}`)
+      throw new Error(
+        error.error?.message +
+          (error.error?.details ? `: ${JSON.stringify(error.error.details)}` : '') ||
+          `API error: ${response.status}`,
+      )
     }
 
     if (response.status === 204) {
