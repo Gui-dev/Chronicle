@@ -16,7 +16,13 @@ interface PhotoGalleryProps {
 export function PhotoGallery({ photos }: PhotoGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
-  if (photos.length === 0) return null
+  if (photos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-card py-12">
+        <p className="text-muted">Nenhuma foto ainda</p>
+      </div>
+    )
+  }
 
   return (
     <div>

@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Cloud, Loader2, MapPin, Tag, Users } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 function formatUtcDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -69,9 +70,11 @@ export default function MemoryDetailPage() {
       const { api } = await import('@/lib/api-client')
       await api.delete(`/api/memories/${id}`)
       await queryClient.invalidateQueries({ queryKey: ['memories'] })
+      toast.success('Memória deletada!')
       router.push('/')
     } catch (err) {
       console.error('Failed to delete memory:', err)
+      toast.error('Falha ao deletar memória')
       setIsDeleting(false)
     }
   }

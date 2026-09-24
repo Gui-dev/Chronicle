@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { StepBasicInfo } from './steps/step-basic-info'
 import { StepLocation } from './steps/step-location'
 import { StepMusic } from './steps/step-music'
@@ -90,6 +91,7 @@ export function CreateMemoryWizard() {
       }
     }
 
+    toast.success('Memória criada!')
     router.push('/')
   }
 

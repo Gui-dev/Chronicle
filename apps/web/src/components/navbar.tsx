@@ -57,8 +57,10 @@ export function Navbar() {
           </button>
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted">{user?.name}</span>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="max-w-[100px] truncate text-sm text-muted sm:max-w-[200px]">
+                {user?.name}
+              </span>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -71,7 +73,7 @@ export function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+              className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] sm:px-4"
             >
               Entrar
             </Link>

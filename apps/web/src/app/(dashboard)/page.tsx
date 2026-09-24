@@ -31,7 +31,7 @@ function formatElapsed(dateA: string, dateB: string): string {
 
 export default function DashboardPage() {
   const { filters, setFilter, resetFilters, setPage } = useFilters()
-  const { data, isLoading, error } = useMemories(filters)
+  const { data, isLoading, error, refetch } = useMemories(filters)
 
   const memories = data?.data || []
   const pagination = data?.pagination
@@ -114,13 +114,26 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-red-500">Erro ao carregar memórias</div>
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <p className="text-red-500">Erro ao carregar memórias</p>
+          <Button
+            variant="outline"
+            onClick={() => refetch()}
+            className="rounded-lg border-card text-text hover:border-primary hover:text-primary"
+          >
+            Tentar novamente
+          </Button>
         </div>
       ) : memories.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-card py-20">
           <p className="text-lg text-muted">Nenhuma memória encontrada</p>
-          <p className="mt-2 text-sm text-muted">Comece criando sua primeira memória!</p>
+          <p className="mt-2 text-sm text-muted">Crie sua primeira memória para começar!</p>
+          <Link href="/memories/new" className="mt-4">
+            <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+              <Plus className="h-5 w-5" />
+              Nova Memória
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="relative pl-6 sm:pl-10">
