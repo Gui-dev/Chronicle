@@ -14,14 +14,19 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { body, headers = {}, ...rest } = options
 
+    const hasBody = body !== undefined && body !== null
+    const defaultHeaders: Record<string, string> = hasBody
+      ? { 'Content-Type': 'application/json' }
+      : {}
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...rest,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...defaultHeaders,
         ...headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: hasBody ? JSON.stringify(body) : undefined,
     })
 
     if (!response.ok) {
