@@ -138,12 +138,12 @@
 - [x] Hook use-update-memory
 
 ### 3.7 Storybook
-- [ ] Documentar todos os componentes
-- [ ] Criar stories para memory-card
-- [ ] Criar stories para audio-player
-- [ ] Criar stories para photo-gallery
-- [ ] Criar stories para memory-filters
-- [ ] Criar stories para timeline-marker
+- [x] Documentar todos os componentes
+- [x] Criar stories para memory-card
+- [x] Criar stories para audio-player
+- [x] Criar stories para photo-gallery
+- [x] Criar stories para memory-filters
+- [x] Criar stories para timeline-marker
 
 ---
 
