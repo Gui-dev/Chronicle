@@ -9,6 +9,7 @@ function parseLocalDate(value: string | Date): Date {
   return new Date(value)
 }
 
-export const localDate: z.ZodType<Date, z.ZodTypeDef, string | Date> = z
+export const localDate: z.ZodType<Date, z.ZodTypeDef, string | Date | null> = z
   .union([z.string(), z.date()])
-  .transform(parseLocalDate)
+  .nullable()
+  .transform((v) => (v ? parseLocalDate(v) : new Date()))
