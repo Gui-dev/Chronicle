@@ -3,14 +3,13 @@
 import { useGeocoding } from '@/hooks/use-geocoding'
 import type { GeocodingResult } from '@/hooks/use-geocoding'
 import { useWeather } from '@/hooks/use-weather'
-import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import { Cloud, MapPin } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepLocationProps {
-  form: UseFormReturn<CreateMemoryInput, any>
+  form: UseFormReturn<any>
 }
 
 export function StepLocation({ form }: StepLocationProps) {

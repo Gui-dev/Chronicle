@@ -11,6 +11,28 @@ import { Cloud, Loader2, MapPin, Tag, Users } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+function formatUtcDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const monthNames = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ]
+  const month = monthNames[d.getUTCMonth()]
+  const year = d.getUTCFullYear()
+  return `${day} de ${month} de ${year}`
+}
+
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
@@ -73,11 +95,7 @@ export default function MemoryDetailPage() {
     )
   }
 
-  const formattedDate = new Date(memory.memoryDate).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
+  const formattedDate = formatUtcDate(memory.memoryDate)
 
   const relativeDate = formatRelativeDate(memory.memoryDate)
 

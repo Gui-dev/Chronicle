@@ -9,6 +9,28 @@ interface MemoryCardProps {
   memory: Memory
 }
 
+function formatUtcDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const monthNames = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ]
+  const month = monthNames[d.getUTCMonth()]
+  const year = d.getUTCFullYear()
+  return `${day} de ${month} de ${year}`
+}
+
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
@@ -31,12 +53,7 @@ function formatRelativeDate(dateStr: string): string {
 }
 
 export function MemoryCard({ memory }: MemoryCardProps) {
-  const formattedDate = new Date(memory.memoryDate).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-
+  const formattedDate = formatUtcDate(memory.memoryDate)
   const relativeDate = formatRelativeDate(memory.memoryDate)
 
   return (
@@ -53,12 +70,7 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
 
-  const formattedDate = new Date(memory.memoryDate).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-
+  const formattedDate = formatUtcDate(memory.memoryDate)
   const relativeDate = formatRelativeDate(memory.memoryDate)
 
   return (
@@ -132,7 +144,7 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
             )}
           </div>
 
-          {memory.photos.length > 0 && (
+          {(memory.photos ?? []).length > 0 && (
             <div
               className={`grid gap-3 pt-2 ${memory.photos.length === 1 ? 'grid-cols-1' : memory.photos.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'}`}
             >

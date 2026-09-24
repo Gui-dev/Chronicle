@@ -1,11 +1,10 @@
 'use client'
 
 import { ChipInput } from '@/components/chip-input'
-import type { CreateMemoryInput } from '@chronicle/schemas'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepPeopleProps {
-  form: UseFormReturn<CreateMemoryInput, any>
+  form: UseFormReturn<any>
   people: string[]
   onPeopleChange: (people: string[]) => void
   tags: string[]

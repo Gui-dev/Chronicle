@@ -7,6 +7,7 @@ import { Button, Card } from '@chronicle/ui'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { StepBasicInfo } from './steps/step-basic-info'
@@ -28,15 +29,16 @@ export function CreateMemoryWizard() {
   const [photos, setPhotos] = useState<File[]>([])
   const [people, setPeople] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
+  const router = useRouter()
 
   const createMemory = useCreateMemory()
 
-  const form = useForm<CreateMemoryInput>({
+  const form = useForm<any>({
     resolver: zodResolver(createMemorySchema),
     defaultValues: {
       title: '',
       content: '',
-      memoryDate: new Date(),
+      memoryDate: new Date().toISOString().split('T')[0],
     },
   })
 
@@ -62,9 +64,10 @@ export function CreateMemoryWizard() {
     }
   }
 
-  const onSubmit = async (data: CreateMemoryInput) => {
-    const memoryData = {
+  const onSubmit = async (data: any) => {
+    const memoryData: CreateMemoryInput = {
       ...data,
+      memoryDate: new Date(`${data.memoryDate}T00:00:00`),
       people: people.length > 0 ? people : undefined,
       tags: tags.length > 0 ? tags : undefined,
     }
@@ -86,6 +89,8 @@ export function CreateMemoryWizard() {
         )
       }
     }
+
+    router.push('/')
   }
 
   const renderStep = () => {

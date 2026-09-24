@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { localDate } from './local-date'
 
 export const createMemorySchema = z.object({
   title: z.string().min(1).max(255),
   content: z.string().optional(),
-  memoryDate: z.coerce.date(),
+  memoryDate: localDate,
   locationName: z.string().max(255).optional(),
   locationLat: z.number().min(-90).max(90).optional(),
   locationLng: z.number().min(-180).max(180).optional(),

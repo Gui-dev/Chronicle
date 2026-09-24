@@ -36,7 +36,9 @@ export default function EditMemoryPage() {
       setTitle(memory.title)
       setContent(memory.content || '')
       setMemoryDate(
-        memory.memoryDate ? new Date(memory.memoryDate).toISOString().split('T')[0] : '',
+        memory.memoryDate
+          ? `${new Date(memory.memoryDate).getUTCFullYear()}-${String(new Date(memory.memoryDate).getUTCMonth() + 1).padStart(2, '0')}-${String(new Date(memory.memoryDate).getUTCDate()).padStart(2, '0')}`
+          : '',
       )
       setWeatherTemp(memory.weatherTemp?.toString() || '')
       setWeatherDesc(memory.weatherDesc || '')

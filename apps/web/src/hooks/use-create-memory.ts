@@ -3,7 +3,6 @@
 import { api } from '@/lib/api-client'
 import type { CreateMemoryInput } from '@chronicle/schemas'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
 
 interface CreateMemoryResponse {
   data: {
@@ -15,7 +14,6 @@ interface CreateMemoryResponse {
 
 export function useCreateMemory() {
   const queryClient = useQueryClient()
-  const router = useRouter()
 
   return useMutation({
     mutationFn: async (data: CreateMemoryInput) => {
@@ -23,7 +21,6 @@ export function useCreateMemory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] })
-      router.push('/')
     },
   })
 }
