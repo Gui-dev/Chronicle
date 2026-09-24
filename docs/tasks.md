@@ -170,10 +170,10 @@
 
 ### 5.1 UX
 - [x] Loading states (skeleton cards, spinners)
-- [ ] Error states
-- [ ] Empty states
-- [ ] Toasts/notificações
-- [ ] Responsividade mobile
+- [x] Error states (retry buttons on dashboard/memories)
+- [x] Empty states (photo gallery, CTA buttons in empty states)
+- [x] Toasts/notificações (sonner - create/delete success)
+- [x] Responsividade mobile (navbar truncation, responsive padding)
 
 ### 5.2 Performance
 - [ ] Otimização de imagens (Next/Image)

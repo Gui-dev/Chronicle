@@ -4,5 +4,5 @@ import { env } from '../env'
 export const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
 export const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'models/gemini-1.5-flash',
 })
