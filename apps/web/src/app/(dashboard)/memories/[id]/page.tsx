@@ -44,7 +44,6 @@ export default function MemoryDetailPage() {
     try {
       const { api } = await import('@/lib/api-client')
       await api.delete(`/api/memories/${id}`)
-      await import('@/hooks/use-memories')
       router.push('/')
     } catch (err) {
       console.error('Failed to delete memory:', err)

@@ -23,6 +23,7 @@ export function handleError(error: FastifyError) {
   }
 
   // Default
+  console.error('[API Error]', error)
   return {
     error: {
       code: 'INTERNAL_ERROR',
