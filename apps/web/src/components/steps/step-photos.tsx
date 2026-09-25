@@ -1,11 +1,25 @@
 'use client'
 
 import { ImagePlus, X } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface StepPhotosProps {
   photos: File[]
   onPhotosChange: (photos: File[]) => void
+}
+
+function PhotoPreview({ photo }: { photo: File }) {
+  const [objectUrl, setObjectUrl] = useState<string>()
+
+  useEffect(() => {
+    const url = URL.createObjectURL(photo)
+    setObjectUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [photo])
+
+  if (!objectUrl) return null
+
+  return <img src={objectUrl} alt={photo.name} className="h-full w-full object-cover" />
 }
 
 export function StepPhotos({ photos, onPhotosChange }: StepPhotosProps) {
@@ -104,11 +118,7 @@ export function StepPhotos({ photos, onPhotosChange }: StepPhotosProps) {
               key={`${photo.name}-${index}`}
               className="group relative aspect-square overflow-hidden rounded-lg"
             >
-              <img
-                src={URL.createObjectURL(photo)}
-                alt={photo.name}
-                className="h-full w-full object-cover"
-              />
+              <PhotoPreview photo={photo} />
               <button
                 type="button"
                 onClick={() => removePhoto(index)}
