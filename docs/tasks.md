@@ -176,10 +176,10 @@
 - [x] Responsividade mobile (navbar truncation, responsive padding)
 
 ### 5.2 Performance
-- [ ] Otimização de imagens (Next/Image)
-- [ ] Lazy loading
-- [ ] Cache de queries (Tanstack Query)
-- [ ] Prefeitura de rotas
+- [x] Otimização de imagens (Next/Image)
+- [x] Lazy loading
+- [x] Cache de queries (Tanstack Query)
+- [x] Prefeitura de rotas
 
 ### 5.3 Deploy
 - [ ] Definir hospedagem (VPS/Railway/Fly.io)
