@@ -175,7 +175,13 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
                     src={photo.url}
                     alt={photo.filename || 'Foto da memória'}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                    sizes={
+                      memory.photos.length === 1
+                        ? '(max-width: 640px) 100vw, 672px'
+                        : memory.photos.length === 2
+                          ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 330px'
+                          : '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 216px'
+                    }
                     className="object-cover transition-transform duration-500 group-hover/img:scale-110"
                   />
                 </div>

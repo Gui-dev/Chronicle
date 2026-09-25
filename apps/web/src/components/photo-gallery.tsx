@@ -43,7 +43,7 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
               src={photo.url}
               alt={photo.filename || 'Foto da memória'}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 176px"
               className="object-cover transition-transform group-hover:scale-105"
             />
           </button>
@@ -72,6 +72,7 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
             alt={photos[lightboxIndex].filename || 'Foto da memória'}
             width={photos[lightboxIndex].width ?? 1200}
             height={photos[lightboxIndex].height ?? 800}
+            sizes="90vw"
             className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
