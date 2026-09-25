@@ -59,7 +59,14 @@ Respond in JSON format:
     const response = result.response
     const text = response.text()
 
-    return this.parseNarrative(text)
+    const narrative = this.parseNarrative(text)
+
+    await db
+      .update(memories)
+      .set({ aiNarrative: narrative.narrative })
+      .where(eq(memories.id, memoryId))
+
+    return narrative
   }
 
   private async generateWithRetry(prompt: string, attempts = 3): Promise<GenerateContentResult> {
