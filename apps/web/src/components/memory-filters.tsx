@@ -41,10 +41,6 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
   const [searchInput, setSearchInput] = useState(filters.search || '')
 
   useEffect(() => {
-    if (!filters.search && searchInput) {
-      setSearchInput('')
-      return
-    }
     const timer = setTimeout(() => {
       const next = searchInput || undefined
       if (next !== filters.search) {
@@ -64,6 +60,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
             placeholder="Buscar memórias..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            data-testid="search"
             className="h-10 rounded-lg border-2 border-card bg-card pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
