@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "localhost",
         port: "9000",
       },
+      {
+        protocol: "https",
+        hostname: "i.scdn.co",
+      },
     ],
   },
   async rewrites() {
