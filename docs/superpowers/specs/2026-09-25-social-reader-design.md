@@ -15,7 +15,7 @@ Este spec transforma a Chronicle em uma experiência de leitura pública: qualqu
 2. **Privacidade padrão**: nova memória nasce pública; usuário pode marcar como privada.
 3. **Migração**: memórias existentes viram públicas (coluna `isPublic` default `true`).
 4. **Minhas Memórias**: página separada logada (`/minhas-memorias`) listando apenas as do usuário (públicas + privadas).
-5. **Perfil**: página simples logada (`/perfil`) com dados do usuário e contagem de memórias.
+5. **Perfil**: página simples logada (`/perfil`) com dados do usuário, contagem de memórias e **foto de perfil opcional** (upload via MinIO + remover). Avatar aparece também no menu da navbar (sem foto → iniciais do nome).
 6. **Card deixa de ser link**; ações de dono como ícones (editar → página de edição; deletar e narrativa inline).
 7. **Galeria**: reutilizar `PhotoGallery` no card (grid + lightbox), adicionando setas ←/→, navegação por teclado e contador.
 8. **Proteção**: abordagem "guarda por página" (`RequireAuth`), removendo `AuthGuard` do layout do dashboard.
@@ -61,10 +61,18 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 
 **`POST /api/memories/:id/generate-narrative`** — já exige sessão e checa dono no service (`narrative.service.ts`). Sem mudanças funcionais; apenas manter.
 
+**Avatar (`apps/api/src/modules/users/`)** — novo módulo de perfil do usuário:
+
+- **`POST /api/users/avatar`** (multipart, exige sessão): salva a imagem em MinIO (`users/{userId}/{uuid}{ext}`, chave `users/`), atualiza `users.image` = `/${BUCKET_NAME}/users/{userId}/{uuid}{ext}` e retorna `{ data: { image } }`. Limite de tamanho e mimetypes permitidos (image/png, image/jpeg, image/webp). Reutilizar o acesso ao `s3Client`/`BUCKET_NAME` do plugin minio e a leitura de `file.buffer` do multipart (precisa de `fastify-multipart` ou o mesmo mecanismo usado nas fotos de memória — verificar o que já existe).
+- **`DELETE /api/users/avatar`** (exige sessão): remove o objeto do MinIO e seta `users.image = null`.
+- Somente o próprio usuário pode alterar o próprio avatar (sessão).
+- Coluna `users.image` já existe (`varchar(512)`, nullable) — sem migration.
+
 ### Testes de API
 
 - Unit: `findAll` anônimo retorna só públicas; logado retorna públicas + próprias privadas; `findById` privada para não-dono → forbidden.
 - Integration: rotas GET não exigem sessão para públicas; create/update com `isPublic`.
+- Avatar: POST/DELETE exigem sessão; atualizam/limpam `users.image`; mimetype inválido ou tamanho maior que o limite → 4xx.
 
 ## Frontend
 
@@ -80,7 +88,8 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 
 ### Navbar (`navbar.tsx`)
 
-- Logado: substituir nome + "Sair" por um **dropdown de usuário** acionado por click (avatar se `user.image`, senão iniciais/nome curto):
+- Logado: substituir nome + "Sair" por um **dropdown de usuário** acionado por click:
+  - **Avatar** (se `user.image`) ou **iniciais do nome** em círculo (sem foto) como trigger.
   - **Minhas Memórias** → `/minhas-memorias`
   - **Perfil** → `/perfil`
   - **Nova Memória** → `/memories/new`
@@ -108,8 +117,13 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 ### Página Perfil
 
 - `apps/web/src/app/(dashboard)/perfil/page.tsx` (client, `RequireAuth`).
-- Mostra: avatar (se houver), nome, email, contagem de memórias do usuário (via query `?mine=true` ou endpoint simples), link para `/minhas-memorias`.
-- Sem escopo de edição de perfil.
+- Mostra:
+  - **Avatar grande** — se `user.image`, imagem (via `/_next/image` com o `remotePatterns` já configurado para `localhost:9000`); senão círculo com iniciais.
+  - **Botão de upload** (input file → `FormData` → `POST /api/users/avatar`), com preview/loading.
+  - **Botão remover** (se tem foto) → `DELETE /api/users/avatar`.
+  - Ações do avatar devem **refrescar a sessão** (`invalidateSession()` de `use-auth`) para o avatar novo aparecer na navbar.
+  - Nome, email, contagem de memórias (via query `?mine=true` ou contagem simples), link para `/minhas-memorias`.
+- Sem escopo de edição de perfil (nome/email) além do avatar.
 
 ### Card da timeline (`memory-card.tsx` / `MemoryCardFull`)
 
@@ -138,6 +152,7 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 
 - `use-memories.ts`: adicionar suporte a `mine?: boolean` no `buildQueryString` e no tipo `MemoryFiltersInput` (ou parâmetro do hook). Simplificação: extender `MemoryFiltersInput` em `@chronicle/schemas` com `mine` opcional, e o `findAll` do service aplica `userId` quando `mine=true`.
 - `use-memory.ts` (detalhe/edição): continua (usado pela página de edição).
+- Avatar: usar `api` client para `POST`/`DELETE` `/api/users/avatar` (ou hook `use-avatar`) e `invalidateSession()` após mudança.
 
 ## Fora de escopo
 
@@ -145,6 +160,7 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 - Edição de fotos/música no card (editar só redireciona para a página de edição existente).
 - Páginas de perfil com edição de dados; contagem precisa apenas de um valor simples.
 - Storybook: atualizações de stories para `PhotoGallery` e `MemoryCardFull` ficam para o plano (cronograma) se houver stories existentes.
+- Nota: o já existente upload de memória usa multipart; o mesmo mecanismo será seguido pelo avatar.
 
 ## Testes E2E (ajustes/aditivos)
 
@@ -155,6 +171,7 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
   - Menu logado: navega para Minhas Memórias e Perfil; logout.
   - Card: deletar com confirmação; gerar narrativa inline; toggle público/privado (ícones aparecem só para dono).
   - Galeria: abrir lightbox, navegar com setas e teclado, contador correto.
+  - Perfil: upload de avatar (sem foto → iniciais; com foto → imagem na navbar e no perfil); remover avatar.
 
 ## Toggle de privacidade — decisão
 
