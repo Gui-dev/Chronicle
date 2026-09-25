@@ -1,16 +1,23 @@
 'use client'
 
 import { MemoryDetailHeader } from '@/components/memory-detail-header'
-import { MemoryMusicPlayer } from '@/components/memory-music-player'
 import { NarrativeSection } from '@/components/narrative-section'
 import { PhotoGallery } from '@/components/photo-gallery'
 import { useMemory } from '@/hooks/use-memory'
 import { Button } from '@chronicle/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { Cloud, Loader2, MapPin, Tag, Users } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
+
+const MemoryMusicPlayer = dynamic(
+  () => import('@/components/memory-music-player').then((m) => m.MemoryMusicPlayer),
+  {
+    loading: () => <div className="h-24 animate-pulse rounded-xl bg-card" />,
+  },
+)
 
 function formatUtcDate(dateStr: string): string {
   const d = new Date(dateStr)
