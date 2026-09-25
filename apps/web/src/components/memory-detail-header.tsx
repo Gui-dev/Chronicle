@@ -30,6 +30,7 @@ export function MemoryDetailHeader({
       <div className="mb-8 flex items-center justify-between">
         <Link
           href="/"
+          prefetch={false}
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />

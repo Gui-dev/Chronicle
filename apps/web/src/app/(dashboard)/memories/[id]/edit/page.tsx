@@ -108,7 +108,7 @@ export default function EditMemoryPage() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <p className="text-muted">Memória não encontrada</p>
-        <Link href="/" className="text-primary hover:underline">
+        <Link href="/" prefetch={false} className="text-primary hover:underline">
           Voltar ao início
         </Link>
       </div>
@@ -120,6 +120,7 @@ export default function EditMemoryPage() {
       <div className="mb-6">
         <Link
           href={`/memories/${id}`}
+          prefetch={false}
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -352,7 +353,7 @@ export default function EditMemoryPage() {
             )}
             Salvar alterações
           </Button>
-          <Link href={`/memories/${id}`}>
+          <Link href={`/memories/${id}`} prefetch={false}>
             <Button
               type="button"
               variant="outline"

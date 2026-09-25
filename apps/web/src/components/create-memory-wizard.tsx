@@ -174,7 +174,7 @@ export function CreateMemoryWizard() {
         {renderStep()}
 
         <div className="mt-8 flex justify-between">
-          <Link href="/">
+          <Link href="/" prefetch={false}>
             <Button
               type="button"
               variant="outline"

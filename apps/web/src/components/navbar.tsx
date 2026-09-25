@@ -73,6 +73,7 @@ export function Navbar() {
           ) : (
             <Link
               href="/login"
+              prefetch={false}
               className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] sm:px-4"
             >
               Entrar
