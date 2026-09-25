@@ -2,6 +2,7 @@
 
 import type { Memory } from '@/hooks/use-memories'
 import { MapPin, Music, Pause, Play, Tag, Users } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -170,10 +171,12 @@ export function MemoryCardFull({ memory }: MemoryCardProps) {
                   key={photo.id}
                   className="relative h-44 overflow-hidden rounded-2xl border border-card group/img"
                 >
-                  <img
+                  <Image
                     src={photo.url}
                     alt={photo.filename || 'Foto da memória'}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover/img:scale-110"
                   />
                 </div>
               ))}
