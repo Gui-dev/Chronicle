@@ -31,6 +31,8 @@ interface Memory {
     filename: string | null
     mimetype: string | null
     size: number | null
+    width: number | null
+    height: number | null
     orderIndex: number
   }>
 }

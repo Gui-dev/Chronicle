@@ -7,6 +7,8 @@ interface Photo {
   id: string
   url: string
   filename: string | null
+  width: number | null
+  height: number | null
 }
 
 interface PhotoGalleryProps {
