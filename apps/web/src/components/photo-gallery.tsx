@@ -1,6 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
+import Image from 'next/image'
 import { useState } from 'react'
 
 interface Photo {
@@ -38,10 +39,12 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
             onClick={() => setLightboxIndex(index)}
             className="group relative cursor-pointer overflow-hidden rounded-lg aspect-square"
           >
-            <img
+            <Image
               src={photo.url}
               alt={photo.filename || 'Foto da memória'}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              className="object-cover transition-transform group-hover:scale-105"
             />
           </button>
         ))}
@@ -64,9 +67,11 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
             <X className="h-6 w-6" />
           </button>
 
-          <img
+          <Image
             src={photos[lightboxIndex].url}
             alt={photos[lightboxIndex].filename || 'Foto da memória'}
+            width={photos[lightboxIndex].width ?? 1200}
+            height={photos[lightboxIndex].height ?? 800}
             className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
