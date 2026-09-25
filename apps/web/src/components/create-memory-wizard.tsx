@@ -6,16 +6,12 @@ import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Button, Card } from '@chronicle/ui'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { StepBasicInfo } from './steps/step-basic-info'
-import { StepLocation } from './steps/step-location'
-import { StepMusic } from './steps/step-music'
-import { StepPeople } from './steps/step-people'
-import { StepPhotos } from './steps/step-photos'
 
 const STEPS = [
   { id: 0, label: 'Básico' },
@@ -24,6 +20,31 @@ const STEPS = [
   { id: 3, label: 'Fotos' },
   { id: 4, label: 'Pessoas' },
 ]
+
+function StepFallback() {
+  return (
+    <div className="flex h-48 items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
+  )
+}
+
+const StepBasicInfo = dynamic(
+  () => import('./steps/step-basic-info').then((m) => m.StepBasicInfo),
+  { loading: StepFallback },
+)
+const StepLocation = dynamic(() => import('./steps/step-location').then((m) => m.StepLocation), {
+  loading: StepFallback,
+})
+const StepMusic = dynamic(() => import('./steps/step-music').then((m) => m.StepMusic), {
+  loading: StepFallback,
+})
+const StepPhotos = dynamic(() => import('./steps/step-photos').then((m) => m.StepPhotos), {
+  loading: StepFallback,
+})
+const StepPeople = dynamic(() => import('./steps/step-people').then((m) => m.StepPeople), {
+  loading: StepFallback,
+})
 
 export function CreateMemoryWizard() {
   const [currentStep, setCurrentStep] = useState(0)
