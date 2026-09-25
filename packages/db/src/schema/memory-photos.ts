@@ -10,6 +10,8 @@ export const memoryPhotos = pgTable('memory_photos', {
   filename: varchar('filename', { length: 255 }),
   mimetype: varchar('mimetype', { length: 100 }),
   size: integer('size'),
+  width: integer('width'),
+  height: integer('height'),
   orderIndex: integer('order_index').default(0).notNull(),
 })
 
