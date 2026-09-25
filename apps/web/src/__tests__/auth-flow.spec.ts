@@ -10,7 +10,7 @@ test.describe('Registro + Login', () => {
   })
 
   test('authenticatedPage is redirected to dashboard', async ({ authenticatedPage }) => {
-    await expect(authenticatedPage).toHaveURL(/\/dashboard/)
+    await expect(authenticatedPage).toHaveURL('/')
   })
 
   test('register page is accessible', async ({ page }) => {

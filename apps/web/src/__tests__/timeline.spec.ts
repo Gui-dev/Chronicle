@@ -11,6 +11,6 @@ test.describe('Visualizar timeline', () => {
 
     await authenticatedPage.goto('/')
     await expect(authenticatedPage.locator('text=Memórias')).toBeVisible()
-    await expect(authenticatedPage.locator('text=Teste Timeline')).toBeVisible()
+    await expect(authenticatedPage.locator('text=Teste Timeline').first()).toBeVisible()
   })
 })

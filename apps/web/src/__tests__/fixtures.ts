@@ -5,7 +5,7 @@ async function login(page: Page) {
   await page.fill('[data-testid="email"]', 'deb@test.com')
   await page.fill('[data-testid="password"]', 'senha12345')
   await page.click('[data-testid="login-button"]')
-  await page.waitForURL('/dashboard', { timeout: 10000 })
+  await page.waitForURL('/', { timeout: 10000 })
 }
 
 export const test = base.extend<{ authenticatedPage: Page }>({

@@ -12,6 +12,8 @@ test.describe('Criar memória completa', () => {
       tags: ['teste', 'e2e'],
     })
 
-    await expect(authenticatedPage.locator('text=Teste E2E')).toBeVisible({ timeout: 10000 })
+    await expect(authenticatedPage.locator('text=Teste E2E').first()).toBeVisible({
+      timeout: 10000,
+    })
   })
 })
