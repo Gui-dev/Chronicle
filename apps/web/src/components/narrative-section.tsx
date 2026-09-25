@@ -1,7 +1,9 @@
 'use client'
 
+import type { Memory } from '@/hooks/use-memories'
 import { api } from '@/lib/api-client'
 import { Button } from '@chronicle/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
@@ -17,6 +19,7 @@ interface NarrativeResult {
 }
 
 export function NarrativeSection({ memoryId, aiNarrative }: NarrativeSectionProps) {
+  const queryClient = useQueryClient()
   const [narrative, setNarrative] = useState<string | null>(aiNarrative)
   const [mood, setMood] = useState<string | null>(null)
   const [themes, setThemes] = useState<string[]>([])
@@ -31,6 +34,10 @@ export function NarrativeSection({ memoryId, aiNarrative }: NarrativeSectionProp
       setNarrative(response.data.narrative)
       setMood(response.data.mood)
       setThemes(response.data.themes)
+      queryClient.setQueryData<Memory>(['memory', memoryId], (old) =>
+        old ? { ...old, aiNarrative: response.data.narrative } : old,
+      )
+      queryClient.invalidateQueries({ queryKey: ['memories'] })
     } catch {
       // Error handled silently
     } finally {
