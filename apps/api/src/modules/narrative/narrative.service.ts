@@ -2,6 +2,7 @@ import { db, eq, memories, memoryPeople, memoryTags } from '@chronicle/db'
 import type { GenerateContentResult } from '@google/generative-ai'
 import { AppError } from '../../errors/app-error'
 import { geminiModel } from '../../plugins/ai'
+import { parseNarrativeResponse } from './narrative.parser'
 
 interface NarrativeResult {
   narrative: string
@@ -59,7 +60,7 @@ Respond in JSON format:
     const response = result.response
     const text = response.text()
 
-    const narrative = this.parseNarrative(text)
+    const narrative = parseNarrativeResponse(text)
 
     await db
       .update(memories)
@@ -84,28 +85,6 @@ Respond in JSON format:
       }
     }
     throw new Error('Unexpected retry exhaustion')
-  }
-
-  private parseNarrative(text: string): NarrativeResult {
-    try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
-        throw new Error('Invalid JSON response from AI')
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]) as NarrativeResult
-      return {
-        narrative: parsed.narrative,
-        mood: parsed.mood || 'neutral',
-        themes: parsed.themes || [],
-      }
-    } catch {
-      return {
-        narrative: text,
-        mood: 'neutral',
-        themes: [],
-      }
-    }
   }
 }
 
