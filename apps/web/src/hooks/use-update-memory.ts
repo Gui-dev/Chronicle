@@ -20,7 +20,9 @@ export function useUpdateMemory(id: string) {
     mutationFn: async (data: UpdateMemoryInput) => {
       return api.put<UpdateMemoryResponse>(`/api/memories/${id}`, data)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.cancelQueries({ queryKey: ['memories'] })
+      await queryClient.cancelQueries({ queryKey: ['memory', id] })
       queryClient.invalidateQueries({ queryKey: ['memories'] })
       queryClient.invalidateQueries({ queryKey: ['memory', id] })
       router.push(`/memories/${id}`)
