@@ -1,6 +1,7 @@
 'use client'
 
 import { Pause, Play } from 'lucide-react'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
 interface MemoryMusicPlayerProps {
@@ -59,7 +60,15 @@ export function MemoryMusicPlayer({ track, artist, url, cover }: MemoryMusicPlay
       </audio>
 
       <div className="flex items-center gap-4">
-        {cover && <img src={cover} alt={track} className="h-14 w-14 rounded-lg object-cover" />}
+        {cover && (
+          <Image
+            src={cover}
+            alt={track}
+            width={56}
+            height={56}
+            className="h-14 w-14 rounded-lg object-cover"
+          />
+        )}
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-text">{track}</p>

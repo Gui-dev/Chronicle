@@ -5,6 +5,7 @@ import type { SpotifyTrack } from '@/hooks/use-spotify-search'
 import type { CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import { Music } from 'lucide-react'
+import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
@@ -81,9 +82,11 @@ export function StepMusic({ form }: StepMusicProps) {
                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
               >
                 {track.cover && (
-                  <img
+                  <Image
                     src={track.cover}
                     alt={track.name}
+                    width={48}
+                    height={48}
                     className="h-12 w-12 rounded-lg object-cover"
                   />
                 )}
