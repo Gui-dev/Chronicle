@@ -1,6 +1,9 @@
+'use client'
+
 import type { MemoryFiltersInput } from '@chronicle/schemas'
 import { Button, Input } from '@chronicle/ui'
 import { Search, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface MemoryFiltersProps {
   filters: MemoryFiltersInput
@@ -35,6 +38,22 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
     filters.location ||
     filters.tag
 
+  const [searchInput, setSearchInput] = useState(filters.search || '')
+
+  useEffect(() => {
+    if (!filters.search && searchInput) {
+      setSearchInput('')
+      return
+    }
+    const timer = setTimeout(() => {
+      const next = searchInput || undefined
+      if (next !== filters.search) {
+        onFilterChange('search', next)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, filters.search, onFilterChange])
+
   return (
     <div className="mb-8 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -43,8 +62,8 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           <Input
             type="text"
             placeholder="Buscar memórias..."
-            value={filters.search || ''}
-            onChange={(e) => onFilterChange('search', e.target.value || undefined)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="h-10 rounded-lg border-2 border-card bg-card pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -84,7 +103,10 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           <Button
             variant="ghost"
             size="sm"
-            onClick={onReset}
+            onClick={() => {
+              setSearchInput('')
+              onReset()
+            }}
             className="h-10 text-muted hover:text-primary"
           >
             <X className="mr-1 h-4 w-4" />
