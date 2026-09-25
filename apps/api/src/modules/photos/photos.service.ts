@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { db, eq, memories, memoryPhotos } from '@chronicle/db'
+import { imageSize } from 'image-size'
 import { AppError } from '../../errors/app-error'
 import { BUCKET_NAME, s3Client } from '../../plugins/minio'
 
@@ -37,6 +38,16 @@ export class PhotosService {
       }),
     )
 
+    let width: number | null = null
+    let height: number | null = null
+    try {
+      const dimensions = imageSize(file.buffer)
+      width = dimensions.width ?? null
+      height = dimensions.height ?? null
+    } catch {
+      // unsupported or invalid image format — keep null
+    }
+
     const [photo] = await db
       .insert(memoryPhotos)
       .values({
@@ -45,6 +56,8 @@ export class PhotosService {
         filename: file.filename,
         mimetype: file.mimetype,
         size: file.buffer.length,
+        width,
+        height,
       })
       .returning()
 
