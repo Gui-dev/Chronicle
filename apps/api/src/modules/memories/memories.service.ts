@@ -84,20 +84,23 @@ export class MemoriesService {
     const { year, month, weather, location, tag, search, page, limit, mine } = filters
     const userId = options?.userId
 
-    if (mine === true && !userId) {
-      return {
-        data: [],
-        pagination: { page, limit, total: 0, totalPages: 0 },
-      }
-    }
+    const conditions = []
 
-    const conditions = [
-      mine === true
-        ? eq(memories.userId, userId as string)
-        : userId
+    if (mine === true) {
+      if (!userId) {
+        return {
+          data: [],
+          pagination: { page, limit, total: 0, totalPages: 0 },
+        }
+      }
+      conditions.push(eq(memories.userId, userId))
+    } else {
+      conditions.push(
+        userId
           ? or(eq(memories.isPublic, true), eq(memories.userId, userId))
           : eq(memories.isPublic, true),
-    ]
+      )
+    }
 
     if (year) {
       conditions.push(sql`EXTRACT(YEAR FROM ${memories.memoryDate}) = ${year}`)

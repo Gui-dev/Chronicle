@@ -40,8 +40,7 @@ const signIn = (userId = 'user-1') =>
     ReturnType<typeof auth.api.getSession>
   >)
 
-const signOut = () =>
-  getSession.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth.api.getSession>>)
+const signOut = () => getSession.mockResolvedValue(null)
 
 describe('Memories Routes', () => {
   let server: ReturnType<typeof buildServer>

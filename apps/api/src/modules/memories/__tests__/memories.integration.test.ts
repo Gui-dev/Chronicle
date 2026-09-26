@@ -40,7 +40,7 @@ type Session = Awaited<ReturnType<typeof auth.api.getSession>>
 const signIn = (userId = 'user-1') =>
   getSession.mockResolvedValue({ user: { id: userId } } as unknown as Session)
 
-const signOut = () => getSession.mockResolvedValue(null as unknown as Session)
+const signOut = () => getSession.mockResolvedValue(null)
 
 describe('Memories Integration Tests', () => {
   let server: ReturnType<typeof buildServer>
