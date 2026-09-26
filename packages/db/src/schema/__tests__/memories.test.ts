@@ -32,6 +32,7 @@ describe('Memories Schema', () => {
       ['music_artist', 'PgVarchar', false],
       ['music_url', 'PgText', false],
       ['music_cover', 'PgText', false],
+      ['is_public', 'PgBoolean', true],
       ['ai_narrative', 'PgText', false],
       ['created_at', 'PgTimestamp', true],
       ['updated_at', 'PgTimestamp', true],

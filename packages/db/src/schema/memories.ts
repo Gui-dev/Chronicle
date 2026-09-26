@@ -1,4 +1,4 @@
-import { decimal, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, decimal, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
 export const memories = pgTable('memories', {
@@ -19,6 +19,7 @@ export const memories = pgTable('memories', {
   musicArtist: varchar('music_artist', { length: 255 }),
   musicUrl: text('music_url'),
   musicCover: text('music_cover'),
+  isPublic: boolean('is_public').notNull().default(true),
   aiNarrative: text('ai_narrative'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),

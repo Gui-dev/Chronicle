@@ -49,6 +49,7 @@ export const createMemorySchema = z.object({
     .transform((v) => v || undefined),
   people: z.array(z.string().max(255)).optional(),
   tags: z.array(z.string().max(100)).optional(),
+  isPublic: z.boolean().optional(),
 })
 
 export type CreateMemoryInput = z.infer<typeof createMemorySchema>
