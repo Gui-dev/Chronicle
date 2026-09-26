@@ -2,22 +2,12 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
+import { getInitials } from '@/lib/get-initials'
 import { Disc3, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-
-function getInitials(name: string | null | undefined, email: string | null | undefined) {
-  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) {
-    return ((email ?? '').trim()[0] ?? '?').toUpperCase()
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-}
 
 export function Navbar() {
   const { user, isAuthenticated, isLoading, invalidateSession } = useAuth()

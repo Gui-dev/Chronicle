@@ -20,6 +20,16 @@ interface SessionData {
 
 let cachedSession: SessionData | null | undefined = undefined
 
+type SessionListener = (data: SessionData | null | undefined) => void
+
+const sessionListeners = new Set<SessionListener>()
+
+function broadcastSession(data: SessionData | null | undefined) {
+  for (const listener of sessionListeners) {
+    listener(data)
+  }
+}
+
 async function fetchSessionOnce(): Promise<SessionData | null> {
   try {
     const res = await fetch('http://localhost:3333/api/auth/get-session', {
@@ -49,12 +59,19 @@ export function useAuth() {
     })
   }, [])
 
+  useEffect(() => {
+    sessionListeners.add(setSession)
+    return () => {
+      sessionListeners.delete(setSession)
+    }
+  }, [])
+
   const invalidateSession = useCallback(async () => {
     cachedSession = undefined
-    setSession(undefined)
+    broadcastSession(undefined)
     const data = await fetchSessionOnce()
     cachedSession = data
-    setSession(data)
+    broadcastSession(data)
     queryClient.invalidateQueries({ queryKey: ['memories'] })
   }, [queryClient])
 

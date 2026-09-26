@@ -58,6 +58,7 @@ function buildQueryString(filters: MemoryFiltersInput): string {
   if (filters.search) params.set('search', filters.search)
   if (filters.page) params.set('page', filters.page.toString())
   if (filters.limit) params.set('limit', filters.limit.toString())
+  if (filters.mine) params.set('mine', 'true')
 
   return params.toString()
 }
