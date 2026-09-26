@@ -6,7 +6,7 @@ import { Disc3, Search } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
@@ -25,11 +25,19 @@ export function Navbar() {
   const [signingOut, setSigningOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (user?.image) setAvatarFailed(false)
+  }, [user?.image])
 
   useEffect(() => {
     if (!menuOpen) return
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false)
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        triggerRef.current?.focus()
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -97,6 +105,7 @@ export function Navbar() {
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   data-testid="user-menu-toggle"
+                  ref={triggerRef}
                 >
                   {user?.image && !avatarFailed ? (
                     <Image
@@ -104,6 +113,7 @@ export function Navbar() {
                       alt={user.name || 'Avatar'}
                       width={32}
                       height={32}
+                      sizes="32px"
                       className="h-8 w-8 object-cover"
                       onError={() => setAvatarFailed(true)}
                     />
@@ -116,13 +126,11 @@ export function Navbar() {
 
                 {menuOpen && (
                   <div
-                    role="menu"
                     aria-label="Menu do usuário"
                     className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
                   >
                     <Link
                       href="/minhas-memorias"
-                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-minhas-memorias"
@@ -131,7 +139,6 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/perfil"
-                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-perfil"
@@ -140,17 +147,15 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/memories/new"
-                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-nova"
                     >
                       Nova Memória
                     </Link>
-                    <div className="my-1 h-px bg-border" />
+                    <div className="my-1 h-px bg-border" aria-hidden="true" />
                     <button
                       type="button"
-                      role="menuitem"
                       onClick={handleSignOut}
                       disabled={signingOut}
                       className={menuItemClass}
