@@ -117,7 +117,7 @@ function EditMemoryForm({ id }: { id: string }) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <p className="text-muted">Memória não encontrada</p>
-        <Link href="/" prefetch={false} className="text-primary hover:underline">
+        <Link href="/" className="text-primary hover:underline">
           Voltar ao início
         </Link>
       </div>
@@ -129,11 +129,10 @@ function EditMemoryForm({ id }: { id: string }) {
       <div className="mb-6">
         <Link
           href="/"
-          prefetch={false}
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar à memória
+          Voltar ao início
         </Link>
       </div>
 
@@ -362,7 +361,7 @@ function EditMemoryForm({ id }: { id: string }) {
             )}
             Salvar alterações
           </Button>
-          <Link href="/" prefetch={false}>
+          <Link href="/">
             <Button
               type="button"
               variant="outline"
