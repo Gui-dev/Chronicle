@@ -192,10 +192,10 @@
 ## Fase 6: Timeline pública, perfil e privacidade
 
 ### 6.1 Privacidade (schema + API)
-- [ ] Coluna `is_public` no schema memories (+ migration)
-- [ ] Zod: `isPublic` em create/update, `mine` em memory-filters
-- [ ] Backend: feed público + `?mine=true` + findById pública
-- [ ] Backend: status 401 mantido nas ações de dono
+- [x] Coluna `is_public` no schema memories (+ migration)
+- [x] Zod: `isPublic` em create/update, `mine` em memory-filters
+- [x] Backend: feed público + `?mine=true` + findById pública
+- [x] Backend: status 401 mantido nas ações de dono
 
 ### 6.2 Avatar
 - [ ] Backend: POST/DELETE /api/users/avatar (MinIO)
