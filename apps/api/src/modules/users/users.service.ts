@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import path from 'node:path'
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { db, eq, users } from '@chronicle/db'
 import { AppError } from '../../errors/app-error'
@@ -7,6 +6,11 @@ import { BUCKET_NAME, s3Client } from '../../plugins/minio'
 
 const ALLOWED_MIMETYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const MAX_SIZE = 5 * 1024 * 1024
+const EXT_BY_MIMETYPE: Record<string, string> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/webp': '.webp',
+}
 
 export class UsersService {
   async uploadAvatar(
@@ -25,8 +29,7 @@ export class UsersService {
       throw AppError.badRequest('Imagem muito grande (máx. 5MB)')
     }
 
-    const ext = path.extname(file.filename)
-    const key = `users/${userId}/${randomUUID()}${ext}`
+    const key = `users/${userId}/${randomUUID()}${EXT_BY_MIMETYPE[file.mimetype]}`
 
     await s3Client.send(
       new PutObjectCommand({

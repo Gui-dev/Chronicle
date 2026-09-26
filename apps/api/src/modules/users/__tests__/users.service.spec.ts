@@ -1,5 +1,5 @@
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { db, users } from '@chronicle/db'
+import { db, eq, users } from '@chronicle/db'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUCKET_NAME, s3Client } from '../../../plugins/minio'
 import { usersService } from '../users.service'
@@ -44,6 +44,7 @@ const PNG_1X1 = Buffer.from(
 
 const send = vi.mocked(s3Client.send)
 const update = vi.mocked(db.update)
+const eqPredicate = vi.mocked(eq)
 
 describe('UsersService', () => {
   const baseFile = {
@@ -112,6 +113,7 @@ describe('UsersService', () => {
 
       expect(image).toBe(`/${BUCKET_NAME}/${key}`)
       expect(update).toHaveBeenCalledWith(users)
+      expect(eqPredicate).toHaveBeenCalledWith(users.id, 'user-1')
       expect(mocks.updates[0]).toEqual({ image })
     })
   })
