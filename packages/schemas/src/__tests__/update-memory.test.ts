@@ -23,4 +23,20 @@ describe('updateMemorySchema', () => {
 
     expect(result.success).toBe(false)
   })
+
+  it('should allow isPublic partial update', () => {
+    const result = updateMemorySchema.safeParse({
+      isPublic: false,
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject isPublic when it is not a boolean', () => {
+    const result = updateMemorySchema.safeParse({
+      isPublic: 'false',
+    })
+
+    expect(result.success).toBe(false)
+  })
 })

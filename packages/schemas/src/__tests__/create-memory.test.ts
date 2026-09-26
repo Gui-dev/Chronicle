@@ -47,4 +47,24 @@ describe('createMemorySchema', () => {
 
     expect(result.success).toBe(false)
   })
+
+  it('should accept isPublic as an optional boolean', () => {
+    const result = createMemorySchema.safeParse({
+      title: 'Test Memory',
+      memoryDate: '2026-03-12',
+      isPublic: false,
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject isPublic when it is not a boolean', () => {
+    const result = createMemorySchema.safeParse({
+      title: 'Test Memory',
+      memoryDate: '2026-03-12',
+      isPublic: 'false',
+    })
+
+    expect(result.success).toBe(false)
+  })
 })
