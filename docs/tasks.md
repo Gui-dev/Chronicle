@@ -206,10 +206,10 @@
 - [x] Dropdown de usuário na navbar (avatar/iniciais)
 
 ### 6.4 Páginas
-- [ ] Home pública (CTA anônimo → /login)
-- [ ] Página `/my-memories`
-- [ ] Página `/profile` (dados, contagem)
-- [ ] Perfil: upload/remoção de avatar (MinIO)
+- [x] Home pública (CTA anônimo → /login)
+- [x] Página `/my-memories`
+- [x] Página `/profile` (dados, contagem)
+- [x] Perfil: upload/remoção de avatar (MinIO)
 
 ### 6.5 Card e galeria
 - [ ] Ações de dono no card (editar, deletar, narrativa, privacidade)
