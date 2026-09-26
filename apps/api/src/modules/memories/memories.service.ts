@@ -8,6 +8,7 @@ import {
   memoryPeople,
   memoryPhotos,
   memoryTags,
+  or,
   sql,
 } from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
@@ -32,6 +33,7 @@ export class MemoriesService {
       musicCover?: string
       people?: string[]
       tags?: string[]
+      isPublic?: boolean
     },
   ) {
     const [memory] = await db
@@ -51,6 +53,7 @@ export class MemoriesService {
         musicArtist: data.musicArtist,
         musicUrl: data.musicUrl,
         musicCover: data.musicCover,
+        isPublic: data.isPublic ?? true,
       })
       .returning()
 
@@ -77,10 +80,24 @@ export class MemoriesService {
     return memory
   }
 
-  async findAll(userId: string, filters: MemoryFiltersInput) {
-    const { year, month, weather, location, tag, search, page, limit } = filters
+  async findAll(filters: MemoryFiltersInput, options?: { userId?: string }) {
+    const { year, month, weather, location, tag, search, page, limit, mine } = filters
+    const userId = options?.userId
 
-    const conditions = [eq(memories.userId, userId)]
+    if (mine === true && !userId) {
+      return {
+        data: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      }
+    }
+
+    const conditions = [
+      mine === true
+        ? eq(memories.userId, userId as string)
+        : userId
+          ? or(eq(memories.isPublic, true), eq(memories.userId, userId))
+          : eq(memories.isPublic, true),
+    ]
 
     if (year) {
       conditions.push(sql`EXTRACT(YEAR FROM ${memories.memoryDate}) = ${year}`)
@@ -155,14 +172,14 @@ export class MemoriesService {
     }
   }
 
-  async findById(id: string, userId: string) {
+  async findById(id: string, userId?: string) {
     const [memory] = await db.select().from(memories).where(eq(memories.id, id)).limit(1)
 
     if (!memory) {
       throw AppError.notFound('Memória não encontrada')
     }
 
-    if (memory.userId !== userId) {
+    if (!memory.isPublic && memory.userId !== userId) {
       throw AppError.forbidden('Acesso negado')
     }
 
@@ -203,6 +220,7 @@ export class MemoriesService {
       musicCover?: string
       people?: string[]
       tags?: string[]
+      isPublic?: boolean
     },
   ) {
     await this.findById(id, userId)
@@ -223,6 +241,7 @@ export class MemoriesService {
         musicArtist: data.musicArtist,
         musicUrl: data.musicUrl,
         musicCover: data.musicCover,
+        isPublic: data.isPublic,
         updatedAt: new Date(),
       })
       .where(eq(memories.id, id))

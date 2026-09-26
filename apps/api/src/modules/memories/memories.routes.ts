@@ -37,6 +37,7 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       musicCover: body.musicCover,
       people: body.people,
       tags: body.tags,
+      isPublic: body.isPublic,
     })
 
     return reply.status(201).send({ data: memory })
@@ -48,7 +49,9 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       headers: request.headers as Record<string, string>,
     })
 
-    if (!session) {
+    const filters = memoryFiltersSchema.parse(request.query)
+
+    if (filters.mine === true && !session) {
       return reply.status(401).send({
         error: {
           code: 'UNAUTHORIZED',
@@ -57,9 +60,7 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       })
     }
 
-    const filters = memoryFiltersSchema.parse(request.query)
-
-    const result = await memoriesService.findAll(session.user.id, filters)
+    const result = await memoriesService.findAll(filters, { userId: session?.user.id })
 
     return reply.send(result)
   })
@@ -70,18 +71,9 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       headers: request.headers as Record<string, string>,
     })
 
-    if (!session) {
-      return reply.status(401).send({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Not authenticated',
-        },
-      })
-    }
-
     const { id } = request.params as { id: string }
 
-    const memory = await memoriesService.findById(id, session.user.id)
+    const memory = await memoriesService.findById(id, session?.user.id)
 
     return reply.send({ data: memory })
   })
@@ -120,6 +112,7 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       musicCover: body.musicCover,
       people: body.people,
       tags: body.tags,
+      isPublic: body.isPublic,
     })
 
     return reply.send({ data: memory })
