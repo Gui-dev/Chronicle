@@ -207,8 +207,8 @@
 
 ### 6.4 Páginas
 - [ ] Home pública (CTA anônimo → /login)
-- [ ] Página `/minhas-memorias`
-- [ ] Página `/perfil` (dados, contagem)
+- [ ] Página `/my-memories`
+- [ ] Página `/profile` (dados, contagem)
 - [ ] Perfil: upload/remoção de avatar (MinIO)
 
 ### 6.5 Card e galeria

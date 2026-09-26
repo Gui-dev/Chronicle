@@ -14,8 +14,8 @@ Este spec transforma a Chronicle em uma experiência de leitura pública: qualqu
 1. **Home com sessão**: feed comunitário (públicas de todos) intercalado com as próprias privadas.
 2. **Privacidade padrão**: nova memória nasce pública; usuário pode marcar como privada.
 3. **Migração**: memórias existentes viram públicas (coluna `isPublic` default `true`).
-4. **Minhas Memórias**: página separada logada (`/minhas-memorias`) listando apenas as do usuário (públicas + privadas).
-5. **Perfil**: página simples logada (`/perfil`) com dados do usuário, contagem de memórias e **foto de perfil opcional** (upload via MinIO + remover). Avatar aparece também no menu da navbar (sem foto → iniciais do nome).
+4. **Minhas Memórias**: página separada logada (`/my-memories`) listando apenas as do usuário (públicas + privadas).
+5. **Perfil**: página simples logada (`/profile`) com dados do usuário, contagem de memórias e **foto de perfil opcional** (upload via MinIO + remover). Avatar aparece também no menu da navbar (sem foto → iniciais do nome).
 6. **Card deixa de ser link**; ações de dono como ícones (editar → página de edição; deletar e narrativa inline).
 7. **Galeria**: reutilizar `PhotoGallery` no card (grid + lightbox), adicionando setas ←/→, navegação por teclado e contador.
 8. **Proteção**: abordagem "guarda por página" (`RequireAuth`), removendo `AuthGuard` do layout do dashboard.
@@ -82,7 +82,7 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 - Criar `apps/web/src/components/require-auth.tsx` (client): redireciona para `/login` se `!isAuthenticated` após `isLoading`; enquanto carrega renderiza spinner.
 - **Remover** `apps/web/src/app/(dashboard)/memories/[id]/page.tsx` e `memories/[id]/loading.tsx`.
 - Manter `memories/[id]/edit` (página de edição) protegida por `RequireAuth`. O ícone Editar no card aponta para `/memories/[id]/edit`.
-- Páginas protegidas com `RequireAuth`: `memories/new`, `memories/[id]/edit`, `minhas-memorias` (nova), `perfil` (nova).
+- Páginas protegidas com `RequireAuth`: `memories/new`, `memories/[id]/edit`, `my-memories` (nova), `profile` (nova).
 - Home (`/`) e `/memories` ficam públicas.
   - Nota: `/memories` (lista simples) permanece, mas ambas agora mostram o feed público logado.
 
@@ -90,8 +90,8 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 
 - Logado: substituir nome + "Sair" por um **dropdown de usuário** acionado por click:
   - **Avatar** (se `user.image`) ou **iniciais do nome** em círculo (sem foto) como trigger.
-  - **Minhas Memórias** → `/minhas-memorias`
-  - **Perfil** → `/perfil`
+   - **Minhas Memórias** → `/my-memories`
+   - **Perfil** → `/profile`
   - **Nova Memória** → `/memories/new`
   - **Sair** → `signOut()` + `invalidateSession()`
 - Anônimo: manter link "Entrar" (`/login`).
@@ -109,20 +109,20 @@ Migração: `drizzle-kit generate` + push. As linhas existentes recebem `true` p
 
 ### Página Minhas Memórias
 
-- `apps/web/src/app/(dashboard)/minhas-memorias/page.tsx` (client, `RequireAuth`).
+- `apps/web/src/app/(dashboard)/my-memories/page.tsx` (client, `RequireAuth`).
 - Chama `useMemories` com um parâmetro novo `mine: true` (query string).
 - Lista os cards do usuário (públicas + privadas), reusando `MemoryCardFull`.
 - Paginação idêntica à Home.
 
 ### Página Perfil
 
-- `apps/web/src/app/(dashboard)/perfil/page.tsx` (client, `RequireAuth`).
+- `apps/web/src/app/(dashboard)/profile/page.tsx` (client, `RequireAuth`).
 - Mostra:
   - **Avatar grande** — se `user.image`, imagem (via `/_next/image` com o `remotePatterns` já configurado para `localhost:9000`); senão círculo com iniciais.
   - **Botão de upload** (input file → `FormData` → `POST /api/users/avatar`), com preview/loading.
   - **Botão remover** (se tem foto) → `DELETE /api/users/avatar`.
   - Ações do avatar devem **refrescar a sessão** (`invalidateSession()` de `use-auth`) para o avatar novo aparecer na navbar.
-  - Nome, email, contagem de memórias (via query `?mine=true` ou contagem simples), link para `/minhas-memorias`.
+   - Nome, email, contagem de memórias (via query `?mine=true` ou contagem simples), link para `/my-memories`.
 - Sem escopo de edição de perfil (nome/email) além do avatar.
 
 ### Card da timeline (`memory-card.tsx` / `MemoryCardFull`)

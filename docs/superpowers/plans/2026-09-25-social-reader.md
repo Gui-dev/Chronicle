@@ -355,8 +355,8 @@ git commit -m "feat(web): per-page auth guard and remove detail route"
 `'use client'` (already). Add local state for `menuOpen`. Trigger: avatar `<img>` (if `user.image`, via `next/image` with existing `localhost:9000` remotePattern) or initials circle (`user.name` initials, uppercase, `bg-primary/20 text-primary rounded-full h-8 w-8 grid place-items-center`). Add `data-testid="user-menu-toggle"`.
 
 Menu items (buttons/links):
-- **Minhas Memórias** → `Link href="/minhas-memorias"` (`data-testid="menu-minhas-memorias"`)
-- **Perfil** → `Link href="/perfil"` (`data-testid="menu-perfil"`)
+- **Minhas Memórias** → `Link href="/my-memories"` (`data-testid="menu-my-memories"`)
+- **Perfil** → `Link href="/profile"` (`data-testid="menu-profile"`)
 - **Nova Memória** → `Link href="/memories/new"` (`data-testid="menu-nova"`)
 - **Sair** → button calling `signOut()` + `invalidateSession()` (`data-testid="menu-sair"`), reusing existing `handleSignOut`.
 
@@ -382,8 +382,8 @@ git commit -m "feat(web): user dropdown menu in navbar"
 
 **Files:**
 - Modify: `apps/web/src/app/(dashboard)/page.tsx`
-- Create: `apps/web/src/app/(dashboard)/minhas-memorias/page.tsx`
-- Create: `apps/web/src/app/(dashboard)/perfil/page.tsx`
+- Create: `apps/web/src/app/(dashboard)/my-memories/page.tsx`
+- Create: `apps/web/src/app/(dashboard)/profile/page.tsx`
 - Modify: `apps/web/src/hooks/use-memories.ts` (support `mine`)
 
 - [ ] **Step 1: `use-memories.ts` — support `mine`**
@@ -400,7 +400,7 @@ In `page.tsx`:
 
 - [ ] **Step 3: Minhas Memórias page**
 
-Create `(dashboard)/minhas-memorias/page.tsx` (`'use client'`, wrapped in `RequireAuth`):
+Create `(dashboard)/my-memories/page.tsx` (`'use client'`, wrapped in `RequireAuth`):
 - `useFilters()` + `useMemories({ ...filters, mine: true })`.
 - Title "Minhas Memórias".
 - CTA "Nova Memória" → `/memories/new`.
@@ -410,7 +410,7 @@ Create `(dashboard)/minhas-memorias/page.tsx` (`'use client'`, wrapped in `Requi
 
 - [ ] **Step 4: Perfil page**
 
-Create `(dashboard)/perfil/page.tsx` (`'use client'`, wrapped in `RequireAuth`):
+Create `(dashboard)/profile/page.tsx` (`'use client'`, wrapped in `RequireAuth`):
 - `useAuth()` → `user`, `invalidateSession`.
 - Avatar block: large (h-24 w-24 rounded-full) `next/image` if `user.image`, else initials circle. `data-testid="profile-avatar"`.
 - Upload: hidden `<input type="file" accept="image/png,image/jpeg,image/webp">`, label/button "Alterar foto". On change:
@@ -422,7 +422,7 @@ Create `(dashboard)/perfil/page.tsx` (`'use client'`, wrapped in `RequireAuth`):
   ```
   (mirror the memory-photo upload fetch pattern in `create-memory-wizard.tsx` — the `api` client JSON-stringifies bodies, so use raw `fetch` for FormData.)
 - Remove button (`data-testid="remove-avatar"`): `DELETE /api/users/avatar` (via `api.delete`), then `invalidateSession()`. Show only when `user.image`.
-- Info: name, email. Memory count: `useMemories({ page:1, limit:1, mine:true })` → `pagination.total`. Link "Ver minhas memórias" → `/minhas-memorias`.
+- Info: name, email. Memory count: `useMemories({ page:1, limit:1, mine:true })` → `pagination.total`. Link "Ver minhas memórias" → `/my-memories`.
 - Upload state (loading) + sonner toasts for success/error.
 
 - [ ] **Step 5: Verify + commit**
@@ -432,10 +432,10 @@ pnpm --filter web typecheck
 pnpm lint
 ```
 
-Manual: anonymous Home loads public memories, CTA → /login; logged Home shows own private; `/minhas-memorias` lists only own; `/perfil` shows avatar upload/remove working.
+Manual: anonymous Home loads public memories, CTA → /login; logged Home shows own private; `/my-memories` lists only own; `/profile` shows avatar upload/remove working.
 
 ```bash
-git add apps/web/src/app/\(dashboard\)/page.tsx apps/web/src/app/\(dashboard\)/minhas-memorias apps/web/src/app/\(dashboard\)/perfil apps/web/src/hooks/use-memories.ts apps/web/src/components
+git add apps/web/src/app/\(dashboard\)/page.tsx apps/web/src/app/\(dashboard\)/my-memories apps/web/src/app/\(dashboard\)/profile apps/web/src/hooks/use-memories.ts apps/web/src/components
 git commit -m "feat(web): public home, my memories and profile pages"
 ```
 
@@ -458,7 +458,7 @@ git commit -m "feat(web): public home, my memories and profile pages"
 
 When `isOwner`, render a row of icon buttons (top-right of card), with `data-testid`s:
 - **Editar** (`lucide Pencil`) → `Link href={`/memories/${memory.id}/edit`}`.
-- **Deletar** (`Trash2`) → open `ConfirmDialog` (reuse component); on confirm perform `api.delete('/api/memories/'+id)` then `queryClient.invalidateQueries({ queryKey: ['memories'] })`; sonner success/error. (Extract a `useDeleteMemory` hook or inline — prefer a small hook `apps/web/src/hooks/use-delete-memory.ts` for reuse in `minhas-memorias` too.)
+- **Deletar** (`Trash2`) → open `ConfirmDialog` (reuse component); on confirm perform `api.delete('/api/memories/'+id)` then `queryClient.invalidateQueries({ queryKey: ['memories'] })`; sonner success/error. (Extract a `useDeleteMemory` hook or inline — prefer a small hook `apps/web/src/hooks/use-delete-memory.ts` for reuse in `my-memories` too.)
 - **Narrativa** (`Sparkles`):
   - If no `aiNarrative` → button "Gerar narrativa" (inline) that calls `POST /api/memories/:id/generate-narrative` (reuse `narrative-section.tsx`-style logic or inline) and invalidates.
   - If `aiNarrative` exists → expandable block (existing narrative button/section) with a "Regenerar" affordance for the owner.
@@ -534,7 +534,7 @@ git commit -m "feat(web): lightbox arrows, keyboard nav and counter"
 - Create: `apps/web/src/__tests__/social-menu.spec.ts`
 - Create: `apps/web/src/__tests__/owner-actions.spec.ts`
 - Create: `apps/web/src/__tests__/gallery.spec.ts`
-- Create: `apps/web/src/__tests__/perfil.spec.ts`
+- Create: `apps/web/src/__tests__/profile.spec.ts`
 - Reference: `apps/web/src/__tests__/fixtures.ts`
 
 - [ ] **Step 1: Adjust helpers**
@@ -549,10 +549,10 @@ git commit -m "feat(web): lightbox arrows, keyboard nav and counter"
 - [ ] **Step 2: New specs**
 
 - `public-home.spec.ts`: anonymous `page` (fixture `test({ page })`): Home shows "Entrar" in navbar; card titles visible (seeded public memories); CTA button label ("Nova Memória") links to `/login` (assert href).
-- `social-menu.spec.ts`: `authenticatedPage`: click `user-menu-toggle`; assert menu items `minhas-memorias`, `perfil`, `nova` present; click `menu-minhas-memorias` → URL `/minhas-memorias`; click back; `menu-sair` → URL `/login` or anonymous navbar shows "Entrar".
+- `social-menu.spec.ts`: `authenticatedPage`: click `user-menu-toggle`; assert menu items `my-memories`, `profile`, `nova` present; click `menu-my-memories` → URL `/my-memories`; click back; `menu-sair` → URL `/login` or anonymous navbar shows "Entrar".
 - `owner-actions.spec.ts`: `authenticatedPage` creates a memory, `goto('/')`; assert the card (data-testid `memory-card-<id>`) shows `edit-button`, `delete-button`, `privacy-toggle`, narrative. Click `delete-button` → confirm dialog → card disappears. Also assert privacy toggle: create two memories, toggle one to private, assert it still shows for owner on Home (or in Minhas Memórias) and hides in a separate anonymous session? Simpler within logged scope: private memory visible at `/` for owner; verify a second anonymous context does not see it (new `context` in the same spec via `browser`).
 - `gallery.spec.ts`: `authenticatedPage` creates memory with photos (upload 2 files) — reuse existing upload code — goto `/`, click first card photo (`data-testid="photo-gallery"` first thumbnail), assert lightbox open (`lightbox-next` visible), click next → counter "2 / 2", press ArrowLeft → "1 / 2", press Escape → closes.
-- `perfil.spec.ts`: `authenticatedPage` goto `/perfil`; assert name/email; upload a small PNG (`setInputFiles('[data-testid="avatar-input"]', { name:'a.png', mimeType:'image/png', buffer })`); assert navbar avatar `img` appears after `invalidateSession`; click `remove-avatar`; assert returns to initials.
+- `profile.spec.ts`: `authenticatedPage` goto `/profile`; assert name/email; upload a small PNG (`setInputFiles('[data-testid="avatar-input"]', { name:'a.png', mimeType:'image/png', buffer })`); assert navbar avatar `img` appears after `invalidateSession`; click `remove-avatar`; assert returns to initials.
 
 - [ ] **Step 3: Run E2E**
 
@@ -590,8 +590,8 @@ git commit -m "test(e2e): public home, social menu and owner actions"
 1. Anonymous `/` → public memories, Entrar visible, CTA → /login.
 2. Login → navbar initials/avatar dropdown → Minhas Memórias / Perfil / Nova Memória / Sair.
 3. Create memory → defaults public; toggle private via card → disappears from anonymous Home, stays for owner.
-4. `/minhas-memorias` shows only own (public + private).
-5. `/perfil`: upload avatar → appears in navbar + profile; remove → initials back.
+4. `/my-memories` shows only own (public + private).
+5. `/profile`: upload avatar → appears in navbar + profile; remove → initials back.
 6. Card owner actions: edit navigates to edit page; delete works; narrative generates inline.
 7. Gallery: lightbox arrows/keyboard/counter on a memory with 2+ photos.
 8. `/memories/<id>` (old detail) → 404/not found; no lingering links to it.
@@ -620,8 +620,8 @@ Append a new phase to `docs/tasks.md` after Fase 5 (incremental tasks as decided
 
 ### 6.4 Páginas
 - [ ] Home pública (CTA anônimo → /login)
-- [ ] Página `/minhas-memorias`
-- [ ] Página `/perfil` (dados, contagem, avatar)
+- [ ] Página `/my-memories`
+- [ ] Página `/profile` (dados, contagem, avatar)
 
 ### 6.5 Card e galeria
 - [ ] Ações de dono no card (editar, deletar, narrativa, privacidade)

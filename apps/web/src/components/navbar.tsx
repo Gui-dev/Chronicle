@@ -130,18 +130,18 @@ export function Navbar() {
                     className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
                   >
                     <Link
-                      href="/minhas-memorias"
+                      href="/my-memories"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
-                      data-testid="menu-minhas-memorias"
+                      data-testid="menu-my-memories"
                     >
                       Minhas Memórias
                     </Link>
                     <Link
-                      href="/perfil"
+                      href="/profile"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
-                      data-testid="menu-perfil"
+                      data-testid="menu-profile"
                     >
                       Perfil
                     </Link>
