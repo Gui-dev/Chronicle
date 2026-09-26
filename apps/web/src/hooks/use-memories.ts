@@ -21,6 +21,7 @@ interface Memory {
   musicUrl: string | null
   musicCover: string | null
   aiNarrative: string | null
+  isPublic: boolean
   createdAt: string
   updatedAt: string
   people: Array<{ id: string; memoryId: string; name: string }>

@@ -1,8 +1,9 @@
 'use client'
 
+import { cn } from '@chronicle/ui'
 import { X } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface Photo {
   id: string
@@ -14,10 +15,25 @@ interface Photo {
 
 interface PhotoGalleryProps {
   photos: Photo[]
+  /** Section heading. Pass `null` to hide it, e.g. when embedded in the memory card. */
+  heading?: string | null
+  /** Extra classes merged into the thumbnail grid, to override the column layout. */
+  className?: string
 }
 
-export function PhotoGallery({ photos }: PhotoGalleryProps) {
+export function PhotoGallery({ photos, heading = 'Fotos', className }: PhotoGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setLightboxIndex(null)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxIndex])
 
   if (photos.length === 0) {
     return (
@@ -29,9 +45,9 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-text">Fotos</h2>
+      {heading && <h2 className="mb-4 text-lg font-semibold text-text">{heading}</h2>}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4', className)}>
         {photos.map((photo, index) => (
           <button
             key={photo.id}
@@ -51,16 +67,19 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
       </div>
 
       {lightboxIndex !== null && (
-        <button
-          type="button"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm"
+        <dialog
+          open
+          aria-label="Visualizar foto"
+          data-testid="lightbox"
           onClick={() => setLightboxIndex(null)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setLightboxIndex(null)
           }}
+          className="fixed inset-0 z-50 m-0 h-full max-h-none w-full max-w-none flex-col items-center justify-center border-0 bg-background/90 p-0 backdrop-blur-sm open:flex"
         >
           <button
             type="button"
+            aria-label="Fechar"
             onClick={() => setLightboxIndex(null)}
             className="absolute right-4 top-4 cursor-pointer rounded-full bg-background/80 p-2 text-text"
           >
@@ -75,7 +94,6 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
             sizes="90vw"
             className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
           />
 
           {photos.length > 1 && (
@@ -95,7 +113,7 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
               ))}
             </div>
           )}
-        </button>
+        </dialog>
       )}
     </div>
   )
