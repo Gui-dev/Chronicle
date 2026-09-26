@@ -199,7 +199,6 @@
 
 ### 6.2 Avatar
 - [x] Backend: POST/DELETE /api/users/avatar (MinIO)
-- [ ] Página Perfil: upload/remoção de avatar
 
 ### 6.3 Guarda e navegação
 - [ ] RequireAuth por página (remover AuthGuard do layout)
@@ -209,7 +208,8 @@
 ### 6.4 Páginas
 - [ ] Home pública (CTA anônimo → /login)
 - [ ] Página `/minhas-memorias`
-- [ ] Página `/perfil` (dados, contagem, avatar)
+- [ ] Página `/perfil` (dados, contagem)
+- [ ] Perfil: upload/remoção de avatar (MinIO)
 
 ### 6.5 Card e galeria
 - [ ] Ações de dono no card (editar, deletar, narrativa, privacidade)
