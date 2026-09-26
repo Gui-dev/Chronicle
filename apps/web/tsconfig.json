@@ -31,5 +31,5 @@
     "**/*.mts",
     "src/__tests__/**/*.ts"
   ],
-  "exclude": ["node_modules", "src/stories"]
+  "exclude": ["node_modules"]
 }

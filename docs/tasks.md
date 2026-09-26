@@ -138,12 +138,7 @@
 - [x] Hook use-update-memory
 
 ### 3.7 Storybook
-- [x] Documentar todos os componentes
-- [x] Criar stories para memory-card
-- [x] Criar stories para audio-player
-- [x] Criar stories para photo-gallery
-- [x] Criar stories para memory-filters
-- [x] Criar stories para timeline-marker
+- [ ] Removido: stories e tsconfig sem Storybook instalado (2026-09-26)
 
 ---
 
