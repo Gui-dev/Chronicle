@@ -203,7 +203,7 @@
 ### 6.3 Guarda e navegação
 - [x] RequireAuth por página (remover AuthGuard do layout)
 - [x] Remover página de detalhe `/memories/[id]`
-- [ ] Dropdown de usuário na navbar (avatar/iniciais)
+- [x] Dropdown de usuário na navbar (avatar/iniciais)
 
 ### 6.4 Páginas
 - [ ] Home pública (CTA anônimo → /login)
