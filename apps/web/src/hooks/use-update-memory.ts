@@ -25,7 +25,7 @@ export function useUpdateMemory(id: string) {
       await queryClient.cancelQueries({ queryKey: ['memory', id] })
       queryClient.invalidateQueries({ queryKey: ['memories'] })
       queryClient.invalidateQueries({ queryKey: ['memory', id] })
-      router.push(`/memories/${id}`)
+      router.push('/')
     },
   })
 }

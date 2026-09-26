@@ -1,5 +1,6 @@
 'use client'
 
+import { RequireAuth } from '@/components/require-auth'
 import { useMemory } from '@/hooks/use-memory'
 import { useUpdateMemory } from '@/hooks/use-update-memory'
 import { updateMemorySchema } from '@chronicle/schemas'
@@ -13,6 +14,14 @@ export default function EditMemoryPage() {
   const params = useParams()
   const id = params.id as string
 
+  return (
+    <RequireAuth>
+      <EditMemoryForm id={id} />
+    </RequireAuth>
+  )
+}
+
+function EditMemoryForm({ id }: { id: string }) {
   const { data: memory, isLoading } = useMemory(id)
   const updateMutation = useUpdateMemory(id)
 
@@ -119,7 +128,7 @@ export default function EditMemoryPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6">
         <Link
-          href={`/memories/${id}`}
+          href="/"
           prefetch={false}
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary"
         >
@@ -353,7 +362,7 @@ export default function EditMemoryPage() {
             )}
             Salvar alterações
           </Button>
-          <Link href={`/memories/${id}`} prefetch={false}>
+          <Link href="/" prefetch={false}>
             <Button
               type="button"
               variant="outline"
