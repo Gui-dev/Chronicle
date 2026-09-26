@@ -186,3 +186,35 @@
 - [ ] Configurar CI/CD
 - [ ] Variáveis de ambiente em produção
 - [ ] Domínio + SSL
+
+---
+
+## Fase 6: Timeline pública, perfil e privacidade
+
+### 6.1 Privacidade (schema + API)
+- [ ] Coluna `is_public` no schema memories (+ migration)
+- [ ] Zod: `isPublic` em create/update, `mine` em memory-filters
+- [ ] Backend: feed público + `?mine=true` + findById pública
+- [ ] Backend: status 401 mantido nas ações de dono
+
+### 6.2 Avatar
+- [ ] Backend: POST/DELETE /api/users/avatar (MinIO)
+- [ ] Página Perfil: upload/remoção de avatar
+
+### 6.3 Guarda e navegação
+- [ ] RequireAuth por página (remover AuthGuard do layout)
+- [ ] Remover página de detalhe `/memories/[id]`
+- [ ] Dropdown de usuário na navbar (avatar/iniciais)
+
+### 6.4 Páginas
+- [ ] Home pública (CTA anônimo → /login)
+- [ ] Página `/minhas-memorias`
+- [ ] Página `/perfil` (dados, contagem, avatar)
+
+### 6.5 Card e galeria
+- [ ] Ações de dono no card (editar, deletar, narrativa, privacidade)
+- [ ] Galeria com setas, teclado e contador
+
+### 6.6 E2E
+- [ ] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
+- [ ] Novos specs: home pública, menu logado, ações de dono, galeria, perfil
