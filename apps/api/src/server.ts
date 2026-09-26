@@ -7,6 +7,7 @@ import { integrationsRoutes } from './modules/integrations'
 import { memoriesRoutes } from './modules/memories'
 import { narrativeRoutes } from './modules/narrative'
 import { photosRoutes } from './modules/photos'
+import { usersRoutes } from './modules/users'
 import { authPlugin } from './plugins/auth'
 import { corsPlugin } from './plugins/cors'
 import { swaggerPlugin } from './plugins/swagger'
@@ -56,6 +57,7 @@ export function buildServer() {
   server.register(photosRoutes)
   server.register(integrationsRoutes)
   server.register(narrativeRoutes)
+  server.register(usersRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
