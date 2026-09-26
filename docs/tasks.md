@@ -198,7 +198,7 @@
 - [x] Backend: status 401 mantido nas ações de dono
 
 ### 6.2 Avatar
-- [ ] Backend: POST/DELETE /api/users/avatar (MinIO)
+- [x] Backend: POST/DELETE /api/users/avatar (MinIO)
 - [ ] Página Perfil: upload/remoção de avatar
 
 ### 6.3 Guarda e navegação
