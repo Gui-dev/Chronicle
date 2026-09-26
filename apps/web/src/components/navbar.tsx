@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
-import { Disc3, Search } from 'lucide-react'
+import { Disc3, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -68,7 +68,8 @@ export function Navbar() {
   }
 
   const menuItemClass =
-    'block w-full px-4 py-2 text-left text-sm text-text transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50'
+    'flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-text transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50'
+  const menuIconClass = 'h-4 w-4 shrink-0'
 
   return (
     <>
@@ -127,7 +128,7 @@ export function Navbar() {
                 {menuOpen && (
                   <div
                     aria-label="Menu do usuário"
-                    className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
+                    className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
                   >
                     <Link
                       href="/my-memories"
@@ -135,6 +136,7 @@ export function Navbar() {
                       className={menuItemClass}
                       data-testid="menu-my-memories"
                     >
+                      <Library className={menuIconClass} />
                       Minhas Memórias
                     </Link>
                     <Link
@@ -143,6 +145,7 @@ export function Navbar() {
                       className={menuItemClass}
                       data-testid="menu-profile"
                     >
+                      <User className={menuIconClass} />
                       Perfil
                     </Link>
                     <Link
@@ -151,6 +154,7 @@ export function Navbar() {
                       className={menuItemClass}
                       data-testid="menu-nova"
                     >
+                      <Plus className={menuIconClass} />
                       Nova Memória
                     </Link>
                     <div className="my-1 h-px bg-border" aria-hidden="true" />
@@ -161,6 +165,7 @@ export function Navbar() {
                       className={menuItemClass}
                       data-testid="menu-sair"
                     >
+                      <LogOut className={menuIconClass} />
                       {signingOut ? 'Saindo...' : 'Sair'}
                     </button>
                   </div>
