@@ -44,9 +44,7 @@ export default function DashboardPage() {
         pagination={pagination}
         isLoading={isLoading}
         error={error}
-        onRetry={() => {
-          refetch()
-        }}
+        onRetry={refetch}
         onPageChange={setPage}
         emptyTitle={
           isAuthenticated ? 'Nenhuma memória encontrada' : 'Nenhuma memória pública encontrada'

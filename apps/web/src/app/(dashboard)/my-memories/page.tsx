@@ -39,9 +39,7 @@ export default function MyMemoriesPage() {
           pagination={pagination}
           isLoading={isLoading}
           error={error}
-          onRetry={() => {
-            refetch()
-          }}
+          onRetry={refetch}
           onPageChange={setPage}
           emptyTitle="Nenhuma memória encontrada"
           emptyDescription="Crie sua primeira memória para começar!"

@@ -9,10 +9,11 @@ import { Button, Card, CardContent } from '@chronicle/ui'
 import { Camera, Library, Loader2, Mail, Trash2, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 const AVATAR_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/api/users/avatar`
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const payload = (await response.json().catch(() => null)) as {
@@ -28,6 +29,10 @@ export default function ProfilePage() {
   const [removing, setRemoving] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
 
+  useEffect(() => {
+    if (user?.image) setAvatarFailed(false)
+  }, [user?.image])
+
   const memoryCount = memoriesData?.pagination.total ?? 0
   const busy = uploading || removing
 
@@ -36,6 +41,11 @@ export default function ProfilePage() {
     event.target.value = ''
 
     if (!file) return
+
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('A imagem deve ter no máximo 5MB')
+      return
+    }
 
     setUploading(true)
     try {
@@ -109,11 +119,19 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
+              <input
+                id="avatar-file"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="peer sr-only"
+                data-testid="avatar-input"
+                onChange={handleAvatarChange}
+                disabled={uploading}
+              />
               <label
                 htmlFor="avatar-file"
                 data-testid="avatar-upload"
-                aria-busy={uploading}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background"
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -122,15 +140,6 @@ export default function ProfilePage() {
                 )}
                 {uploading ? 'Enviando...' : 'Alterar foto'}
               </label>
-              <input
-                id="avatar-file"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                data-testid="avatar-input"
-                onChange={handleAvatarChange}
-                disabled={uploading}
-              />
 
               {user?.image && (
                 <Button

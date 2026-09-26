@@ -30,9 +30,11 @@ function broadcastSession(data: SessionData | null | undefined) {
   }
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
+
 async function fetchSessionOnce(): Promise<SessionData | null> {
   try {
-    const res = await fetch('http://localhost:3333/api/auth/get-session', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -68,7 +70,6 @@ export function useAuth() {
 
   const invalidateSession = useCallback(async () => {
     cachedSession = undefined
-    broadcastSession(undefined)
     const data = await fetchSessionOnce()
     cachedSession = data
     broadcastSession(data)
