@@ -223,9 +223,9 @@ export class MemoriesService {
       isPublic?: boolean
     },
   ) {
-    await this.findById(id, userId)
+    await this.assertOwner(id, userId)
 
-    const [memory] = await db
+    const [updated] = await db
       .update(memories)
       .set({
         title: data.title,
@@ -271,12 +271,24 @@ export class MemoriesService {
       }
     }
 
-    return memory
+    return updated
   }
 
   async delete(id: string, userId: string) {
-    await this.findById(id, userId)
+    await this.assertOwner(id, userId)
     await db.delete(memories).where(eq(memories.id, id))
+  }
+
+  private async assertOwner(id: string, userId: string) {
+    const [memory] = await db.select().from(memories).where(eq(memories.id, id)).limit(1)
+
+    if (!memory) {
+      throw AppError.notFound('Memória não encontrada')
+    }
+
+    if (memory.userId !== userId) {
+      throw AppError.forbidden('Acesso negado')
+    }
   }
 }
 

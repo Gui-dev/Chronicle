@@ -323,5 +323,31 @@ describe('MemoriesService privacy', () => {
         },
       )
     })
+
+    it('refuses to update a public memory owned by someone else', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-2', isPublic: true }]
+
+      await expect(memoriesService.update('mem-1', 'user-1', { title: 'X' })).rejects.toMatchObject(
+        {
+          statusCode: 403,
+        },
+      )
+    })
+  })
+
+  describe('delete', () => {
+    it('refuses to delete a public memory owned by someone else', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-2', isPublic: true }]
+
+      await expect(memoriesService.delete('mem-1', 'user-1')).rejects.toMatchObject({
+        statusCode: 403,
+      })
+    })
+
+    it('deletes a memory owned by the signed-in user', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1', isPublic: false }]
+
+      await expect(memoriesService.delete('mem-1', 'user-1')).resolves.toBeUndefined()
+    })
   })
 })
