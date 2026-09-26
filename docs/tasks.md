@@ -201,8 +201,8 @@
 - [x] Backend: POST/DELETE /api/users/avatar (MinIO)
 
 ### 6.3 Guarda e navegação
-- [ ] RequireAuth por página (remover AuthGuard do layout)
-- [ ] Remover página de detalhe `/memories/[id]`
+- [x] RequireAuth por página (remover AuthGuard do layout)
+- [x] Remover página de detalhe `/memories/[id]`
 - [ ] Dropdown de usuário na navbar (avatar/iniciais)
 
 ### 6.4 Páginas
