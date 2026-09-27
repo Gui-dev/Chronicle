@@ -50,6 +50,9 @@ vi.mock('@chronicle/db', () => {
   const or = (...conds: unknown[]) => ({ op: 'or', conds })
   const and = (...conds: unknown[]) => ({ op: 'and', conds })
   const ilike = (col: unknown, pattern: unknown) => ({ op: 'ilike', col, pattern })
+  const gte = (col: unknown, value: unknown) => ({ op: 'gte', col, value })
+  const lt = (col: unknown, value: unknown) => ({ op: 'lt', col, value })
+  const inArray = (col: unknown, values: unknown) => ({ op: 'inArray', col, values })
   const sql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
     op: 'sql',
     text: strings.join('?'),
@@ -126,7 +129,7 @@ vi.mock('@chronicle/db', () => {
     delete: () => ({ where: async () => undefined }),
   }
 
-  return { ...tables, eq, or, and, ilike, sql, desc, asc, db }
+  return { ...tables, eq, or, and, ilike, sql, desc, asc, gte, lt, inArray, db }
 })
 
 const filters = (overrides: Record<string, unknown> = {}) =>
