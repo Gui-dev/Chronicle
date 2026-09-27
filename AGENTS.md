@@ -19,6 +19,7 @@ pnpm test         # turbo run test
 pnpm test:unit    # turbo run test:unit
 pnpm db:generate  # drizzle-kit generate
 pnpm db:push      # drizzle-kit push
+pnpm db:studio    # drizzle-kit studio
 ```
 
 Pre-commit: `lefthook` runs `biome check --no-errors-on-unmatched --staged {staged_files}` and stages fixes.
@@ -50,9 +51,11 @@ Pre-commit: `lefthook` runs `biome check --no-errors-on-unmatched --staged {stag
 
 - PostgreSQL via Docker (`compose.yml`). User: `chronicle` / password: `chronicle`
 - **DATABASE_URL must be `postgresql://chronicle:chronicle@localhost:5432/chronicle`** (NOT `postgres:postgres`)
-- Auth tables use **text IDs** (nanoid), NOT uuid. `users.id` is `varchar(255)`, `sessions.user_id` and `accounts.user_id` are `varchar(255)`
-- If tables don't exist, sign-up returns 500. Run `drizzle-kit push` or manually create tables
-- `drizzle-kit` has vitest compatibility issues — use `pnpm db:push` or manual SQL if needed
+- Auth tables use **text IDs** (nanoid), NOT uuid. `users.id` is `varchar(255)`, `sessions.user_id` and `accounts.user_id` are `text`
+- If tables don't exist, sign-up returns 500. Run `pnpm db:push`, or `pnpm db:migrate` to apply the versioned migrations in `packages/db/src/migrations/`
+- Migrations are versioned. Prefer `pnpm db:generate` + `pnpm db:migrate` over hand-written `ALTER TABLE`
+- `drizzle.config.ts` loads the root `.env` itself; its cwd is `packages/db`, so it must use `path: '../../.env'`
+- The schema glob is `./src/schema/*.ts` on purpose. `*` would match `__tests__/` and drizzle-kit would load vitest under CommonJS and fail
 
 ## Auth Flow
 
@@ -96,7 +99,7 @@ Pre-commit: `lefthook` runs `biome check --no-errors-on-unmatched --staged {stag
 
 ## Important Gotchas
 
-- `drizzle-kit v0.30.6` has vitest compatibility issues — use manual SQL or upgrade if needed
+- `drizzle-kit` is `^0.31.11`. It previously choked on the schema glob; that is fixed, so prefer migrations over manual SQL
 - `useSession` from Better Auth React client may not properly sync session state after login. Use `useQuery` fetching `/api/auth/get-session` instead
 - CORS preflight (OPTIONS) works, but actual POST responses need CORS headers explicitly set in auth plugin
 - `.env` is gitignored — never commit credentials
