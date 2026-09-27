@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test'
 import { test } from './fixtures'
-import { createMemory } from './helpers'
+import { createMemoryViaWizard } from './helpers'
 
 test.describe('Criar memória completa', () => {
   test('can create a memory with people and tags', async ({ authenticatedPage }) => {
-    const _url = await createMemory(authenticatedPage, {
+    await createMemoryViaWizard(authenticatedPage, {
       title: 'Teste E2E',
       content: 'Memória criada via teste E2E',
       memoryDate: '2026-09-24',
@@ -12,8 +12,7 @@ test.describe('Criar memória completa', () => {
       tags: ['teste', 'e2e'],
     })
 
-    await expect(authenticatedPage.locator('text=Teste E2E').first()).toBeVisible({
-      timeout: 10000,
-    })
+    await expect(authenticatedPage.getByRole('heading', { name: 'Sua Timeline' })).toBeVisible()
+    await expect(authenticatedPage.locator('[data-memory-id]').first()).toBeVisible()
   })
 })

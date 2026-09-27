@@ -150,7 +150,10 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
         <span className="font-mono text-xs text-muted">{relativeDate}</span>
       </div>
 
-      <div className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 shadow-lg transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(240,192,64,0.1)] sm:p-8">
+      <div
+        data-memory-id={memory.id}
+        className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 shadow-lg transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(240,192,64,0.1)] sm:p-8"
+      >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-text group-hover:text-primary transition-colors">

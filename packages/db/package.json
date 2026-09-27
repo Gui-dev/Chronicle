@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "e2e:reset": "tsx src/scripts/reset-e2e-data.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.38.0",
@@ -28,6 +29,7 @@
     "better-sqlite3": "^11.0.0",
     "dotenv": "^16.4.0",
     "drizzle-kit": "^0.31.11",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

@@ -211,5 +211,5 @@
 - [x] Galeria com setas, teclado e contador
 
 ### 6.6 E2E
-- [ ] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
+- [x] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
 - [ ] Novos specs: home pública, menu logado, ações de dono, galeria, perfil
