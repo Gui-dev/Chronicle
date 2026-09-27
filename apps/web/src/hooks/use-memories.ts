@@ -21,6 +21,8 @@ interface Memory {
   musicUrl: string | null
   musicCover: string | null
   aiNarrative: string | null
+  aiMood: string | null
+  aiThemes: string[] | null
   isPublic: boolean
   createdAt: string
   updatedAt: string

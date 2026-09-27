@@ -21,6 +21,8 @@ export const memories = pgTable('memories', {
   musicCover: text('music_cover'),
   isPublic: boolean('is_public').notNull().default(true),
   aiNarrative: text('ai_narrative'),
+  aiMood: varchar('ai_mood', { length: 50 }),
+  aiThemes: text('ai_themes').array(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })

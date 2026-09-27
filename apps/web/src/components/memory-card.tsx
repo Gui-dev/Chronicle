@@ -349,9 +349,33 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
             {narrativeOpen && (
               <div
                 id={`narrative-panel-${memory.id}`}
-                className="mt-4 rounded-2xl border border-card bg-background/40 p-5 font-serif text-sm leading-relaxed italic text-gray-300"
+                className="mt-4 rounded-2xl border border-card bg-background/40 p-5"
               >
-                <p>{memory.aiNarrative}</p>
+                <p className="font-serif text-sm leading-relaxed italic text-gray-300">
+                  {memory.aiNarrative}
+                </p>
+
+                {(memory.aiMood || memory.aiThemes?.length) && (
+                  <div
+                    data-testid="narrative-meta"
+                    className="mt-4 flex flex-wrap items-center gap-2 border-t border-card/60 pt-4 not-italic"
+                  >
+                    {memory.aiMood && (
+                      <span className="rounded-full border border-secondary/40 bg-secondary/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-secondary">
+                        {memory.aiMood}
+                      </span>
+                    )}
+                    {memory.aiThemes?.map((theme) => (
+                      <span
+                        key={theme}
+                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-primary"
+                      >
+                        {theme}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {owner && (
                   <Button
                     variant="ghost"

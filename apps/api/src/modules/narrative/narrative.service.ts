@@ -64,7 +64,11 @@ Respond in JSON format:
 
     await db
       .update(memories)
-      .set({ aiNarrative: narrative.narrative })
+      .set({
+        aiNarrative: narrative.narrative,
+        aiMood: narrative.mood,
+        aiThemes: narrative.themes,
+      })
       .where(eq(memories.id, memoryId))
 
     return narrative
