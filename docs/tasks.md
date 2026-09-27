@@ -207,8 +207,8 @@
 - [x] Perfil: upload/remoção de avatar (MinIO)
 
 ### 6.5 Card e galeria
-- [ ] Ações de dono no card (editar, deletar, narrativa, privacidade)
-- [ ] Galeria com setas, teclado e contador
+- [x] Ações de dono no card (editar, deletar, narrativa, privacidade)
+- [x] Galeria com setas, teclado e contador
 
 ### 6.6 E2E
 - [ ] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
