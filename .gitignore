@@ -35,3 +35,6 @@ minio-data/
 storybook-static/
 .env.example
 apps/web/test-results/
+
+# Worktrees do superpowers
+.worktrees/
