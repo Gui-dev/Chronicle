@@ -1,6 +1,7 @@
 'use client'
 
 import { MemoryCardFull } from '@/components/memory-card'
+import { useAuth } from '@/hooks/use-auth'
 import type { Memory, PaginatedResponse } from '@/hooks/use-memories'
 import { formatElapsed } from '@/lib/format-elapsed'
 import { Button } from '@chronicle/ui'
@@ -57,6 +58,10 @@ export function MemoryTimeline({
   emptyDescription,
   emptyAction,
 }: MemoryTimelineProps) {
+  // Resolved once per page rather than per card: 20 cards calling useAuth()
+  // would fire 20 duplicate session requests.
+  const { user } = useAuth()
+
   if (isLoading) {
     return <TimelineSkeleton />
   }
@@ -102,7 +107,7 @@ export function MemoryTimeline({
                 <div className="h-px flex-1 bg-card" />
               </div>
             )}
-            <MemoryCardFull memory={memory} />
+            <MemoryCardFull memory={memory} isOwner={user?.id === memory.userId} />
           </div>
         ))}
       </div>

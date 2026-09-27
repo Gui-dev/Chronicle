@@ -2,7 +2,6 @@
 
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { PhotoGallery } from '@/components/photo-gallery'
-import { useAuth } from '@/hooks/use-auth'
 import { useDeleteMemory } from '@/hooks/use-delete-memory'
 import type { Memory } from '@/hooks/use-memories'
 import { api } from '@/lib/api-client'
@@ -28,8 +27,8 @@ import { toast } from 'sonner'
 
 interface MemoryCardFullProps {
   memory: Memory
-  /** Overrides the session-based ownership check. Defaults to `user.id === memory.userId`. */
-  isOwner?: boolean
+  /** Whether the signed-in user owns this memory. Computed once per page by `MemoryTimeline`. */
+  isOwner: boolean
 }
 
 function formatUtcDate(dateStr: string): string {
@@ -88,13 +87,12 @@ function photoSizes(photoCount: number): string {
 }
 
 export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [isPlaying, setIsPlaying] = useState(false)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const owner = isOwner ?? (!!user && user.id === memory.userId)
+  const owner = isOwner
   const deleteMemory = useDeleteMemory()
 
   const toggleVisibility = useMutation({
@@ -142,7 +140,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
   const relativeDate = formatRelativeDate(memory.memoryDate)
 
   return (
-    <article className="relative group">
+    <article className="relative group" data-testid={`memory-card-${memory.id}`}>
       <div className="absolute -left-6 sm:-left-8.75 top-6 h-5 w-5 rounded-full border-4 border-background bg-primary shadow-[0_0_8px_rgba(240,192,64,0.5)] z-10" />
 
       <div className="mb-3 flex items-center gap-3">
@@ -183,6 +181,8 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                 <button
                   type="button"
                   onClick={() => setIsPlaying(!isPlaying)}
+                  aria-label={isPlaying ? 'Pausar trilha' : 'Reproduzir trilha'}
+                  aria-pressed={isPlaying}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-background"
                 >
                   {isPlaying ? (
@@ -196,20 +196,20 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
 
             {owner && (
               <div className="flex items-center gap-1.5">
-                <Link
-                  href={`/memories/${memory.id}/edit`}
-                  data-testid="card-edit"
-                  aria-label="Editar memória"
-                  title="Editar"
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
                 >
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                  <Link
+                    href={`/memories/${memory.id}/edit`}
+                    data-testid="card-edit"
+                    aria-label="Editar memória"
                   >
                     <Pencil className="h-4 w-4" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
 
                 <Button
                   variant="outline"
@@ -321,6 +321,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
               type="button"
               data-testid="narrative-toggle"
               aria-expanded={narrativeOpen}
+              aria-controls={`narrative-panel-${memory.id}`}
               onClick={() => setNarrativeOpen(!narrativeOpen)}
               className="flex w-full items-center justify-between rounded-2xl border border-primary/30 bg-background/60 p-4 text-left transition-all hover:bg-background"
             >
@@ -346,7 +347,10 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
             </button>
 
             {narrativeOpen && (
-              <div className="mt-4 rounded-2xl border border-card bg-background/40 p-5 font-serif text-sm leading-relaxed italic text-gray-300">
+              <div
+                id={`narrative-panel-${memory.id}`}
+                className="mt-4 rounded-2xl border border-card bg-background/40 p-5 font-serif text-sm leading-relaxed italic text-gray-300"
+              >
                 <p>{memory.aiNarrative}</p>
                 {owner && (
                   <Button
