@@ -213,3 +213,79 @@
 ### 6.6 E2E
 - [x] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
 - [x] Novos specs: home pública, menu logado, ações de dono, galeria, perfil
+
+---
+
+## Fase 7: Produto Maduro
+
+Origem: auditoria de 11 melhorias propostas, agrupadas em 7 fases por faixa de risco.
+Cada fase é autocontida e entregável; a ordem vai do que tem menor chance de retrabalho
+para o que mexe em segurança e privacidade.
+
+Spec detalhado da 7.0: `docs/superpowers/specs/2026-09-27-phase-7-0-foundation-design.md`
+
+### 7.0 Fundação — performance, busca e qualidade
+- [ ] `EXTRACT` de ano/mês reescrito como intervalo (predicado sargável)
+- [ ] Teste de equivalência: intervalo == `EXTRACT` para dados cruzando 31/12 e 01/01
+- [ ] Índices btree: `(user_id, memory_date DESC)`, `memory_date DESC WHERE is_public`,
+      `memory_photos/people/tags(memory_id)`, `memory_tags(name)`
+- [ ] `CREATE EXTENSION pg_trgm` + índices GIN em `title`, `content`, `location_name`, `weather_desc`
+      (só na migration, nunca no schema — SQLite in-memory não suporta)
+- [ ] N+1 eliminado: 3 queries em lote com `inArray` + agrupamento (`4 + 3N` → 5 constantes)
+- [ ] Teste que trava a contagem constante de queries
+- [ ] `search-query.ts`: parser da gramática de prefixos + testes unitários
+- [ ] Busca na API: query parseada → condições Drizzle (AND entre dimensões)
+- [ ] Busca por autor (`@user`) via join em `users`
+- [ ] `searchMeta` na resposta (query canônica, para os chips virem do servidor)
+- [ ] `SearchDialog` no header: debounce 300ms, `Cmd/Ctrl+K` e `/`, setas+Enter, foco restaurado
+- [ ] Página `/search?q=` reaproveitando `MemoryTimeline` (conserta o 404 existente)
+- [ ] Chips removíveis da query parseada reescrevendo a URL
+- [ ] "Nova Memória" no header (logado → `/memories/new`, anônimo → `/login`)
+- [ ] Input de busca sai dos filtros da timeline; `search` sai do `useFilters` da página
+- [ ] `useDebouncedValue` extraído para `apps/web/src/hooks/`
+- [ ] 3 `noExplicitAny` eliminados (wizard, `server.ts`, `auth.routes.spec.ts`)
+- [ ] `EXPLAIN ANALYZE` confirmando Index/Bitmap Index Scan em vez de Seq Scan
+- [ ] E2E: `filter-memory.spec.ts` reescrito + novo `search.spec.ts`
+
+### 7.1 Uploads Resilientes
+- [ ] Validação de MIME e assinatura de arquivo no módulo de fotos
+- [ ] Normalização/processamento de imagem e extração de dimensões
+- [ ] Feedback de progresso por arquivo e por memória
+- [ ] Retry de upload individual com backoff
+- [ ] Atomicidade: memórias com falha de foto não viram registro pela metade
+- [ ] Testes de upload inválido, excedente de tamanho e falha parcial
+
+### 7.2 Filtros e IA Editorial
+- [ ] Inputs de clima, localização e tag na UI (estado já existe, falta renderizar)
+- [ ] Filtro por artwork exposto no schema e na API
+- [ ] Tono (`aiMood`) selecionável pelo usuário e aplicado à regeneração da narrativa
+- [ ] Regeração parcial (só narrativa, sem tocar em data/fotos/pessoas)
+- [ ] Versões da narrativa com histórico e restauração
+- [ ] Chips de tag/pessoa clicáveis a partir do card
+
+### 7.3 Confiança do Usuário
+- [ ] Exportação dos dados (JSON + mídia) com request autenticado e job assíncrono
+- [ ] Lixeira com `deletedAt` e restauração, em vez de hard delete
+- [ ] Exclusão de conta com confirmação e limpeza de MinIO
+- [ ] Tela de privacidade e gestão de dados
+
+### 7.4 Compartilhamento
+- [ ] Link privado com token expirável para memórias não públicas
+- [ ] Nível de acesso por memória além de público/privado
+- [ ] Prévia redigida para memória compartilhada (sem dados sensíveis do autor)
+- [ ] Lista de memórias compartilhadas e revogação de acesso
+
+### 7.5 Retrospectivas
+- [ ] "Há um ano" na home, com memória do período
+- [ ] Resumos por período e novos itens desde a última visita
+- [ ] Mapa de lugares visitados a partir de `locationLat`/`locationLng`
+- [ ] Recorrências: pessoas, lugares e temas mais frequentes
+- [ ] Mês/ano no formato "setembro de 2026" na timeline
+
+### 7.6 Acessibilidade e Mobile
+- [ ] Auditoria de teclado em timeline, galeria, modal de busca e wizard
+- [ ] Contraste AA em todo o conjunto de cores atual
+- [ ] Gerenciamento de foco em lightbox e dialogs
+- [ ] Timeline em coluna única no mobile
+- [ ] Wizard em passos menores no mobile
+- [ ] Landmarks e `aria-live` para resultados de busca e estado de upload
