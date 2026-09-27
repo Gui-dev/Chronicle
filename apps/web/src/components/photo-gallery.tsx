@@ -19,9 +19,19 @@ interface PhotoGalleryProps {
   heading?: string | null
   /** Extra classes merged into the thumbnail grid, to override the column layout. */
   className?: string
+  /** Extra classes merged into each thumbnail, to override aspect ratio / rounding. */
+  itemClassName?: string
+  /** `sizes` hint for the thumbnail images, so the optimizer fetches the right width. */
+  sizes?: string
 }
 
-export function PhotoGallery({ photos, heading = 'Fotos', className }: PhotoGalleryProps) {
+export function PhotoGallery({
+  photos,
+  heading = 'Fotos',
+  className,
+  itemClassName,
+  sizes = '(max-width: 640px) 50vw, (max-width: 768px) 33vw, 176px',
+}: PhotoGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   useEffect(() => {
@@ -53,13 +63,16 @@ export function PhotoGallery({ photos, heading = 'Fotos', className }: PhotoGall
             key={photo.id}
             type="button"
             onClick={() => setLightboxIndex(index)}
-            className="group relative cursor-pointer overflow-hidden rounded-lg aspect-square"
+            className={cn(
+              'group relative cursor-pointer overflow-hidden rounded-lg aspect-square',
+              itemClassName,
+            )}
           >
             <Image
               src={photo.url}
               alt={photo.filename || 'Foto da memória'}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 176px"
+              sizes={sizes}
               className="object-cover transition-transform group-hover:scale-105"
             />
           </button>

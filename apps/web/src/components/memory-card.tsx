@@ -81,6 +81,12 @@ function photoGridClass(photoCount: number): string {
   return 'grid-cols-1 pt-2 sm:grid-cols-3 md:grid-cols-3'
 }
 
+function photoSizes(photoCount: number): string {
+  if (photoCount === 1) return '(max-width: 640px) 100vw, 672px'
+  if (photoCount === 2) return '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 330px'
+  return '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 216px'
+}
+
 export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -95,9 +101,9 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
     mutationFn: async (isPublic: boolean) => {
       await api.put(`/api/memories/${memory.id}`, { isPublic })
     },
-    onSuccess: () => {
+    onSuccess: (_data, newIsPublic) => {
       queryClient.invalidateQueries({ queryKey: ['memories'] })
-      toast.success(`Memória agora é ${memory.isPublic ? 'privada' : 'pública'}`)
+      toast.success(`Memória agora é ${newIsPublic ? 'pública' : 'privada'}`)
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Erro ao alterar a visibilidade')
@@ -304,6 +310,8 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
             photos={memory.photos}
             heading={null}
             className={photoGridClass(memory.photos.length)}
+            itemClassName="h-44 rounded-2xl border border-card aspect-auto"
+            sizes={photoSizes(memory.photos.length)}
           />
         )}
 
