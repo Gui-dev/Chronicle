@@ -2,13 +2,27 @@
 
 import { RequireAuth } from '@/components/require-auth'
 import { useMemory } from '@/hooks/use-memory'
+import { useDeleteMemoryPhoto, useUploadMemoryPhoto } from '@/hooks/use-memory-photos'
 import { useUpdateMemory } from '@/hooks/use-update-memory'
 import { updateMemorySchema } from '@chronicle/schemas'
 import { Button } from '@chronicle/ui'
-import { ArrowLeft, Calendar, Cloud, Loader2, MapPin, Music, Save, Tag, Users } from 'lucide-react'
+import {
+  ArrowLeft,
+  Calendar,
+  Cloud,
+  ImagePlus,
+  Loader2,
+  MapPin,
+  Music,
+  Save,
+  Tag,
+  Users,
+  X,
+} from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function EditMemoryPage() {
   const params = useParams()
@@ -39,6 +53,19 @@ function EditMemoryForm({ id }: { id: string }) {
   const [musicArtist, setMusicArtist] = useState('')
   const [musicUrl, setMusicUrl] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const uploadPhoto = useUploadMemoryPhoto(id)
+  const deletePhoto = useDeleteMemoryPhoto(id)
+
+  const photos = memory?.photos ?? []
+
+  const handlePhotoInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).filter((file) => file.type.startsWith('image/'))
+    e.target.value = ''
+    for (const file of files) {
+      uploadPhoto.mutate(file)
+    }
+  }
 
   useEffect(() => {
     if (memory) {
@@ -298,6 +325,68 @@ function EditMemoryForm({ id }: { id: string }) {
             placeholder="viagem, família, natureza..."
             className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
+        </div>
+
+        <div className="border-t border-card pt-6">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-text">
+            <ImagePlus className="h-4 w-4" /> Fotos
+          </h3>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            data-testid="edit-photo-input"
+            onChange={handlePhotoInput}
+            className="hidden"
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={uploadPhoto.isPending}
+            data-testid="edit-photo-add"
+            className="border-card text-text hover:border-primary hover:text-primary"
+          >
+            {uploadPhoto.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+            Adicionar fotos
+          </Button>
+
+          {photos.length > 0 && (
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {photos.map((photo) => (
+                <div
+                  key={photo.id}
+                  data-testid="edit-photo"
+                  className="group relative aspect-square overflow-hidden rounded-lg"
+                >
+                  <Image
+                    src={photo.url}
+                    alt={photo.filename || 'Foto da memória'}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 200px"
+                    className="object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => deletePhoto.mutate(photo.id)}
+                    disabled={deletePhoto.isPending}
+                    aria-label="Remover foto"
+                    data-testid="edit-photo-remove"
+                    className="absolute right-2 top-2 cursor-pointer rounded-full bg-background/80 p-1"
+                  >
+                    <X className="h-4 w-4 text-text" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-card pt-6">
