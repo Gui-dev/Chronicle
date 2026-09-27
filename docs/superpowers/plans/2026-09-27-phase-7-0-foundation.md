@@ -23,6 +23,9 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 5. `useFilters` expõe `search` como chave comum de `MemoryFiltersInput`; o `MemoryTimeline` já resolve `isOwner` internamente (linha 110) e tem skeleton, erro com retry, vazio e paginação — a página `/search` reaproveita tudo.
 6. `user-menu.spec.ts:21,43` dependem de `data-testid="menu-nova"` (o item "Nova Memória" do dropdown). **`search-button` não é usado por nenhum spec.** Só um spec quebra com a remoção do input de busca: `filter-memory.spec.ts:41`.
 7. `MemoryData` em `helpers.ts` não aceita `weatherDesc`, mas `createMemorySchema:32` aceita. O helper precisa ser estendido para o E2E de `clima:`.
+8. **Nomes dos pacotes de workspace:** `apps/api` chama-se `api` e `apps/web` chama-se `web` — **sem** o escopo `@chronicle/`, que só existe em `packages/*`. O filtro `pnpm --filter @chronicle/api` não casa com nada. Use `pnpm --filter api` e `pnpm --filter web`.
+9. **`pnpm --filter api test -- -t 'nome'` não filtra.** O `--` é repassado literalmente e o vitest ignora o `-t`, rodando a suíte inteira — o passo "rodar para confirmar que falha" passaria à toa. A forma que filtra é `pnpm --filter api exec vitest run -t 'nome'`.
+10. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
@@ -81,7 +84,7 @@ E adicionar `gte, lt, inArray` ao objeto retornado pelo mock:
 
 - [ ] **Step 3: Verificar que nada quebrou**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS — todos os specs do módulo `memories` continuam verdes.
 
 - [ ] **Step 4: Commit**
@@ -134,7 +137,7 @@ Adicionar em `describe('findAll')`:
 
 - [ ] **Step 2: Rodar e confirmar que falha**
 
-Run: `pnpm --filter @chronicle/api test -- -t 'sargable'`
+Run: `pnpm --filter api exec vitest run -t 'sargable'`
 Expected: FAIL — `EXTRACT` ainda está nas condições.
 
 - [ ] **Step 3: Implementar o intervalo**
@@ -187,7 +190,7 @@ Substituindo os blocos `if (year)` e `if (month)` por:
 
 - [ ] **Step 4: Rodar e confirmar que passa**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS — inclui os dois testes novos e os de privacidade existentes.
 
 - [ ] **Step 5: Commit**
@@ -253,7 +256,7 @@ Adicionar em `describe('findAll')`:
 
 - [ ] **Step 3: Rodar e confirmar que falha**
 
-Run: `pnpm --filter @chronicle/api test -- -t 'once per page'`
+Run: `pnpm --filter api exec vitest run -t 'once per page'`
 Expected: FAIL — `times('memoryPhotos')` é 4.
 
 - [ ] **Step 4: Trocar por 3 queries em lote**
@@ -353,7 +356,7 @@ Adicionar em `describe('findAll')`:
 
 - [ ] **Step 6: Rodar e confirmar que passa**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS — contagem constante e ordenação.
 
 - [ ] **Step 7: Resetar `junctionRows` no `beforeEach`**
@@ -976,7 +979,7 @@ Adicionar em `describe('findAll')`:
 
 - [ ] **Step 2: Rodar e confirmar que falha**
 
-Run: `pnpm --filter @chronicle/api test -- -t 'bare term'`
+Run: `pnpm --filter api exec vitest run -t 'bare term'`
 Expected: FAIL — o `search` atual monta um único `ilike` com a string inteira.
 
 - [ ] **Step 3: Importar o parser e reescrever o bloco de `search`**
@@ -1036,7 +1039,7 @@ Substituir os blocos `if (year)`, `if (month)`, `if (weather)`, `if (location)` 
 
 - [ ] **Step 4: Rodar e confirmar que passa**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS — inclui os testes de ano/mês da Task 2.
 
 - [ ] **Step 5: Commit**
@@ -1100,7 +1103,7 @@ Resetar `mocks.state.leftJoins = []` no `beforeEach`.
 
 - [ ] **Step 3: Rodar e confirmar que falha**
 
-Run: `pnpm --filter @chronicle/api test -- -t 'author'`
+Run: `pnpm --filter api exec vitest run -t 'author'`
 Expected: FAIL.
 
 - [ ] **Step 4: Implementar o join**
@@ -1148,7 +1151,7 @@ E montar as duas queries com o join quando o autor estiver presente:
 
 - [ ] **Step 5: Rodar e confirmar que passa**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1197,7 +1200,7 @@ git commit -m "feat(memories): search memories by author"
 
 - [ ] **Step 2: Rodar e confirmar que falha**
 
-Run: `pnpm --filter @chronicle/api test -- -t 'searchMeta'`
+Run: `pnpm --filter api exec vitest run -t 'searchMeta'`
 Expected: FAIL — `searchMeta` é `undefined`.
 
 - [ ] **Step 3: Implementar**
@@ -1219,7 +1222,7 @@ A rota em `memories.routes.ts:63-65` faz `reply.send(result)` e repassa o campo 
 
 - [ ] **Step 4: Rodar e confirmar que passa**
 
-Run: `pnpm --filter @chronicle/api test`
+Run: `pnpm --filter api test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2001,7 +2004,7 @@ test.describe('Busca', () => {
 
 - [ ] **Step 4: Rodar a suíte E2E**
 
-Run: `pnpm test:e2e` (ou `pnpm --filter @chronicle/web test:e2e`, conforme o script)
+Run: `pnpm test:e2e` (o script raiz roda `turbo run test:e2e`; `apps/web` tem `test:e2e: playwright test`)
 Expected: PASS.
 
 > Só Chromium: não há Firefox instalado neste ambiente.
