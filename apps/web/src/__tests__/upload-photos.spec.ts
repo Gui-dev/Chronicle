@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import { expect } from '@playwright/test'
 import { test } from './fixtures'
-import { createMemory } from './helpers'
-
-const PHOTO_FIXTURE = path.join(__dirname, 'photo-fixture.png')
+import { PHOTO_FIXTURE, createMemory } from './helpers'
 
 test.describe('Upload de fotos', () => {
   test('uploads a photo from the edit page', async ({ authenticatedPage }) => {

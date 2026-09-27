@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { type Page, type Response, expect } from '@playwright/test'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
+const PHOTO_FIXTURE = path.join(__dirname, 'photo-fixture.png')
 
 interface MemoryData {
   title: string
@@ -9,6 +12,7 @@ interface MemoryData {
   locationName?: string
   people?: string[]
   tags?: string[]
+  isPublic?: boolean
 }
 
 /**
@@ -28,6 +32,7 @@ export async function createMemory(page: Page, data: MemoryData): Promise<string
       locationName: data.locationName,
       people: data.people,
       tags: data.tags,
+      isPublic: data.isPublic,
     },
   })
 
@@ -38,6 +43,48 @@ export async function createMemory(page: Page, data: MemoryData): Promise<string
   const body = (await response.json()) as { data: { id: string } }
   return body.data.id
 }
+
+/** Reads a memory back, to assert what a UI action actually persisted. */
+export async function fetchMemory(
+  page: Page,
+  id: string,
+): Promise<{ isPublic: boolean; photos: { id: string; filename: string | null }[] }> {
+  const response = await page.request.get(`${API_URL}/api/memories/${id}`)
+
+  if (!response.ok()) {
+    throw new Error(`GET /api/memories/${id} failed with ${response.status()}`)
+  }
+
+  const body = (await response.json()) as {
+    data: { isPublic: boolean; photos: { id: string; filename: string | null }[] }
+  }
+  return body.data
+}
+
+/**
+ * Attaches photos to a memory through the API, so gallery specs do not have to
+ * drive the wizard's photo step. `page` must be authenticated: the route 401s
+ * without a session.
+ */
+export async function addPhotos(page: Page, memoryId: string, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    const response = await page.request.post(`${API_URL}/api/memories/${memoryId}/photos`, {
+      multipart: {
+        file: {
+          name: `foto-${i + 1}.png`,
+          mimeType: 'image/png',
+          buffer: readFileSync(PHOTO_FIXTURE),
+        },
+      },
+    })
+
+    if (!response.ok()) {
+      throw new Error(`POST photos failed with ${response.status()}: ${await response.text()}`)
+    }
+  }
+}
+
+export { PHOTO_FIXTURE }
 
 const STEP_HEADINGS = [
   'Informações Básicas',

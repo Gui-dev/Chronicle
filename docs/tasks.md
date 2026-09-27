@@ -212,4 +212,4 @@
 
 ### 6.6 E2E
 - [x] Ajustar specs existentes (timeline, filtros, delete, edit, fotos)
-- [ ] Novos specs: home pública, menu logado, ações de dono, galeria, perfil
+- [x] Novos specs: home pública, menu logado, ações de dono, galeria, perfil

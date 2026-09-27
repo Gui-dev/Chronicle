@@ -164,13 +164,18 @@ export class MemoriesService {
       .from(memories)
       .where(and(...conditions))
 
+    // postgres returns count(*) as a string (int8), so `total` has to be
+    // coerced: callers compare it against numbers, and the profile pluralises
+    // on `total === 1`, which a "1" would never match.
+    const total = Number(countResult.count)
+
     return {
       data: enrichedResults,
       pagination: {
         page,
         limit,
-        total: countResult.count,
-        totalPages: Math.ceil(countResult.count / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     }
   }

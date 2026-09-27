@@ -1,16 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { type Page, test as base } from '@playwright/test'
 
-// Specs create fixed titles, so a per run reset is not enough: retries and
-// repeat-each would leave a previous copy of the same title behind and make
-// count assertions drift. Resetting before every test keeps each one isolated.
-base.beforeEach(() => {
-  execFileSync('pnpm', ['--filter', '@chronicle/db', 'e2e:reset'], {
-    cwd: '../..',
-    stdio: 'pipe',
-  })
-})
-
 async function login(page: Page) {
   await page.goto('/login')
   await page.fill('[data-testid="email"]', 'deb@test.com')
@@ -19,8 +9,37 @@ async function login(page: Page) {
   await page.waitForURL('/', { timeout: 10000 })
 }
 
-export const test = base.extend<{ authenticatedPage: Page }>({
-  authenticatedPage: async ({ browser }, use) => {
+function resetTestData() {
+  execFileSync('pnpm', ['--filter', '@chronicle/db', 'e2e:reset'], {
+    cwd: '../..',
+    stdio: 'pipe',
+  })
+}
+
+export const test = base.extend<{ resetData: undefined; authenticatedPage: Page }>({
+  // Specs share one account and create fixed titles, so a per run reset is not
+  // enough: a leftover from a previous spec would satisfy a count assertion.
+  //
+  // This has to be an auto fixture rather than a beforeEach hook. A hook
+  // registered on `base` at the top of a shared module only reached the first
+  // spec file that imported it, so every other file ran against whatever the
+  // previous one left behind. Fixtures live on the exported `test`, so every
+  // spec that imports this module gets it.
+  resetData: [
+    // Playwright requires the destructuring pattern here, so the empty object
+    // it complains about is mandatory rather than accidental.
+    // biome-ignore lint/correctness/noEmptyPattern: mandated by Playwright
+    async ({}, use) => {
+      resetTestData()
+      await use(undefined)
+    },
+    { auto: true },
+  ],
+
+  // Declared only to order this after the reset, so a test never logs in
+  // against an account the reset has not cleaned yet.
+  // biome-ignore lint/correctness/noUnusedVariables: ordering dependency
+  authenticatedPage: async ({ browser, resetData }, use) => {
     const context = await browser.newContext()
     const page = await context.newPage()
     await login(page)

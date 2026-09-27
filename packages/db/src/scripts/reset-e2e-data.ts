@@ -28,7 +28,16 @@ async function main() {
       delete from memories where user_id = ${user[0].id} returning id
     `
 
-    console.log(`[e2e-reset] deleted ${deleted.length} memories owned by ${E2E_EMAIL}`)
+    // The profile spec uploads and removes an avatar, and "Remover foto" only
+    // renders when users.image is set. Leaving it behind would make the next
+    // run start with an avatar it did not upload.
+    const [cleared] = await sql<{ image: string | null }[]>`
+      update users set image = null where id = ${user[0].id} returning image
+    `
+
+    const avatarNote = cleared?.image ? ', cleared avatar' : ''
+
+    console.log(`[e2e-reset] deleted ${deleted.length} memories owned by ${E2E_EMAIL}${avatarNote}`)
   } finally {
     await sql.end()
   }
