@@ -34,6 +34,8 @@ describe('Memories Schema', () => {
       ['music_cover', 'PgText', false],
       ['is_public', 'PgBoolean', true],
       ['ai_narrative', 'PgText', false],
+      ['ai_mood', 'PgVarchar', false],
+      ['ai_themes', 'PgArray', false],
       ['created_at', 'PgTimestamp', true],
       ['updated_at', 'PgTimestamp', true],
     ].map(([name, type, notNull]) => ({ name, type, notNull }))
