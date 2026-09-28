@@ -470,32 +470,52 @@ convenção de `as never` já presente nos testes do schema:
 
 ```ts
 describe('Memories indexes', () => {
-  const indexNames = (table: Parameters<typeof getTableConfig>[0]) =>
-    getTableConfig(table).indexes.map((index) => index.config.name)
+  // Assert the columns, not just the name. A name-only test passes with the
+  // index on the wrong columns, which is the entire risk surface here: an index
+  // on the right name in the wrong order is unusable by the query it serves.
+  const indexOn = (table: PgTable, name: string) => {
+    const found = getTableConfig(table).indexes.find((index) => index.config.name === name)
+    if (!found) return undefined
+    return found.config.columns.map((column) => column.name)
+  }
 
-  it('indexes the owner timeline and the public feed', () => {
-    expect(indexNames(memories as never)).toEqual(
-      expect.arrayContaining(['memories_user_date_idx', 'memories_public_date_idx']),
+  it('indexes the owner timeline as user_id then memory_date descending', () => {
+    expect(indexOn(memories, 'memories_user_date_idx')).toEqual(['user_id', 'memory_date'])
+  })
+
+  it('indexes the public feed on is_public then memory_date, not partially', () => {
+    // Partial would read `WHERE is_public = true`, which the logged-in feed's
+    // `is_public = true OR user_id = $1` cannot be proven to imply.
+    const found = getTableConfig(memories).indexes.find(
+      (index) => index.config.name === 'memories_public_date_idx',
     )
+    expect(found?.config.where).toBeUndefined()
+    expect(indexOn(memories, 'memories_public_date_idx')).toEqual(['is_public', 'memory_date'])
   })
 
   it('indexes every junction table by memory_id', () => {
-    expect(indexNames(memoryPhotos as never)).toContain('memory_photos_memory_idx')
-    expect(indexNames(memoryPeople as never)).toContain('memory_people_memory_idx')
-    expect(indexNames(memoryTags as never)).toContain('memory_tags_memory_idx')
+    expect(indexOn(memoryPhotos, 'memory_photos_memory_idx')).toEqual(['memory_id'])
+    expect(indexOn(memoryPeople, 'memory_people_memory_idx')).toEqual(['memory_id'])
+    expect(indexOn(memoryTags, 'memory_tags_memory_idx')).toEqual(['memory_id'])
   })
 
   it('indexes tags by name for the #tag search', () => {
-    expect(indexNames(memoryTags as never)).toContain('memory_tags_name_idx')
+    expect(indexOn(memoryTags, 'memory_tags_name_idx')).toEqual(['name'])
   })
 })
 ```
 
-E ampliar o import existente para incluir as tabelas junction:
+E ampliar o import existente para incluir as tabelas junction e o tipo da tabela:
 
 ```ts
+import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core'
 import { memories, memoryPeople, memoryPhotos, memoryTags, users } from '../index'
 ```
+
+> Os `as never` que os testes antigos usavam em `getTableConfig(memories as never)` são
+> desnecessários — `Parameters<typeof getTableConfig>[0]` aceita as tabelas diretamente. Os
+> testes novos não usam cast nenhum; trocar os antigos fica para a Task 15, junto com a limpeza
+> geral de tipos.
 
 - [ ] **Step 2: Rodar e confirmar que falha**
 
@@ -507,7 +527,6 @@ Expected: FAIL — nenhum índice declarado.
 Em `packages/db/src/schema/memories.ts`:
 
 ```ts
-import { sql } from 'drizzle-orm'
 import { boolean, decimal, index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
@@ -519,10 +538,13 @@ export const memories = pgTable(
   (table) => [
     // Own timeline, already ordered newest-first by findAll.
     index('memories_user_date_idx').on(table.userId, table.memoryDate.desc()),
-    // Public feed. Partial, so it stays small instead of indexing every private row.
-    index('memories_public_date_idx')
-      .on(table.memoryDate.desc())
-      .where(sql`${table.isPublic} = true`),
+    // Public feed. NOT partial: the logged-in feed is
+    // `is_public = true OR user_id = $1`, and Postgres will not use a partial
+    // index for a query it cannot prove implies the index predicate — its
+    // implication check does not reason through OR. Indexed on (is_public,
+    // memory_date) instead, so it serves the is_public arm of that OR directly
+    // and still keeps the DESC ordering the timeline wants.
+    index('memories_public_date_idx').on(table.isPublic, table.memoryDate.desc()),
   ],
 )
 ```
@@ -595,7 +617,11 @@ Esta task **não tem teste automatizável** (ver pré-requisito 3). O SQL de ver
 Acrescentar ao final do arquivo `.sql` gerado na Task 4:
 
 ```sql
--- GIN trigram indexes: `search`, `location` and `weather` all match with
+-- `memory_tags.name` entra na lista pelo mesmo motivo dos outros: o filtro de tag é
+  `ilike(memoryTags.name, '%tag%')`, com wildcard inicial, que btree não atende. O índice btree
+  `memory_tags_name_idx` da Task 4 fica para o caminho de igualdade exata; sozinho ele não serve
+  o `#tag`.
+- GIN trigram indexes: `search`, `location` and `weather` all match with
 -- ilike '%term%'. A leading wildcard cannot use a btree, so without trigram the
 -- new search is a sequential scan — the exact cost this phase exists to remove.
 --
@@ -608,6 +634,7 @@ CREATE INDEX memories_title_trgm_idx ON memories USING gin (title gin_trgm_ops);
 CREATE INDEX memories_content_trgm_idx ON memories USING gin (content gin_trgm_ops);
 CREATE INDEX memories_location_trgm_idx ON memories USING gin (location_name gin_trgm_ops);
 CREATE INDEX memories_weather_trgm_idx ON memories USING gin (weather_desc gin_trgm_ops);
+CREATE INDEX memory_tags_name_trgm_idx ON memory_tags USING gin (name gin_trgm_ops);
 ```
 
 - [ ] **Step 2: Aplicar e confirmar que a extensão existe**
@@ -627,11 +654,15 @@ Rodar com dados representativos já na base:
 ```sql
 EXPLAIN ANALYZE SELECT * FROM memories WHERE is_public = true ORDER BY memory_date DESC LIMIT 20;
 EXPLAIN ANALYZE SELECT * FROM memories WHERE user_id = 'x' ORDER BY memory_date DESC LIMIT 20;
+-- A forma que a rota realmente emite para quem está logado
+-- (`memories.routes.ts:63` sempre passa `session?.user.id`)
+EXPLAIN ANALYZE SELECT * FROM memories WHERE is_public = true OR user_id = 'x' ORDER BY memory_date DESC LIMIT 20;
 EXPLAIN ANALYZE SELECT * FROM memories WHERE title ILIKE '%festa%';
+EXPLAIN ANALYZE SELECT * FROM memory_tags WHERE name ILIKE '%festa%';
 EXPLAIN ANALYZE SELECT * FROM memory_photos WHERE memory_id IN ('00000000-0000-0000-0000-000000000000');
 ```
 
-Expected: `Index Scan` ou `Bitmap Index Scan` nos quatro. `Seq Scan` nas tabelas pequenas é aceitável e esperado — o planner escolhe seq scan abaixo do limiar; o que invalida a task é `Seq Scan` **com filtro de índice disponível e tabela grande**, então repetir com a base de produção ou com `SET enable_seqscan = off` para forçar o planner:
+Expected: `Index Scan` ou `Bitmap Index Scan` nos seis. `Seq Scan` nas tabelas pequenas é aceitável e esperado — o planner escolhe seq scan abaixo do limiar; o que invalida a task é `Seq Scan` **com filtro de índice disponível e tabela grande**, então repetir com a base de produção ou com `SET enable_seqscan = off` para forçar o planner:
 
 ```sql
 SET enable_seqscan = off;
