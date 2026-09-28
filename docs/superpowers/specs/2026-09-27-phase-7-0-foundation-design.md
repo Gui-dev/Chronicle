@@ -175,14 +175,33 @@ export function serializeSearchQuery(q: ParsedSearchQuery): string
 
 `serialize` existe porque é o que permite os chips removíveis reescrevendo a URL.
 
-A gramática vive **só no servidor**. O cliente nunca interpreta prefixo, o que impede a
-divergência entre web e qualquer consumidor futuro da API.
+A gramática tem **uma implementação só**, em `packages/schemas` (§2.2). O web parseia com a
+mesma função da API, então não há o que divergir. O que continua proibido é o web *decidir* o que
+um prefixo significa.
 
 ### 2.3 Nenhum parâmetro novo na API
 
 O campo `search` de `memoryFiltersSchema` continua sendo o único param de texto e agora aceita
-a gramática inteira. Texto solto mantém o comportamento atual, então a mudança é aditiva e
-`filter-memory.spec.ts` continua fazendo sentido no servidor.
+a gramática inteira.
+
+> **Correção de uma contradição interna.** Este parágrafo dizia antes que "texto solto mantém o
+> comportamento atual, então a mudança é aditiva". Isso contradiz §2.1, e a Concrete é bem pior que
+> uma nota de rodapé: `search=praia sol` hoje é **um** `ilike '%praia sol%'`, ou seja, só acha
+> memória com as duas palavras **adjacentes, nesta ordem**. Depois desta fase passa a ser `praia` E
+> `sol`, em qualquer ordem e em qualquer coluna. Ou seja, a busca de texto solto muda de
+> comportamento — e muda para mais permissivo, o que é o que a §2.1 quer. Quem ler só este
+> parágrafo vai achar que nada mudou e vai estranhar o timeline devolvendo mais coisa. A
+> substitui por `filter-memory.spec.ts`, que vive em `apps/web/src/__tests__/`, continua fazendo
+> sentido — no cliente, não no servidor.
+
+**Precedência entre a gramática e os parâmetros de URL.** A search box e os selects de filtro
+descrevem as mesmas dimensões, então os dois podem falar ao mesmo tempo. A regra é: **a gramática
+vence o parâmetro de URL da mesma dimensão**, e o parâmetro é descartado sem vestígio. `?weather=Sol`
+com `clima:chuva` busca só `chuva`. A exceção é `?tag=`, que **não** é uma dimensão da gramática — é
+um filtro separado — então os dois se aplicam e viram dois `EXISTS` em AND: a memória precisa ter as
+duas tags. Consequência de UI, e é a Task 13 que tem de honrar: quando a query traz `clima:` ou
+`local:`, os selects têm que refletir a query (ou desabilitar), senão o dropdown continua dizendo
+`Sol` enquanto a busca devolve `chuva` — a interface mente sobre o que está filtrando.
 
 `@autor` exige join em `users` — nova condição, sem novo parâmetro.
 

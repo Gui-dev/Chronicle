@@ -1236,7 +1236,13 @@ Adicionar em `describe('findAll')`:
 - [ ] **Step 2: Rodar e confirmar que falha**
 
 Run: `pnpm --filter api exec vitest run -t 'bare term'`
-Expected: FAIL — o `search` atual monta um único `ilike` com a string inteira.
+Expected: FAIL para 8 dos 10 testes novos.
+
+> **Este passo estava errado e foi corrigido na revisão.** Dizia que o `search` antigo montava "um
+> único `ilike` com a string inteira". Não: o base já era `sql\`(title ilike '%…%' OR content
+> ilike '%…%')\``, dois `ilike`. Por isso `expands a bare term into a title/content OR condition`
+> **já passa no base** — é guarda, não driver de TDD. A divergência real do base é que ele tratava
+> a string inteira como **um** termo, então `praia sol` virava `%praia sol%` em vez de dois `AND`.
 
 - [ ] **Step 3: Importar o parser e reescrever o bloco de `search`**
 
@@ -1280,10 +1286,11 @@ Substituir os blocos `if (year)`, `if (month)`, `if (weather)`, `if (location)` 
     const grammar: ParsedSearchQuery | null = search ? parseSearchQuery(search) : null
     const hasGrammar = grammar !== null && !isEmptySearch(grammar)
 
-    // `||` here is a falsy test, not a default: `month` can be a string from the
-    // URL query, so `''` and `0` would read as "no month given" while a real
-    // '9' would not. `??` states the intent, and the month needs coercing to a
-    // number before it reaches `dateRange`.
+    // `??` e um teste de nullish, nao de falsy: `0` e um month valido de
+    // verdade, mesmo que `Number.isFinite(0)` seja true e `0` nao passe em
+    // `dateRange` — mas o boundary (`memoryFiltersSchema`, `memories.routes.ts:52`)
+    // ja rejeita month fora de 1..12 com 400, entao o servico nao revalida.
+    // Ver a nota de precedence grammar-vs-URL-param no spec §2.3.
     const effectiveMonthRaw = grammar?.month ?? month
     const effectiveMonth =
       effectiveMonthRaw === undefined ? undefined : Number(effectiveMonthRaw)
@@ -1342,6 +1349,14 @@ git commit -m "feat(memories): map the search grammar to query conditions"
 ---
 
 ### Task 8: Busca por autor via join
+
+> **Armadilha registrada pela revisão da Task 7.** Hoje `?search=@bruce` devolve o feed **inteiro**:
+> `isEmptySearch` conta `author`, então `hasGrammar` é true, os dois laços ficam vazios, e nenhuma
+> condição entra no `where`. Isso é o estado esperado no meio do plano (o join do autor é esta
+> task), mas a task original só afirmava `leftJoins.length === 1` — o que passa numa implementação
+> que faz o join e **esquece a condição**, devolvendo o feed inteiro sem nenhum teste reclamar. O
+> teste desta task tem que afirmar que o `where` recebeu o predicado de autor, não só que o join
+> aconteceu. A task 8 está corrigida para exigir as duas coisas.
 
 **Files:**
 - Modify: `apps/api/src/modules/memories/memories.service.ts:1-20, 139-170`
