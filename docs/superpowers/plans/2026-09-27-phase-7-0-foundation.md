@@ -25,7 +25,8 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 7. `MemoryData` em `helpers.ts` não aceita `weatherDesc`, mas `createMemorySchema:32` aceita. O helper precisa ser estendido para o E2E de `clima:`.
 8. **Nomes dos pacotes de workspace:** `apps/api` chama-se `api` e `apps/web` chama-se `web` — **sem** o escopo `@chronicle/`, que só existe em `packages/*`. O filtro `pnpm --filter @chronicle/api` não casa com nada. Use `pnpm --filter api` e `pnpm --filter web`.
 9. **`pnpm --filter api test -- -t 'nome'` não filtra.** O `--` é repassado literalmente e o vitest ignora o `-t`, rodando a suíte inteira — o passo "rodar para confirmar que falha" passaria à toa. A forma que filtra é `pnpm --filter api exec vitest run -t 'nome'`.
-10. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
+11. **Mês sem ano encolhe para o ano corrente, e isso é uma armadilha de UI.** O spec (linha 134) decide que `month` com `year` ausente usa o ano corrente, e é o que a Task 2 implementa. O comportamento antigo trazia setembro de *todos* os anos. Nos dois `mes:9` da busca isso é inofensivo, mas em `memory-filters.tsx` os `<select>` de ano e mês são independentes: escolher "Setembro" com "Ano" vazio passa a esconder todas as memórias de setembro dos anos anteriores, sem nenhuma indicação na UI. A Task 13 tem de fechar isso — ao escolher um mês, o ano tem de passar a corrente, ou o mês tem de ficar desabilitado até haver ano.
+12. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
@@ -596,7 +597,37 @@ SELECT count(*) FILTER (
 FROM memories;
 ```
 
-Expected: `old_year = new_year` e `old_jan = new_jan`.
+Dois casos que o SQL acima **nao** pega e que precisam ser conferidos, porque o intervalo
+usa `Date.UTC` e tem um `month ?? 12` que e o unico jeito de Dezembro virar 2027:
+
+```sql
+-- Dezembro: o limite exclusivo tem de cair em janeiro do ano seguinte
+SELECT count(*) FILTER (
+  WHERE memory_date >= '2026-12-01 00:00:00+00' AND memory_date < '2027-01-01 00:00:00+00'
+) AS dec_2026,
+       count(*) FILTER (
+  WHERE memory_date >= '2026-12-01 00:00:00+00' AND memory_date < '2026-12-01 00:00:00+00'
+) AS dec_quebrado;
+
+-- Mes sem ano: o spec diz que usa o ano corrente, entao precisa bater com EXTRACT
+-- restrito ao mesmo ano, e NAO com "setembro de todos os anos"
+SELECT count(*) FILTER (
+  WHERE EXTRACT(YEAR FROM memory_date) = 2026 AND EXTRACT(MONTH FROM memory_date) = 9
+) AS old_setembro,
+       count(*) FILTER (
+  WHERE memory_date >= '2026-09-01 00:00:00+00' AND memory_date < '2026-10-01 00:00:00+00'
+) AS new_setembro;
+```
+
+Expected: `old_year = new_year`, `old_jan = new_jan`, `dec_quebrado = 0`,
+`old_setembro = new_setembro`.
+
+> `dec_quebrado = 0` e o alarme: se `month ?? 12` virar `month + 1` sem o `?? 12`, o fim
+> do intervalo de Dezembro colide com o comeco e a query devolve zero silenciosamente.
+
+> O `month` sem `year` **mudou de comportamento** de proposito (o spec, linha 134, decide
+> assim): antes `EXTRACT(MONTH ...) = 9` trazia setembro de todos os anos, agora traz
+> setembro do ano corrente. Ver pre-requisito 11 para o impacto na UI.
 
 > Se `SHOW TimeZone` **não** for `UTC`, os dois lados divergem. Nesse caso, construir os limites com o offset da sessão em vez de `Date.UTC`, ajustar a Task 2 e o teste de equivalidade, e reexecutar.
 
@@ -1630,6 +1661,22 @@ git commit -m "feat(web): open the search dialog from the navbar and add a heade
 - [ ] **Step 1: Remover o input e o effect de debounce**
 
 Em `memory-filters.tsx`, apagar o bloco `const [searchInput, setSearchInput] = useState(...)` e o `useEffect` do `setTimeout`, e apagar o `<div className="relative flex-1 min-w-[200px]">` que contém o `Input` de busca.
+
+**Fechar a armadilha de mês-sem-ano (pre-requisito 11).** Os dois `<select>` são independentes e
+o serviço trata mês sem ano como "mês do ano corrente", o que esconderia as memórias dos anos
+anteriores sem aviso. Escolher o mês com o ano vazio tem de normalizar o ano para o corrente:
+
+```ts
+// O serviço interpreta mês sem ano como o mês do ano corrente, então o filtro
+// precisa mostrar o ano que ele realmente está aplicando.
+const onMonthChange = (value: string) => {
+  setMonth(value)
+  if (value && !year) setYear(String(new Date().getFullYear()))
+}
+```
+
+Confirmar no E2E da Task 16 que escolher só o mês traz um resultado só do ano corrente, e não
+um conjunto vazio.
 
 Atualizar `hasActiveFilters` para o que sobra:
 
