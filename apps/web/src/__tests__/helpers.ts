@@ -14,6 +14,7 @@ interface MemoryData {
   people?: string[]
   tags?: string[]
   isPublic?: boolean
+  photos?: Array<{ name: string; mimeType: string; buffer: Buffer }>
 }
 
 /**
@@ -123,7 +124,11 @@ const STEP_HEADINGS = [
 ] as const
 
 /** Drives the real creation wizard. Slow, so only use it to test the wizard. */
-export async function createMemoryViaWizard(page: Page, data: MemoryData): Promise<string> {
+export async function createMemoryViaWizard(
+  page: Page,
+  data: MemoryData,
+  options?: { expectFailure?: boolean },
+) {
   await page.goto('/memories/new')
   await page.fill('[data-testid="title"]', data.title)
 
@@ -137,6 +142,12 @@ export async function createMemoryViaWizard(page: Page, data: MemoryData): Promi
 
   if (data.locationName) {
     await page.fill('[data-testid="locationInput"]', data.locationName)
+  }
+
+  await goToStep(page, 3)
+
+  if (data.photos && data.photos.length > 0) {
+    await page.locator('[data-testid="photo-input"]').setInputFiles(data.photos)
   }
 
   await goToStep(page, 4)
@@ -172,6 +183,12 @@ export async function createMemoryViaWizard(page: Page, data: MemoryData): Promi
   // navigation the submit triggers, then reject because the button unmounted,
   // even though the POST already went through. waitForURL is the real signal.
   await submit.click({ force: true, noWaitAfter: true }).catch(() => {})
+
+  if (options?.expectFailure) {
+    await page.waitForSelector('text=Não foi possível salvar as fotos', { timeout: 30000 })
+    page.off('response', onResponse)
+    return ''
+  }
 
   await page.waitForURL('/')
   page.off('response', onResponse)

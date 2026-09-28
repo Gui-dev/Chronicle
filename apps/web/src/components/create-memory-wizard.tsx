@@ -1,6 +1,8 @@
 'use client'
 
 import { useCreateMemory } from '@/hooks/use-create-memory'
+import { usePhotoUpload } from '@/hooks/use-photo-upload'
+import { api } from '@/lib/api-client'
 import { createMemorySchema } from '@chronicle/schemas'
 import type { CreateMemoryFormValues, CreateMemoryInput } from '@chronicle/schemas'
 import { Button, Card } from '@chronicle/ui'
@@ -54,6 +56,7 @@ export function CreateMemoryWizard() {
   const router = useRouter()
 
   const createMemory = useCreateMemory()
+  const { uploadPhotos, progress, isUploading } = usePhotoUpload()
 
   const form = useForm<CreateMemoryFormValues, unknown, CreateMemoryInput>({
     resolver: zodResolver(createMemorySchema),
@@ -97,18 +100,13 @@ export function CreateMemoryWizard() {
     const result = await createMemory.mutateAsync(memoryData)
 
     if (photos.length > 0 && result?.data?.id) {
-      for (const photo of photos) {
-        const formData = new FormData()
-        formData.append('file', photo)
-
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/api/memories/${result.data.id}/photos`,
-          {
-            method: 'POST',
-            credentials: 'include',
-            body: formData,
-          },
-        )
+      const memoryId = result.data.id
+      try {
+        await uploadPhotos(memoryId, photos)
+      } catch {
+        await api.delete(`/api/memories/${memoryId}`).catch(() => {})
+        toast.error('Não foi possível salvar as fotos. A memória não foi criada.')
+        return
       }
     }
 
@@ -208,7 +206,7 @@ export function CreateMemoryWizard() {
             ) : (
               <Button
                 type="submit"
-                disabled={createMemory.isPending}
+                disabled={createMemory.isPending || isUploading}
                 data-testid="submit-memory"
                 className="inline-flex items-center gap-2 bg-primary text-background hover:bg-secondary"
               >
@@ -216,6 +214,13 @@ export function CreateMemoryWizard() {
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Criando...
+                  </>
+                ) : isUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {progress
+                      ? `Enviando foto ${progress.current} de ${progress.total}...`
+                      : 'Enviando fotos...'}
                   </>
                 ) : (
                   'Criar Memória'

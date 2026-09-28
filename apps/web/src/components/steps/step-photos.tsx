@@ -108,6 +108,7 @@ export function StepPhotos({ photos, onPhotosChange }: StepPhotosProps) {
           multiple
           onChange={handleFileChange}
           className="hidden"
+          data-testid="photo-input"
         />
       </div>
 

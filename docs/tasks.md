@@ -317,12 +317,35 @@ puro, e nenhuma query do serviço é assim. Ver a nota ⚠️ do item do `EXPLAI
 > renderiza o `Date` em UTC.
 
 ### 7.1 Uploads Resilientes
-- [ ] Validação de MIME e assinatura de arquivo no módulo de fotos
-- [ ] Normalização/processamento de imagem e extração de dimensões
-- [ ] Feedback de progresso por arquivo e por memória
-- [ ] Retry de upload individual com backoff
-- [ ] Atomicidade: memórias com falha de foto não viram registro pela metade
-- [ ] Testes de upload inválido, excedente de tamanho e falha parcial
+- [x] Validação de MIME e assinatura de arquivo no módulo de fotos — o mimetype
+      declarado pelo cliente nunca é confiado. O serviço fareja os magic bytes do
+      buffer (PNG, JPEG, GIF, WebP) e rejeita o que não corresponder a nenhum formato
+      conhecido. O tipo detectado é o que vai para o banco, não o declarado — um JPEG
+      chamado `.png` é armazenado como JPEG. Extensão do objeto no MinIO também vem do
+      tipo detectado, nunca do nome do arquivo.
+- [x] Normalização/processamento de imagem e extração de dimensões — `sharp` processa
+      todo upload: aplica orientação EXIF, redimensiona para no máximo 2048px no maior
+      lado (sem ampliar) e **remove todos os metadados** (EXIF, GPS, ICC) por padrão —
+      foto não pode carregar localização do aparelho para o storage. Dimensões são
+      extraídas do output processado. `sharp` já estava no store do pnpm como dependência
+      transitiva do Next; foi promovido a dependência direta da API.
+- [x] Feedback de progresso por arquivo e por memória — o wizard usa `XMLHttpRequest`
+      (não `fetch`, que não expõe progresso de upload) e exibe "Enviando foto N de M..."
+      no botão de submit, com o nome do arquivo atual. O botão fica desabilitado durante
+      o upload.
+- [x] Retry de upload individual com backoff — cada arquivo é enviado com até 3 tentativas
+      e backoff exponencial (500ms, 1s, 2s). O retry é por arquivo: se um falha, os
+      seguintes ainda são tentados. No backend, o `PutObjectCommand` também tem retry com
+      backoff (3 tentativas, 100ms base).
+- [x] Atomicidade: memórias com falha de foto não viram registro pela metade — se qualquer
+      foto falhar após todas as tentativas, o wizard **deleta a memória recém-criada** via
+      `DELETE /api/memories/:id` e mostra erro. A memória nunca aparece na timeline como um
+      registro pela metade. No backend, se o insert no banco falha após o objeto já estar
+      no MinIO, o objeto é deletado (compensação) para não deixar órfão.
+- [x] Testes de upload inválido, excedente de tamanho e falha parcial — 10 testes de
+      serviço (validação de assinatura, tamanho, processamento, retry, compensação), 4 de
+      integração (400 para não-imagem, 201 com tipo sniffado) e 3 E2E (upload com progresso,
+      rejeição de não-imagem, deleção da memória em falha parcial).
 
 ### 7.2 Filtros e IA Editorial
 - [ ] Inputs de clima, localização e tag na UI (estado já existe, falta renderizar)
