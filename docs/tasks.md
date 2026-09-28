@@ -225,27 +225,65 @@ para o que mexe em segurança e privacidade.
 Spec detalhado da 7.0: `docs/superpowers/specs/2026-09-27-phase-7-0-foundation-design.md`
 
 ### 7.0 Fundação — performance, busca e qualidade
-- [ ] `EXTRACT` de ano/mês reescrito como intervalo (predicado sargável)
-- [ ] Teste de equivalência: intervalo == `EXTRACT` para dados cruzando 31/12 e 01/01
-- [ ] Índices btree: `(user_id, memory_date DESC)`, `memory_date DESC WHERE is_public`,
-      `memory_photos/people/tags(memory_id)`, `memory_tags(name)`
-- [ ] `CREATE EXTENSION pg_trgm` + índices GIN em `title`, `content`, `location_name`, `weather_desc`
-      (só na migration, nunca no schema — SQLite in-memory não suporta)
-- [ ] N+1 eliminado: 3 queries em lote com `inArray` + agrupamento (`4 + 3N` → 5 constantes)
-- [ ] Teste que trava a contagem constante de queries
-- [ ] `search-query.ts`: parser da gramática de prefixos + testes unitários
-- [ ] Busca na API: query parseada → condições Drizzle (AND entre dimensões)
-- [ ] Busca por autor (`@user`) via join em `users`
-- [ ] `searchMeta` na resposta (query canônica, para os chips virem do servidor)
-- [ ] `SearchDialog` no header: debounce 300ms, `Cmd/Ctrl+K` e `/`, setas+Enter, foco restaurado
-- [ ] Página `/search?q=` reaproveitando `MemoryTimeline` (conserta o 404 existente)
-- [ ] Chips removíveis da query parseada reescrevendo a URL
-- [ ] "Nova Memória" no header (logado → `/memories/new`, anônimo → `/login`)
-- [ ] Input de busca sai dos filtros da timeline; `search` sai do `useFilters` da página
-- [ ] `useDebouncedValue` extraído para `apps/web/src/hooks/`
-- [ ] 3 `noExplicitAny` eliminados (wizard, `server.ts`, `auth.routes.spec.ts`)
-- [ ] `EXPLAIN ANALYZE` confirmando Index/Bitmap Index Scan em vez de Seq Scan
-- [ ] E2E: `filter-memory.spec.ts` reescrito + novo `search.spec.ts`
+- [x] `EXTRACT` de ano/mês reescrito como intervalo (predicado sargável)
+- [ ] Equivalência de conjunto entre o intervalo e o `EXTRACT`, com dados cruzando 31/12 e 01/01
+      — **não automatizável nesta fase**: nenhum teste do repo roda `memoriesService` contra
+      Postgres real (`memories.integration.test.ts` é nome enganoso e mocka o service;
+      `packages/db/src/schema/__tests__/` é introspecção de `getTableConfig`, sem conexão).
+      Virou conferência manual em SQL na Task 5 do plano. Exige harness de Postgres real —
+      candidato a fase própria.
+- [x] Índices btree: `(user_id, memory_date DESC)`, `(is_public, memory_date DESC)`,
+      `memory_photos/people/tags(memory_id)`, `memory_tags(name)`.
+      **O feed público é um btree completo, não o índice parcial que este item propunha.** Motivo:
+      o feed de quem está logado filtra `is_public = true OR user_id = $1`, e o Postgres não prova
+      que um `OR` implica `is_public = true` — um índice parcial seria ignorado justamente na
+      consulta mais importante. Com `is_public` como primeira coluna de um índice completo, os
+      dois braços do `OR` viram `Bitmap Index Scan` sobre o mesmo índice. Trava em
+      `packages/db/src/schema/__tests__/memories.test.ts:86` (`expect(config.where).toBeUndefined()`).
+- [x] `CREATE EXTENSION pg_trgm` + índices GIN em `title`, `content`, `location_name`, `weather_desc`
+      e `memory_tags.name` (só na migration, nunca no schema — SQLite in-memory não suporta).
+      São **cinco**, não quatro: `#tag` e `?tag=` casam com `ilike(name, '%tag%')`, com wildcard
+      inicial, e o btree em `name` só atende igualdade exata.
+- [x] N+1 eliminado: 3 queries em lote com `inArray` + agrupamento (`4 + 3N` → 5 constantes)
+- [x] Teste que trava a contagem constante de queries
+- [x] `search-query.ts`: parser da gramática de prefixos + testes unitários
+- [x] Busca na API: query parseada → condições Drizzle (AND entre dimensões)
+- [x] Busca por autor (`@user`) via join em `users`
+- [x] `searchMeta` na resposta (query canônica, para os chips virem do servidor)
+- [x] `SearchDialog` no header: debounce 300ms, `Cmd/Ctrl+K` e `/`, setas+Enter, foco restaurado
+- [x] Página `/search?q=` reaproveitando `MemoryTimeline` (conserta o 404 existente)
+- [x] Chips removíveis da query parseada reescrevendo a URL
+- [x] "Nova Memória" no header — **somente para logado** → `/memories/new` (`nav-nova`, ícone-only
+      abaixo de `sm`). Este item propunha também o anônimo → `/login`; isso foi revertido na
+      execução porque o header anônimo já mostra "Entrar" apontando para a mesma página, e os dois
+      botões teriam o mesmo destino. O item "Nova Memória" do dropdown (`menu-nova`) permanece e é
+      o destino no mobile, onde `hidden sm:block` remove o CTA. Para anônimo o CTA não redireciona:
+      ele não é renderizado (`navbar.tsx:122`).
+- [x] Input de busca sai dos filtros da timeline; `search` sai do `useFilters` da página.
+      sobra ano e mês na barra — mas `hasActiveFilters` (`memory-filters.tsx:41`) ainda testa
+      `weather`, `location` e `tag`, que essa barra não renderiza. Deliberado: os três parâmetros
+      continuam carregados na página, então "Limpar" aparece quando estão ativos. A lista volta a
+      bater com a barra na 7.2, que é onde os controles de clima/local/tag voltam.
+- [x] `useDebouncedValue` extraído para `apps/web/src/hooks/`
+- [x] 3 `noExplicitAny` eliminados (wizard, `server.ts`, `auth.routes.spec.ts`)
+- [ ] `EXPLAIN ANALYZE` confirmando Index/Bitmap Index Scan em vez de Seq Scan — **manual, sem
+      resultado registrado**. Os índices estão declarados e testados no schema, e
+      `memories.service.sql.spec.ts` fixa o SQL emitido pelo serviço, mas nenhuma suíte toca um
+      planner. Nenhum artefato de `EXPLAIN` foi colado em lugar nenhum do repositório, então esta
+      caixa fica aberta.
+- [x] E2E: `filter-memory.spec.ts` reescrito (sem o caso de input de busca) + **dois** specs novos,
+      `search-dialog.spec.ts` (10 casos) e `search-page.spec.ts` (8 casos). O `search.spec.ts`
+      único que este item propunha não existe: modal e página compartilham quase nada, e um
+      arquivo só não diria o que quebrou. O caso "Nova Memória no header para anônimo" saiu junto
+      com o CTA.
+
+> **Ações manuais desta fase que continuam abertas**, todas registradas em "Limitações conhecidas"
+> na spec: `pnpm db:migrate` não roda contra o dev DB (bookkeeping vazio, `0000` tenta recriar
+> tabelas existentes); o split UTC/local, cujo resíduo é o inverso do que o plano dizia —
+> `memory-filters.tsx:20` é `getUTCFullYear()`, então para cliente a leste do UTC às 00:30 de 1º de
+> janeiro a lista de anos termina no ano anterior e o novo só fica selecionável à meia-noite UTC;
+> e o wizard de criação perde um dia para cliente a leste do UTC (+1..+14), porque o `JSON.stringify`
+> renderiza o `Date` em UTC.
 
 ### 7.1 Uploads Resilientes
 - [ ] Validação de MIME e assinatura de arquivo no módulo de fotos
