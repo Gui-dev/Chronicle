@@ -1,10 +1,10 @@
 'use client'
-import type { CreateMemoryInput } from '@chronicle/schemas'
+import type { CreateMemoryFormValues, CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepBasicInfoProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryFormValues, unknown, CreateMemoryInput>
 }
 
 export function StepBasicInfo({ form }: StepBasicInfoProps) {

@@ -1,5 +1,6 @@
 import multipart from '@fastify/multipart'
 import Fastify from 'fastify'
+import type { FastifyError } from 'fastify'
 import { env } from './env'
 import { handleError } from './errors/error-handler'
 import { authRoutes } from './modules/auth'
@@ -18,7 +19,7 @@ export function buildServer() {
   })
 
   // Set error handler on root scope so it catches errors from all registered plugins
-  server.setErrorHandler((error: any, request, reply) => {
+  server.setErrorHandler((error: FastifyError, request, reply) => {
     request.log.error(error)
 
     const response = handleError(error)

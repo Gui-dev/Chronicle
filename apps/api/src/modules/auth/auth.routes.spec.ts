@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { buildServer } from '../../server'
 
 vi.mock('@chronicle/auth', () => ({
@@ -22,7 +23,17 @@ vi.mock('../../env', () => ({
   },
 }))
 
-const { auth: mockAuth } = (await import('@chronicle/auth')) as any
+type MockedAuth = {
+  api: {
+    signUpEmail: Mock
+    signInEmail: Mock
+    getSession: Mock
+  }
+}
+
+const { auth: mockAuth } = (await import('@chronicle/auth')) as unknown as {
+  auth: MockedAuth
+}
 
 describe('Auth Routes', () => {
   let server: ReturnType<typeof buildServer>

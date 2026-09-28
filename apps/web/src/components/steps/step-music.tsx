@@ -2,7 +2,7 @@
 
 import { useSpotifySearch } from '@/hooks/use-spotify-search'
 import type { SpotifyTrack } from '@/hooks/use-spotify-search'
-import type { CreateMemoryInput } from '@chronicle/schemas'
+import type { CreateMemoryFormValues, CreateMemoryInput } from '@chronicle/schemas'
 import { Input, Label } from '@chronicle/ui'
 import { Music } from 'lucide-react'
 import Image from 'next/image'
@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
 interface StepMusicProps {
-  form: UseFormReturn<CreateMemoryInput>
+  form: UseFormReturn<CreateMemoryFormValues, unknown, CreateMemoryInput>
 }
 
 export function StepMusic({ form }: StepMusicProps) {

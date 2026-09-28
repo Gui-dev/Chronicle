@@ -53,3 +53,5 @@ export const createMemorySchema = z.object({
 })
 
 export type CreateMemoryInput = z.infer<typeof createMemorySchema>
+
+export type CreateMemoryFormValues = z.input<typeof createMemorySchema>

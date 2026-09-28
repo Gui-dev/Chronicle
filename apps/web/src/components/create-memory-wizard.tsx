@@ -2,7 +2,7 @@
 
 import { useCreateMemory } from '@/hooks/use-create-memory'
 import { createMemorySchema } from '@chronicle/schemas'
-import type { CreateMemoryInput } from '@chronicle/schemas'
+import type { CreateMemoryFormValues, CreateMemoryInput } from '@chronicle/schemas'
 import { Button, Card } from '@chronicle/ui'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
@@ -55,7 +55,7 @@ export function CreateMemoryWizard() {
 
   const createMemory = useCreateMemory()
 
-  const form = useForm<any>({
+  const form = useForm<CreateMemoryFormValues, unknown, CreateMemoryInput>({
     resolver: zodResolver(createMemorySchema),
     defaultValues: {
       title: '',
