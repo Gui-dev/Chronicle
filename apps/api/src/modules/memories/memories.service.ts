@@ -13,6 +13,7 @@ import {
   memoryTags,
   or,
   sql,
+  users,
 } from '@chronicle/db'
 import type { Memory, MemoryPerson, MemoryPhoto, MemoryTag } from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
@@ -41,6 +42,46 @@ function groupByMemory<T extends { memoryId: string }>(rows: T[]) {
   }
   return grouped
 }
+
+// Every `memories` column, named. A bare `select()` is `SELECT *`, and once the
+// author search joins `users` the star expands to `users.name`, `users.email`,
+// `users.image` and `users.email_verified` as well — every author's real email
+// address on every row of a feed that is readable by anyone.
+//
+// The star also collides on `id`, which is the worse of the two. Both tables
+// have one, the row object keeps a single `id` key, and postgres.js resolves the
+// duplicate to the LAST occurrence — so `id` becomes the *user's*. Nothing
+// throws: `results.map(r => r.id)` below hands the relation queries a list of
+// user ids, those `inArray` batches match nothing, and every card renders with
+// no photos, no people and no tags while the page looks otherwise healthy.
+//
+// Naming the columns keeps the returned row identical to the pre-join shape, so
+// `Memory` still infers correctly and the id the batches use is the memory's.
+// The spec pins this exact key set, so a column added to `memories` fails that
+// test and has to be listed here on purpose.
+const memoryColumns = {
+  id: memories.id,
+  userId: memories.userId,
+  title: memories.title,
+  content: memories.content,
+  memoryDate: memories.memoryDate,
+  locationName: memories.locationName,
+  locationLat: memories.locationLat,
+  locationLng: memories.locationLng,
+  weatherTemp: memories.weatherTemp,
+  weatherDesc: memories.weatherDesc,
+  weatherIcon: memories.weatherIcon,
+  musicTrack: memories.musicTrack,
+  musicArtist: memories.musicArtist,
+  musicUrl: memories.musicUrl,
+  musicCover: memories.musicCover,
+  isPublic: memories.isPublic,
+  aiNarrative: memories.aiNarrative,
+  aiMood: memories.aiMood,
+  aiThemes: memories.aiThemes,
+  createdAt: memories.createdAt,
+  updatedAt: memories.updatedAt,
+} as const
 
 export class MemoriesService {
   async create(
@@ -175,6 +216,20 @@ export class MemoriesService {
       conditions.push(ilike(memories.locationName, `%${effectiveLocation}%`))
     }
 
+    // The author is read once, off the same `grammar` the other dimensions use,
+    // and it is deliberately NOT folded into the `if (hasGrammar)` block below.
+    // That block pushes a predicate over `users`, and the queries below only
+    // join `users` when this value is set — so the two have to be decided from
+    // one place. Leaving the predicate inside `hasGrammar` makes the agreement
+    // depend on `isEmptySearch` counting `author`, which is true today and is
+    // nobody's stated reason. A `where` naming an unjoined table is a 500, and
+    // a join with no predicate is a slower query that returns the wrong rows.
+    const author = grammar?.author ?? null
+
+    if (author) {
+      conditions.push(or(ilike(users.name, `%${author}%`), ilike(users.email, `%${author}%`)))
+    }
+
     if (hasGrammar) {
       // Loose terms and quoted phrases are AND-ed with each other, each one OR-ed
       // across title/content: "praia sol" means both words are present, each in
@@ -210,13 +265,35 @@ export class MemoriesService {
 
     const offset = (page - 1) * limit
 
-    const results = await db
-      .select()
+    // `memories.user_id` -> `users.id` is many-to-one on the target table's
+    // primary key, so the join adds at most one row per memory: it cannot
+    // duplicate a memory, and `count(*)` below stays the number of memories
+    // matching the filter. Both queries take the join or neither. The count one
+    // is not optional bookkeeping — it shares `conditions` with the rows query,
+    // so once the author predicate is in there, a count query without the join
+    // is `where users.name ilike ...` with `users` absent from the FROM clause.
+    //
+    // The call order is safe: Drizzle defers SQL generation to `.toSQL()`, so
+    // `leftJoin` after `.limit()`/`.offset()` emits the join in the FROM clause
+    // ahead of `where`, `order by` and `limit` regardless of the order the
+    // builder methods were called in. Verified against `.toSQL()`.
+    const authorJoin = eq(memories.userId, users.id)
+    const needsAuthorJoin = author !== null
+
+    const baseRows = db
+      .select(memoryColumns)
       .from(memories)
       .where(and(...conditions))
       .orderBy(desc(memories.memoryDate))
       .limit(limit)
       .offset(offset)
+
+    const baseCount = db
+      .select({ count: sql<number>`count(*)` })
+      .from(memories)
+      .where(and(...conditions))
+
+    const results = needsAuthorJoin ? await baseRows.leftJoin(users, authorJoin) : await baseRows
 
     // One query per relation for the whole page. The previous per-memory
     // version issued 3N queries on top of the rows and count, which made the
@@ -251,10 +328,9 @@ export class MemoriesService {
       }
     }
 
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(memories)
-      .where(and(...conditions))
+    const [countResult] = needsAuthorJoin
+      ? await baseCount.leftJoin(users, authorJoin)
+      : await baseCount
 
     // postgres returns count(*) as a string (int8), so `total` has to be
     // coerced: callers compare it against numbers, and the profile pluralises

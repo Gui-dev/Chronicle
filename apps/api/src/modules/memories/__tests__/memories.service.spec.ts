@@ -1,4 +1,4 @@
-import { memories, memoryPeople, memoryPhotos, memoryTags } from '@chronicle/db'
+import { memories, memoryPeople, memoryPhotos, memoryTags, users } from '@chronicle/db'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../../errors/app-error'
 import { memoriesService } from '../memories.service'
@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
     updates: [] as Array<Record<string, unknown>>,
     fromCalls: [] as string[],
     junctionRows: {} as Record<string, Array<Record<string, unknown>>>,
+    leftJoins: [] as Array<{ from: string; isCount: boolean; condition: unknown }>,
+    projections: [] as Array<{ table: string; isCount: boolean; columns: unknown }>,
   },
 }))
 
@@ -67,6 +69,24 @@ const allOps = (op?: string) => {
 const junctionPredicates = () =>
   mocks.state.junctionConditions as Array<{ op: string; col: unknown; values: unknown }>
 
+// Every predicate that reads a `users` column, matched by identity against the
+// mocked columns. The author filter is the only thing in the query that touches
+// that table, so "is an author predicate in the where" and "does the query
+// reference `users` at all" are the same question — which is what makes the
+// join/where equivalence below worth pinning.
+const authorPredicates = () =>
+  allOps('ilike').filter((c) => {
+    const col = (c as { col: unknown }).col
+    return col === users.name || col === users.email
+  })
+
+// The single column list the rows query selects, as the service spelled it.
+const rowsProjection = () => {
+  const recorded = mocks.state.projections.filter((p) => p.table === 'memories' && !p.isCount)
+  expect(recorded).toHaveLength(1)
+  return recorded[0].columns as Record<string, { __column: string }>
+}
+
 vi.mock('@chronicle/db', () => {
   const column = (name: string) => ({ __column: name })
 
@@ -97,6 +117,12 @@ vi.mock('@chronicle/db', () => {
       memoryId: column('memory_id'),
       orderIndex: column('order_index'),
     },
+    users: {
+      __table: 'users',
+      id: column('id'),
+      name: column('name'),
+      email: column('email'),
+    },
   }
 
   const eq = (col: unknown, value: unknown) => ({ op: 'eq', col, value })
@@ -114,6 +140,14 @@ vi.mock('@chronicle/db', () => {
   const desc = (col: unknown) => ({ op: 'desc', col })
   const asc = (col: unknown) => ({ op: 'asc', col })
 
+  // The count query is the one that asks for `{ count: ... }`; the rows query
+  // now names its columns too, so `projection !== undefined` no longer tells
+  // the two apart. Keying on the `count` key is what survives the rows query
+  // gaining a projection — without this, every rows query would be recorded as
+  // a count and the whole privacy suite would read the wrong bucket.
+  const isCountProjection = (projection: unknown) =>
+    typeof projection === 'object' && projection !== null && 'count' in projection
+
   class SelectChain {
     private fromTable: unknown
 
@@ -121,12 +155,22 @@ vi.mock('@chronicle/db', () => {
 
     from(table: unknown) {
       this.fromTable = table
-      mocks.state.fromCalls.push((table as { __table: string }).__table)
+      const name = (table as { __table: string }).__table
+      mocks.state.fromCalls.push(name)
+      // The projection is recorded here rather than in `select` because it is
+      // the *combination* with the table that matters: the row-shape assertion
+      // is about which columns come out of `memories` once `users` is joined
+      // in, and a projection recorded without its table could not be checked.
+      mocks.state.projections.push({
+        table: name,
+        isCount: isCountProjection(this.projection),
+        columns: this.projection,
+      })
       return this
     }
 
     where(cond: unknown) {
-      if (this.projection !== undefined) {
+      if (isCountProjection(this.projection)) {
         mocks.state.countConditions.push(cond)
       } else if (this.fromTable === tables.memories) {
         mocks.state.memoryConditions.push(cond)
@@ -151,9 +195,22 @@ vi.mock('@chronicle/db', () => {
       return this
     }
 
+    // Called after `.limit()`/`.offset()` on the rows query, and on the count
+    // query with neither. Which query this join landed on is recorded, because
+    // the equivalence under test is per query: a join on the rows query alone
+    // would leave the count query's `where` referencing an unjoined `users`.
+    leftJoin(table: unknown, condition: unknown) {
+      mocks.state.leftJoins.push({
+        from: (table as { __table: string }).__table,
+        isCount: isCountProjection(this.projection),
+        condition,
+      })
+      return this
+    }
+
     // biome-ignore lint/suspicious/noThenProperty: awaits any terminal node of the variable-length mock chain
     then(resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) {
-      if (this.projection !== undefined) {
+      if (isCountProjection(this.projection)) {
         return Promise.resolve([{ count: mocks.state.count }]).then(resolve, reject)
       }
       if (this.fromTable === tables.memories) {
@@ -218,6 +275,8 @@ describe('MemoriesService privacy', () => {
     mocks.state.updates = []
     mocks.state.fromCalls = []
     mocks.state.junctionRows = {}
+    mocks.state.leftJoins = []
+    mocks.state.projections = []
   })
 
   describe('findAll', () => {
@@ -604,6 +663,171 @@ describe('MemoriesService privacy', () => {
       // Only the privacy filter survives; no ilike, no EXISTS, no range.
       expect(memoryOps()).toHaveLength(1)
       expect(allOps('ilike')).toHaveLength(0)
+    })
+
+    it('joins users when the query names an author', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+
+      // The plan put this at `toHaveLength(1)`, which is the wrong number: the
+      // count query shares `conditions` with the rows query, so it needs the
+      // join too (see the count test below for the SQL that makes that
+      // mandatory). Two joins — one per query — is the correct count.
+      expect(mocks.state.leftJoins).toHaveLength(2)
+    })
+
+    it('does not join users when no author is named', async () => {
+      await memoriesService.findAll(filters({ search: 'praia' }))
+
+      expect(mocks.state.leftJoins).toHaveLength(0)
+    })
+
+    it('puts the author predicate in the where, AND-ed with the privacy filter', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+
+      // The assertion the plan's own two tests above could not make. A
+      // leftJoin whose condition is dropped still leaves `leftJoins` at
+      // length 1, so `joins users when the query names an author` passes on an
+      // implementation that joins and forgets the predicate — and that one
+      // answers `@bruce` with the entire public feed, which is exactly the
+      // silent failure this task exists to close. Sibling, not merged into the
+      // privacy `or`, so the two cannot be confused for each other.
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'or'])
+      expect(memoryOps()[1]).toEqual({
+        op: 'or',
+        conds: [
+          { op: 'ilike', col: users.name, pattern: '%bruce%' },
+          { op: 'ilike', col: users.email, pattern: '%bruce%' },
+        ],
+      })
+    })
+
+    it('joins the count query too, since its where reads users', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+
+      // Not redundant with the rows join. `conditions` is one array shared by
+      // both queries, so once the author predicate is in it the count query's
+      // `where` names `users.name` too — and without the join that is
+      // `missing FROM-clause entry for table "users"`. A join on the rows query
+      // alone passes the plan's length-1 assertion and 500s on the real thing.
+      expect(mocks.state.leftJoins.map((j) => j.isCount)).toEqual([false, true])
+      expect(mocks.state.countConditions).toHaveLength(1)
+      expect(mocks.state.countConditions[0]).toEqual(mocks.state.memoryConditions[0])
+    })
+
+    it('joins if and only if the where carries an author predicate', async () => {
+      // The invariant, over the searches that exercise every branch of the
+      // grammar. `needsAuthorJoin` is computed from `grammar.author` in one
+      // place while the predicate is pushed inside `if (hasGrammar)` in another,
+      // and those two agree today only because `isEmptySearch` happens to count
+      // `author`. A mismatch either way is a runtime failure: a `where`
+      // referencing an unjoined table, or a join with nothing to match on. The
+      // matrix is what makes the agreement structural instead of coincidental.
+      let exercisedSome = false
+
+      const searches = [
+        undefined,
+        '   ',
+        'praia',
+        'praia sol',
+        '"sol do norte"',
+        '#festa',
+        'ano:2026',
+        'mes:9',
+        'clima:chuva',
+        'local:praia',
+        '@bruce',
+        '@bruce #festa',
+        '@bruce @',
+        '@"joão silva"',
+        'clima:sol @bruce local:praia ano:2026',
+      ]
+
+      for (const search of searches) {
+        mocks.state.leftJoins = []
+        mocks.state.projections = []
+        mocks.state.memoryConditions = []
+        mocks.state.countConditions = []
+
+        await memoriesService.findAll(filters({ search }))
+
+        const authorInWhere = authorPredicates().length > 0
+        const rowsJoined = mocks.state.leftJoins.some((j) => !j.isCount)
+        const countJoined = mocks.state.leftJoins.some((j) => j.isCount)
+
+        expect({ search, rowsJoined, countJoined, authorInWhere }).toEqual({
+          search,
+          rowsJoined: authorInWhere,
+          countJoined: authorInWhere,
+          authorInWhere,
+        })
+
+        if (authorInWhere) exercisedSome = true
+      }
+
+      // Without this the loop above is satisfied by every side being false, so
+      // the test would pass against an implementation that never joins and never
+      // filters. Some searches have to actually reach the author branch, or the
+      // equivalence was never exercised.
+      expect(exercisedSome).toBe(true)
+    })
+
+    it('selects the memory columns and nothing from users', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+
+      // The join makes a bare `select()` a `SELECT *` over both tables, which
+      // is how the plan as written would put `users.name`, `users.email`,
+      // `users.image` and `users.email_verified` on every row of a feed anyone
+      // can read. Asserting the exact key set is what catches that, and it also
+      // catches the opposite drift: a column dropped from the list here.
+      // `id` is asserted against `memories.id` specifically, because `id` is
+      // also where the star collides — both tables have one, the row object
+      // keeps a single key, and postgres.js resolves the duplicate to the LAST
+      // occurrence, so the star's `id` is the *user's*, not the memory's. That
+      // does not throw; it makes `results.map(r => r.id)` below feed the
+      // relation queries a list of user ids, and every card renders with no
+      // photos, people or tags.
+      const columns = rowsProjection()
+
+      expect(Object.keys(columns)).toEqual([
+        'id',
+        'userId',
+        'title',
+        'content',
+        'memoryDate',
+        'locationName',
+        'locationLat',
+        'locationLng',
+        'weatherTemp',
+        'weatherDesc',
+        'weatherIcon',
+        'musicTrack',
+        'musicArtist',
+        'musicUrl',
+        'musicCover',
+        'isPublic',
+        'aiNarrative',
+        'aiMood',
+        'aiThemes',
+        'createdAt',
+        'updatedAt',
+      ])
+      expect(columns.id).toBe(memories.id)
+      expect(Object.values(columns).some((c) => c === (users.id as unknown))).toBe(false)
+      expect(Object.values(columns).some((c) => c === (users.name as unknown))).toBe(false)
+      expect(Object.values(columns).some((c) => c === (users.email as unknown))).toBe(false)
+    })
+
+    it('selects the same columns when no author is named', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+      const withAuthor = Object.keys(rowsProjection())
+
+      mocks.state.projections = []
+      await memoriesService.findAll(filters({ search: 'praia' }))
+
+      // The projection cannot depend on the join: one list, so a query with and
+      // without an author returns the same row shape and the client cannot tell
+      // which search produced a memory.
+      expect(Object.keys(rowsProjection())).toEqual(withAuthor)
     })
   })
 
