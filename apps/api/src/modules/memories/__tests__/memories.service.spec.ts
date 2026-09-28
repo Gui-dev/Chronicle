@@ -437,8 +437,8 @@ describe('MemoriesService privacy', () => {
       // `expect.arrayContaining`: it passed here with a wrong column in place
       // and the expected column missing from the actual array.
       const predicates = junctionPredicates()
-      expect(predicates.map((p) => p.op)).toEqual(['inArray', 'inArray', 'inArray'])
-      expect(predicates).toHaveLength(3)
+      expect(predicates.map((p) => p.op)).toEqual(['inArray', 'inArray', 'inArray', 'inArray'])
+      expect(predicates).toHaveLength(4)
 
       const idsOn = (col: unknown) => {
         const matches = predicates.filter((p) => p.col === col)

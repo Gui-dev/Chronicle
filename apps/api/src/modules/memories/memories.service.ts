@@ -312,8 +312,13 @@ export class MemoriesService {
     // version issued 3N queries on top of the rows and count, which made the
     // timeline cost grow with the page size.
     const enrichedResults: Array<
-      Memory & { photos: MemoryPhoto[]; people: MemoryPerson[]; tags: MemoryTag[] }
-    > = results.map((memory) => ({ ...memory, photos: [], people: [], tags: [] }))
+      Memory & {
+        photos: MemoryPhoto[]
+        people: MemoryPerson[]
+        tags: MemoryTag[]
+        userName: string | null
+      }
+    > = results.map((memory) => ({ ...memory, photos: [], people: [], tags: [], userName: null }))
 
     if (results.length > 0) {
       const ids = results.map((m) => m.id)
@@ -327,6 +332,16 @@ export class MemoriesService {
       const peopleMap = groupByMemory(peopleRows as MemoryPerson[])
       const tagMap = groupByMemory(tagRows as MemoryTag[])
 
+      // Batch-fetch author names for the page. The public feed mixes memories
+      // from many users, so the card needs to show who wrote each one. One
+      // query for the whole page, not one per memory.
+      const userIds = [...new Set(results.map((m) => m.userId))]
+      const userRows = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, userIds))
+      const userMap = new Map(userRows.map((u) => [u.id, u.name]))
+
       for (const memory of enrichedResults) {
         // inArray returns rows in an unspecified order, so photos are sorted by
         // orderIndex once they are grouped. Nothing sets orderIndex on upload
@@ -338,6 +353,7 @@ export class MemoriesService {
         memory.photos = ordered
         memory.people = peopleMap.get(memory.id) ?? []
         memory.tags = tagMap.get(memory.id) ?? []
+        memory.userName = userMap.get(memory.userId) ?? null
       }
     }
 
@@ -382,6 +398,12 @@ export class MemoriesService {
       throw AppError.forbidden('Acesso negado')
     }
 
+    const [author] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, memory.userId))
+      .limit(1)
+
     const peopleRows = await db.select().from(memoryPeople).where(eq(memoryPeople.memoryId, id))
 
     const tagRows = await db.select().from(memoryTags).where(eq(memoryTags.memoryId, id))
@@ -394,6 +416,7 @@ export class MemoriesService {
 
     return {
       ...memory,
+      userName: author?.name ?? null,
       people: peopleRows,
       tags: tagRows,
       photos: photoRows,

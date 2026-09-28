@@ -19,6 +19,7 @@ import {
   Tag,
   Trash2,
   Unlock,
+  User,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -147,6 +148,15 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
         <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-bold text-primary">
           {formattedDate}
         </span>
+        {memory.userName && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-card bg-background px-3 py-1 text-xs text-muted"
+            data-testid={`memory-author-${memory.id}`}
+          >
+            <User className="h-3 w-3" />
+            {memory.userName}
+          </span>
+        )}
         <span className="font-mono text-xs text-muted">{relativeDate}</span>
       </div>
 

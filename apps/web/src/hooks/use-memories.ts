@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 interface Memory {
   id: string
   userId: string
+  userName: string | null
   title: string
   content: string | null
   memoryDate: string
