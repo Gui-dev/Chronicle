@@ -1555,6 +1555,17 @@ git commit -m "feat(memories): return the canonical search meta in the response"
 
 ### Task 10: Hook `useDebouncedValue`
 
+> **Lacuna registrada pela revisão da Task 9, para a Task 14.** `searchMeta` descreve **só a
+> gramática**. Um filtro que veio só de parâmetro de URL (`?year=2024`, `?tag=`) não tem eco nenhum
+> na resposta — o filtro roda, o `where` está lá, e o `searchMeta` é `null`. Hoje isso é
+> inalcançável: o único consumidor de chip é a Task 14, e ele monta a query só a partir de `q` e usa
+> `useFilters()`, que é `useState` puro e não mora na URL. **Mas a assimetria do §2.3 já é real:**
+> `?tag=` é AND com a `#tag` da query (spec:640) e mesmo assim não aparece no `searchMeta` — uma
+> resposta filtrada por duas tags descreve uma. Se a Task 14 (ou qualquer cliente futuro) passar a
+> combinar `?q=` com `?year=`/`?tag=` e renderizar chips a partir do `searchMeta`, os filtros de URL
+> somem da fileira de chips em silêncio. Resolver significa `searchMeta` deixar de ser só a gramática
+> (ou os chips pararem de vir dele), e é decisão de design, não bug de implementação.
+
 **Files:**
 - Create: `apps/web/src/hooks/use-debounced-value.ts`
 
