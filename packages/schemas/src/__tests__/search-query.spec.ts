@@ -31,6 +31,11 @@ describe('parseSearchQuery', () => {
     const parsed = parseSearchQuery('"fase com espaço" sol')
     expect(parsed.phrases).toEqual(['fase com espaço'])
     expect(parsed.text).toEqual(['sol'])
+    // A word glued to the closing quote is the next token, not part of the
+    // phrase — the quoted state ends with the quote, not with the whitespace.
+    const glued = parseSearchQuery('"fase com espaço"sol')
+    expect(glued.phrases).toEqual(['fase com espaço'])
+    expect(glued.text).toEqual(['sol'])
   })
 
   it('accepts a month by number and by name', () => {
@@ -58,6 +63,10 @@ describe('parseSearchQuery', () => {
     expect(parseSearchQuery('local:#').location).toBeNull()
     // So a punctuation-only query adds no condition at all.
     expect(isEmptySearch(parseSearchQuery('@# ""   '))).toBe(true)
+    // The same rule holds for bare text terms and for phrases.
+    expect(parseSearchQuery('- .').text).toEqual([])
+    expect(isEmptySearch(parseSearchQuery('- .'))).toBe(true)
+    expect(parseSearchQuery('"---"').phrases).toEqual([])
   })
 
   it('reads the weather and location prefixes', () => {

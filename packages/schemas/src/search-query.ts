@@ -63,12 +63,15 @@ function tokenize(input: string): Token[] {
         if (current) tokens.push({ value: current, quoted: true })
         current = ''
         inQuotes = false
+        // The phrase ends with the quote, not with the next whitespace, so
+        // `"a"b` is two tokens rather than one phrase.
+        quoted = false
       } else {
         if (current) tokens.push({ value: current, quoted: false })
         current = ''
         inQuotes = true
+        quoted = true
       }
-      quoted = true
       continue
     }
     if (!inQuotes && /\s/.test(char)) {
@@ -114,7 +117,7 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
 
   for (const token of tokenize(input)) {
     if (token.quoted) {
-      parsed.phrases.push(token.value)
+      if (isWordLike(token.value)) parsed.phrases.push(token.value)
       continue
     }
 
@@ -161,8 +164,9 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
     }
 
     // An unknown prefix, an out-of-range value, or a bare word all land here as
-    // text. The grammar never rejects input.
-    parsed.text.push(token.value)
+    // text. The grammar never rejects input; a term with nothing searchable in
+    // it is the one thing it discards.
+    if (isWordLike(token.value)) parsed.text.push(token.value)
   }
 
   return parsed
