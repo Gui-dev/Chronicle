@@ -60,7 +60,38 @@ EXPLAIN (ANALYZE, COSTS OFF)
 SELECT id FROM memories WHERE content ILIKE '%viagem%';
 
 \echo ''
-\echo '=== 1E) Intervalo de ano (predicado sargável, substitui o EXTRACT) ==='
+\echo '=== 1E) Filtro de ano/mês, nos TRÊS formatos que o serviço realmente emite ==='
+\echo '--- findAll sempre começa com user_id OU is_public (memories.service.ts:166-185), ---'
+\echo '--- então a data NUNCA aparece sozinha. Isto é o que prova o ponto: ---'
+\echo '--- memory_date é coluna não-liderante e os dois btree a atendem assim mesmo. ---'
+-- Caso 1: feed anônimo + ano -> is_public = true AND range
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT id FROM memories
+WHERE is_public = true
+  AND memory_date >= make_date(2026, 1, 1) AND memory_date < make_date(2027, 1, 1)
+ORDER BY memory_date DESC LIMIT 20;
+
+-- Caso 2: feed logado + ano -> o OR dos dois braços, cada um indexado
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT id FROM memories
+WHERE (is_public = true OR user_id = 'u1')
+  AND memory_date >= make_date(2026, 1, 1) AND memory_date < make_date(2027, 1, 1)
+ORDER BY memory_date DESC LIMIT 20;
+
+-- Caso 3: minhas memórias + ano -> so user_id = $1
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT id FROM memories
+WHERE user_id = 'u1'
+  AND memory_date >= make_date(2026, 1, 1) AND memory_date < make_date(2027, 1, 1)
+ORDER BY memory_date DESC LIMIT 20;
+
+\echo ''
+\echo '=== 1F) O contraexemplo, e por que ele NÃO é dívida ==='
+\echo '--- Um range de data PURO dá Seq Scan, porque nenhum índice começa por ---'
+\echo '--- memory_date. A tentação é criar memories(memory_date DESC) e medir ---'
+\echo '--- ganho (4.01ms -> 1.46ms). Mas essa query não é executada por ---'
+\echo '--- ninguém: ela não tem is_public nem user_id, e o serviço sempre põe ---'
+\echo '--- um dos dois. O índice pagaria escrita e disco para servir nada. ---'
 EXPLAIN (ANALYZE, COSTS OFF)
 SELECT id FROM memories
 WHERE memory_date >= make_date(2026, 1, 1) AND memory_date < make_date(2027, 1, 1);

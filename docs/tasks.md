@@ -281,26 +281,32 @@ Spec detalhado da 7.0: `docs/superpowers/specs/2026-09-27-phase-7-0-foundation-d
       - ✅ Trigram (`content ILIKE '%viagem%'`, ~1% das linhas) → `Bitmap Index Scan` em
          `memories_content_trgm_idx`.
       - ✅ `user_id = $1` isolado → `Bitmap Index Scan` em `memories_user_date_idx`.
-      - ⚠️ **Intervalo de ano/mês ainda dá `Seq Scan`.** Nenhum índice começa por `memory_date` — os
-         dois btree começam por `user_id` e por `is_public` — então um range na data pura não tem
-         por onde entrar. O predicado ficou sargável (o `EXTRACT` sobre a coluna nunca indexa), mas
-         sargável sem índice não vira Index Scan. Medido: `CREATE INDEX (memory_date DESC)` troca por
-         `Index Scan` e derruba de **4.01ms para 1.46ms**. Virou item de follow-up logo abaixo.
+      - ✅ **Filtro de ano/mês, nos três formatos que o serviço emite** → todos indexados.
+        `findAll` sempre começa com `user_id` ou `is_public` (`memories.service.ts:166-185`), então a
+        data **nunca aparece sozinha**, e `memory_date` é coluna não-liderante nos dois btree — o que
+        não impede o uso. Medido com 2% e com 20% de memórias públicas: feed anônimo + ano →
+        `Index Scan` em `memories_public_date_idx` (0.22ms); feed logado + ano → `BitmapOr` com os
+        dois braços (0.31ms); minhas memórias + ano → `Bitmap Index Scan` em
+        `memories_user_date_idx` (0.26ms).
+      - ⚠️ **Um range de data puro daria `Seq Scan`** — e é uma armadilha, não uma dívida. Nenhum
+        índice começa por `memory_date`, então `WHERE memory_date BETWEEN ...` sem nenhum outro
+        predicado varre a tabela, e um `CREATE INDEX (memory_date DESC)` mediria 4.01ms → 1.46ms.
+        **Essa query não é executada por ninguém.** Ela não tem `is_public` nem `user_id`, e o
+        serviço sempre põe um dos dois. O índice pagaria escrita e disco para servir nada. O
+        contraexemplo está no artefato (1F) justamente para ninguém "consertar" isso depois.
       - Registrar também o caso em que o `Seq Scan` é a decisão **correta**: com 20% de memórias
-        públicas o planner prefere varrer a tabela, porque 12k de 60k linhas casam e ele quer só as 20
-        mais recentes. Não é índice falhando.
+        públicas e **sem** filtro de ano, o planner prefere varrer a tabela, porque 12k de 60k linhas
+        casam e ele quer só as 20 mais recentes. Não é índice falhando.
 - [x] E2E: `filter-memory.spec.ts` reescrito (sem o caso de input de busca) + **dois** specs novos,
       `search-dialog.spec.ts` (10 casos) e `search-page.spec.ts` (8 casos). O `search.spec.ts`
       único que este item propunha não existe: modal e página compartilham quase nada, e um
       arquivo só não diria o que quebrou. O caso "Nova Memória no header para anônimo" saiu junto
       com o CTA.
 
-**Dívida criada pela própria 7.0, achada no `EXPLAIN` acima e ainda aberta:**
-- [ ] Índice dedicado em `(memory_date DESC)` para o filtro de ano/mês, que hoje é `Seq Scan`
-      (medido 4.01ms → 1.46ms com o índice). Nenhum dos btree atuais começa por `memory_date`.
-      Migration nova, não emendada na `0001` — por isso ficou como item em vez de fait accompli.
-      Antes de escrever, decidir se é btree completo ou parcial em `WHERE is_public`: a mesma
-      armadilha do feed já foi resolvida uma vez, a favor do completo.
+**A 7.0 não deixou nenhuma dívida de índice.** Havia uma candidata — `memories (memory_date DESC)` —
+que foi registrada aqui antes e **está errada**: a medição que a motivava usava um range de data
+puro, e nenhuma query do serviço é assim. Ver a nota ⚠️ do item do `EXPLAIN` acima. O plano de
+índices da 7.0 está fechado e verificado.
 
 > **Ações manuais desta fase que continuam abertas**, todas registradas em "Limitações conhecidas"
 > na spec: `pnpm db:migrate` não roda contra o dev DB (bookkeeping vazio, `0000` tenta recriar
