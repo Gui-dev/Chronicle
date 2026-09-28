@@ -168,6 +168,11 @@ export class MemoriesService {
         return {
           data: [],
           pagination: { page, limit, total: 0, totalPages: 0 },
+          // `null` and not the parsed query, because this returns before the
+          // query is read and the route 401s before it gets here — no search was
+          // applied, so there is nothing canonical to report. Stated so the field
+          // does not read as an oversight on the one path that skips the parse.
+          searchMeta: null,
         }
       }
       conditions.push(eq(memories.userId, userId))
@@ -353,6 +358,16 @@ export class MemoriesService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+      // The grammar, not the string the caller sent, so the client builds its
+      // chips from what this query actually did instead of re-parsing `search`
+      // and risking a second opinion. It is deliberately the raw grammar and not
+      // the `effective*` values above: those fold in the URL params, and spec
+      // §2.3 says the param is discarded where the grammar speaks, so reporting
+      // `effectiveWeather` would put `Sol` in the response of a search that
+      // filtered `chuva`. `null` for a query that parsed to nothing — same rule
+      // the filter itself uses, so a meta never advertises a condition that is
+      // not in the where.
+      searchMeta: hasGrammar ? grammar : null,
     }
   }
 

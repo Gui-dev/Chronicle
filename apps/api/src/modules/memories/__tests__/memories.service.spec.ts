@@ -877,6 +877,97 @@ describe('MemoriesService privacy', () => {
       // client cannot tell an author search from a plain one by looking at a row.
       expect(Object.keys(rowsProjection())).toEqual(withAuthor)
     })
+
+    // The canonical parsed query, so the client renders its chips from what the
+    // server actually did instead of re-parsing the raw string. That only holds
+    // if the two agree, which is what the precedence test below is for.
+    describe('searchMeta', () => {
+      it('returns the canonical parsed query so the client does not re-parse it', async () => {
+        const result = await memoriesService.findAll(filters({ search: '  #Festa   ano:2026  ' }))
+
+        // The whole object, not a few fields. A key added to `ParsedSearchQuery`
+        // has to show up here, and a field the client would read but the server
+        // does not send is exactly the divergence this field exists to remove.
+        expect(result.searchMeta).toEqual({
+          text: [],
+          phrases: [],
+          author: null,
+          tags: ['Festa'],
+          year: 2026,
+          month: null,
+          weather: null,
+          location: null,
+        })
+      })
+
+      it('returns null searchMeta when no search was given', async () => {
+        const result = await memoriesService.findAll(filters())
+
+        expect(result.searchMeta).toBeNull()
+      })
+
+      it('reports the grammar value, not the param it overrode', async () => {
+        const result = await memoriesService.findAll(
+          filters({ weather: 'Sol', search: 'clima:chuva' }),
+        )
+
+        // The two have to agree, because the chip and the query are the same
+        // thing to the person reading them. `Sol` is gone from the response
+        // entirely: it is not merged in, not kept under a second key, and the
+        // chip says `chuva` — which is what the `ilike '%chuva%'` above
+        // actually filtered on. A chip that named `Sol` while the results were
+        // `chuva` would be a worse bug than no chip, so the discarded param
+        // stays discarded here. Spec §2.3 assigns the mirror-the-query duty to
+        // the filter controls (Task 13), not to the response.
+        expect(result.searchMeta?.weather).toBe('chuva')
+        expect(allOps('ilike')).toEqual([
+          { op: 'ilike', col: memories.weatherDesc, pattern: '%chuva%' },
+        ])
+      })
+
+      it('returns null searchMeta for a query that parses to nothing', async () => {
+        // Whitespace and punctuation are both ruled out by the grammar (§2.1:
+        // "query vazia ou só com pontuação → sem condições"), so neither produces
+        // a filter, and neither gets a meta. Returning the empty object instead
+        // would make the client render zero chips off a truthy value, and would
+        // make `searchMeta !== null` mean "a search was sent" when the search
+        // filtered nothing.
+        const blank = await memoriesService.findAll(filters({ search: '   ' }))
+        const punctuation = await memoriesService.findAll(filters({ search: '!!!' }))
+
+        expect(blank.searchMeta).toBeNull()
+        expect(punctuation.searchMeta).toBeNull()
+      })
+
+      it('says nothing about a filter the URL param supplied on its own', async () => {
+        // A gap, pinned so it is a decision rather than an oversight:
+        // `searchMeta` describes the grammar, and `?year=2024` is not part of
+        // the grammar, so this response has no echo of the filter that actually
+        // ran. A client rendering chips from `searchMeta` alone would show none
+        // for the year. Nothing consumes that today — `/search` builds its query
+        // from `q` alone — but any future caller that combines the two has to
+        // render its URL-param filters from the URL, not from here.
+        const result = await memoriesService.findAll(filters({ year: 2024 }))
+
+        // The filter did run; only the meta is silent about it.
+        expect(memoryOps('gte')).toHaveLength(1)
+        expect(result.searchMeta).toBeNull()
+      })
+
+      it('returns null searchMeta on the early return for mine=true with no user', async () => {
+        const result = await memoriesService.findAll(filters({ mine: true, search: '#festa' }))
+
+        // This branch answers before the query is parsed, and the route 401s
+        // before it gets here, so no search is ever applied on it. `null` says
+        // "nothing was filtered by a query", which keeps the field present in
+        // the response shape instead of leaving it `undefined` on one of the two
+        // returns — a `searchMeta` that is `null` on the normal path and missing
+        // on this one is the kind of difference a client only finds in
+        // production.
+        expect(result.data).toEqual([])
+        expect(result.searchMeta).toBeNull()
+      })
+    })
   })
 
   describe('findById', () => {
