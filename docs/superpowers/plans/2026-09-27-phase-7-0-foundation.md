@@ -27,7 +27,8 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 9. **`pnpm --filter api test -- -t 'nome'` não filtra.** O `--` é repassado literalmente e o vitest ignora o `-t`, rodando a suíte inteira — o passo "rodar para confirmar que falha" passaria à toa. A forma que filtra é `pnpm --filter api exec vitest run -t 'nome'`.
 10. **Mês sem ano encolhe para o ano corrente, e isso é uma armadilha de UI.** O spec (linha 134) decide que `month` com `year` ausente usa o ano corrente, e é o que a Task 2 implementa. O comportamento antigo trazia setembro de *todos* os anos. Nos dois `mes:9` da busca isso é inofensivo, mas em `memory-filters.tsx` os `<select>` de ano e mês são independentes: escolher "Setembro" com "Ano" vazio passa a esconder todas as memórias de setembro dos anos anteriores, sem nenhuma indicação na UI. A Task 13 tem de fechar isso — ao escolher um mês, o ano tem de passar a corrente, ou o mês tem de ficar desabilitado até haver ano.
 11. **Ano corrente em UTC no backend, ano local no cliente — split conhecido e não resolvido nesta fase.** O serviço usa `getUTCFullYear()` e o `memory-filters.tsx:14` monta a lista de anos com `getFullYear()`. No caminho dos parâmetros REST o ano explícito vence e o usuário vê um resultado coerente, mas no caminho da busca, `mes:1` digitado às 00:30 de 1º de janeiro em UTC-3 faz o backend escolher o ano **UTC**, um atrás do ano em que a memória foi vivida. A raiz disso é o mesmo item do `SHOW TimeZone` da Task 5: `localDate` grava meia-noite local e o intervalo compara instantes UTC, então uma memória criada exatamente à meia-noite local do último dia do mês cai no mês seguinte. Não é regressão — o `EXTRACT` tinha o mesmo corte — mas registrar aqui para a fase de busca por documentos decidir se quer corrigir.
-12. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
+12. **`pnpm lint` não linta a API.** Só `apps/web` define script `lint` (`biome check .`); `apps/api`, `packages/db`, `packages/schemas`, `packages/auth` e `packages/ui` não têm. Como `pnpm lint` é `turbo run lint`, um "lint passou" nesse comando só diz alguma coisa sobre `apps/web` — e quase todo o código deste plano é `apps/api` e `packages/*`. ParaTasks que tocam API, db ou schemas, o comando de verificação de verdade é `pnpm exec biome check <arquivos alterados>` a partir da raiz, e vale um `pnpm exec biome check .` de vez em quando para ver o inventário de avisos do repo. Os três `noExplicitAny` do baseline vivem em `auth.routes.spec.ts:25`, `server.ts:21` e `create-memory-wizard.tsx:58`.
+13. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
@@ -1586,7 +1587,7 @@ interface PaginatedResponse {
 
 - [ ] **Step 3: Typecheck e lint**
 
-Run: `pnpm typecheck && pnpm lint`
+Run: `pnpm typecheck` e `pnpm exec biome check apps/api/src/modules/memories` (ver pre-requisito 12: `pnpm lint` só cobre `apps/web`)
 Expected: PASS. O `DialogContent` do Radix precisa aceitar `ref`; se o tipo reclamar, trocar por `aria-label` no `DialogTitle` e remover o `ref`/`triggerRef`, que só existia para o foco manual.
 
 - [ ] **Step 4: Commit**
@@ -1738,7 +1739,7 @@ Ajustar os imports: `Input` e `Search` saem de `lucide-react`; `useEffect` e `us
 
 - [ ] **Step 2: Rodar o lint e o typecheck**
 
-Run: `pnpm lint && pnpm typecheck`
+Run: `pnpm lint` (cobre `apps/web`) e `pnpm typecheck`
 Expected: PASS ou aviso de import não usado — resolver removendo o import.
 
 - [ ] **Step 3: Commit**
@@ -1898,7 +1899,7 @@ export default async function SearchPage({
 
 - [ ] **Step 3: Typecheck e lint**
 
-Run: `pnpm typecheck && pnpm lint`
+Run: `pnpm typecheck` e `pnpm exec biome check apps/api/src/modules/memories` (ver pre-requisito 12: `pnpm lint` só cobre `apps/web`)
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
