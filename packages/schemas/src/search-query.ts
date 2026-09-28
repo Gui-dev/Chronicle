@@ -196,14 +196,24 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
   return parsed
 }
 
+// The tokenizer splits a bare token on whitespace, so a dimension value holding
+// one has to be written back quoted — otherwise it re-parses as the dimension
+// plus free text, which is how a removed chip silently narrows a search.
+// Wrapping is the whole of it: the tokenizer has no escape syntax (a backslash
+// is an ordinary character), so a quote always closes the value and no value
+// the parser produces can contain one. There is nothing to escape.
+function quoteIfNeeded(value: string): string {
+  return /\s/.test(value) ? `"${value}"` : value
+}
+
 export function serializeSearchQuery(parsed: ParsedSearchQuery): string {
   const parts: string[] = []
-  if (parsed.author) parts.push(`@${parsed.author}`)
-  for (const tag of parsed.tags) parts.push(`#${tag}`)
+  if (parsed.author) parts.push(`@${quoteIfNeeded(parsed.author)}`)
+  for (const tag of parsed.tags) parts.push(`#${quoteIfNeeded(tag)}`)
   if (parsed.year) parts.push(`ano:${parsed.year}`)
   if (parsed.month) parts.push(`mes:${parsed.month}`)
-  if (parsed.weather) parts.push(`clima:${parsed.weather}`)
-  if (parsed.location) parts.push(`local:${parsed.location}`)
+  if (parsed.weather) parts.push(`clima:${quoteIfNeeded(parsed.weather)}`)
+  if (parsed.location) parts.push(`local:${quoteIfNeeded(parsed.location)}`)
   for (const phrase of parsed.phrases) parts.push(`"${phrase}"`)
   for (const term of parsed.text) parts.push(term)
   return parts.join(' ')

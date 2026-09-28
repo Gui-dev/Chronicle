@@ -160,4 +160,52 @@ describe('serializeSearchQuery', () => {
     expect(serializeSearchQuery(parseSearchQuery('9'))).toBe('9')
     expect(serializeSearchQuery(parseSearchQuery('mes:9'))).toBe('mes:9')
   })
+
+  it('re-quotes a dimension value that the tokenizer would split', () => {
+    // `clima:` and `local:` accept a quoted value, so their value can hold a
+    // space. Written bare, the tokenizer would split it back into a dimension
+    // plus free text, and Task 14 writes this string into the URL.
+    expect(serializeSearchQuery(parseSearchQuery('local:"praia do norte"'))).toBe(
+      'local:"praia do norte"',
+    )
+    expect(serializeSearchQuery(parseSearchQuery('clima:"sol de janeiro"'))).toBe(
+      'clima:"sol de janeiro"',
+    )
+  })
+
+  it('re-parses to the same query for every value the grammar can produce', () => {
+    const queries = [
+      'local:"praia do norte"',
+      'clima:"sol de janeiro"',
+      'clima:"ceu limpo" #festa @bruce ano:2026 mes:setembro',
+      'local:praia clima:sol',
+      '@bruce #festa #praia',
+      'praia sol "fase com espaço"',
+      // A bare dimension prefix survives as free text, and serialize puts free
+      // text last — after the phrases, so a dropped `local:` can never end up
+      // glued to a quote and compose a dimension out of thin air.
+      'local: foo "bar baz"',
+      'clima:---',
+      'mes:0 ano:99',
+      'ano: local:',
+    ]
+
+    for (const query of queries) {
+      const parsed = parseSearchQuery(query)
+      expect(parseSearchQuery(serializeSearchQuery(parsed)), query).toEqual(parsed)
+    }
+  })
+
+  it('has no way to represent a double quote inside a dimension value', () => {
+    // The tokenizer has no escape syntax — a backslash is an ordinary
+    // character — so a quote always closes the value. Nothing the parser
+    // produces can contain one, which is why the serializer wraps without
+    // escaping: there is no faithful spelling of a quoted value to emit.
+    expect(parseSearchQuery('local:praia"norte').location).toBe('praia')
+    expect(parseSearchQuery('local:praia"norte').phrases).toEqual(['norte'])
+    expect(parseSearchQuery('local:"praia"norte"').location).toBe('praia')
+    expect(parseSearchQuery('@praia"norte').author).toBe('praia')
+    expect(parseSearchQuery('#praia"norte').tags).toEqual(['praia'])
+    expect(parseSearchQuery('local:"a \\b"').location).toBe('a \\b')
+  })
 })
