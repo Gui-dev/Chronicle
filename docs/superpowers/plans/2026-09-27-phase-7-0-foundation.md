@@ -31,7 +31,21 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 12. **`pnpm lint` não linta a API.** Só `apps/web` define script `lint` (`biome check .`); `apps/api`, `packages/db`, `packages/schemas`, `packages/auth` e `packages/ui` não têm. Como `pnpm lint` é `turbo run lint`, um "lint passou" nesse comando só diz alguma coisa sobre `apps/web` — e quase todo o código deste plano é `apps/api` e `packages/*`. ParaTasks que tocam API, db ou schemas, o comando de verificação de verdade é `pnpm exec biome check <arquivos alterados>` a partir da raiz, e vale um `pnpm exec biome check .` de vez em quando para ver o inventário de avisos do repo. Os três `noExplicitAny` do baseline vivem em `auth.routes.spec.ts:25`, `server.ts:21` e `create-memory-wizard.tsx:58`. Pior: `pnpm lint` sai **0** mesmo com avisos (64 arquivos, 1 warning) enquanto `pnpm exec biome check .` da raiz vê 174 arquivos e 3 warnings. Ou seja, "lint passou" hoje é verdade *e* continuaria verdade se a Task 15 inteira fosse pulada — não é um gate, é enfeite. De agora em diante, nenhum passo deste plano deve citar `pnpm lint` como evidência.
 13. **`pnpm db:migrate` não funciona contra o banco de desenvolvimento.** O dev DB foi provisionado com `db:push`, então `drizzle.__drizzle_migrations` não existia e a 0000 nunca foi registrada. O `db:migrate` cria a tabela de bookkeeping, não acha migração nenhuma registrada, e tenta reaplicar a 0000 contra tabelas que já existem: `ERROR: relation "accounts" already exists`. Não é um problema de task nem corrigível pelo arquivo de migration. Para verificar a 7.0 contra o Postgres, aplicar o SQL do próprio arquivo via `psql` numa transação, ou usar `pnpm db:push` num banco descartável. As migrations versionadas são para banco novo e produção. Não mexer em `drizzle.__drizzle_migrations` do dev DB: consertar o bookkeeping de 0000 faz a 0001 falhar em seguida, porque os índices dela já estão lá.
 14. **Limitação conhecida da gramática: nenhum valor de dimensão pode conter `"`.** O tokenizer não tem sintaxe de escape — a barra é um caractere comum — então `local:"a\"b"` quebra em `local: 'a'` mais a frase `b"`. O serializer **não** inventa um escape, porque um escape falso seria pior que o wrap: `local:"a\"b"` reinterpretaria como `a\` mais a frase `b"`, que parece correto e não é. O teste `has no way to represent a double quote inside a dimension value` fixa a invariante do parser; se alguém adicionar escape, ele é o sinal de que o serializer precisa ser revisitado. `parse → serialize → parse` é sem perda em tudo que a gramática consegue expressar.
-15. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
+15. **`drizzle-orm` está pinado por `pnpm.overrides` no `package.json` da raiz** (`^0.38.0`), porque
+    `apps/api` passou a depender dele direto na Task 8. Sem o pin, cada pacote resolve sua própria
+    faixa e o `drizzle-orm` novo da API podia ser uma versão diferente do `@chronicle/db` — mesma
+    tabela, duas identidades de classe. O lockfile agora tem `0.38.4` em todo lugar.
+16. **O que o pin NÃO resolve:** o `.pnpm` ainda materializa 4 instâncias de `drizzle-orm@0.38.4`,
+    com hashes diferentes, porque `better-auth` traz um conjunto enorme de peers opcionais que
+    varia por consumidor (`react` 19.2.8 vs 19.3.0, `better-sqlite3` 11 vs 12). `apps/api` e
+    `packages/db` caem em instâncias distintas. `dedupe-peer-dependents=true` no `.npmrc` foi
+    testado e **não** colapsa nada aqui — foi removido em vez de ficar como config morto. Em
+    tempo de execução é inofensivo (`is()` cai para `Symbol.for`), mas em tipos um arquivo que
+    misture import direto de `drizzle-orm` com tipos vindos de `@chronicle/db` pode reclamar de
+    identidade de classe. O spec de SQL gerado da Task 8 contorna isso num comentário; se
+    aparecer o erro, o conserto é subir `drizzle-orm` em `packages/db` como peer direto, não um
+    alias de `paths`.
+17. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
