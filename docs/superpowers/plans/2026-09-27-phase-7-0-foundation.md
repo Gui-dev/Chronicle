@@ -1838,7 +1838,32 @@ git commit -m "feat(web): add the search dialog"
 
 ---
 
-### Task 12: Ligar a busca e o CTA na navbar
+### Task 12:
+
+> **Cobertura de E2E que a Task 11 deixou de fora, e que a Task 16/17 tem que fechar.** O único spec
+> que toca no `SearchDialog` hoje é o `can search by title` reescrito: ele clica `search-button`,
+> preenche `search-dialog-input` com `Festa`, e afirma que `search-result-${festaId}` apareceu e que
+> `search-result-${trilhaId}` não. Tudo o mais abaixo **não tem cobertura nenhuma**:
+>
+> - **Quatro `data-testid` não são referenciados por spec nenhum** em todo o plano: `search-dialog`,
+>   `search-empty`, `search-loading`, `search-results`, `search-see-all`.
+> - **Auto-foco no input:** o spec passa porque `page.fill()` foca o elemento ele mesmo. Ou seja, o
+>   spec ficaria verde mesmo com o auto-foco completamente quebrado — que era exatamente o bug que
+>   o `onOpenAutoFocus` da Task 11 existe para resolver.
+> - **Restore de foco no fechar**, nos quatro caminhos de fechar (Escape, clique fora, Enter, botão
+>   fechar). A Task 11 descobriu que o plano original não restaurava foco nenhum: sem `DialogTrigger`
+>   o `triggerRef` do Radix é `null`, e o `preventDefault` do `onCloseAutoFocus` suprime o fallback do
+>   `FocusScope`. Se isso regredir, nada no E2E acusa.
+> - **Setas para cima e para baixo, e o wraparound nas duas pontas.**
+> - **Enter** abrindo a memória.
+> - **Debounce de 300 ms** — o fill-then-assert não é sensível a tempo, então um debounce removido
+>   passaria.
+> - **`activeIndex` saturado** quando a lista encolhe, e o reset de `query`/índice ao reabrir.
+> - **Hover para destacar.**
+> - Atalhos `Ctrl+K` e `/` da Task 12.
+>
+> A Task 16 (`search.spec.ts`) dirige `/search` direto e nunca abre o modal, então não cobre nada
+> disso por acidente. `apps/web` não tem script de teste unitário, então E2E é a **única** rede. Ligar a busca e o CTA na navbar
 
 **Files:**
 - Modify: `apps/web/src/components/navbar.tsx:1-95`
