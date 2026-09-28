@@ -3,7 +3,10 @@ import {
   db,
   desc,
   eq,
+  gte,
   ilike,
+  inArray,
+  lt,
   memories,
   memoryPeople,
   memoryPhotos,
@@ -13,6 +16,17 @@ import {
 } from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
 import { AppError } from '../../errors/app-error'
+
+// A range predicate, not EXTRACT: `EXTRACT(YEAR FROM memory_date) = 2026` wraps
+// the column in a function, so Postgres can never satisfy it with an index.
+// A half-open interval over the raw column is sargable. Bounds are UTC because
+// memoryDate is a `timestamp` fed by the localDate schema.
+function dateRange(year: number, month?: number) {
+  return {
+    start: new Date(Date.UTC(year, month ? month - 1 : 0, 1)),
+    end: new Date(Date.UTC(year, month ?? 12, 1)),
+  }
+}
 
 export class MemoriesService {
   async create(
@@ -102,12 +116,11 @@ export class MemoriesService {
       )
     }
 
-    if (year) {
-      conditions.push(sql`EXTRACT(YEAR FROM ${memories.memoryDate}) = ${year}`)
-    }
+    const effectiveYear = year ?? (month ? new Date().getUTCFullYear() : undefined)
 
-    if (month) {
-      conditions.push(sql`EXTRACT(MONTH FROM ${memories.memoryDate}) = ${month}`)
+    if (effectiveYear) {
+      const { start, end } = dateRange(effectiveYear, month ?? undefined)
+      conditions.push(gte(memories.memoryDate, start), lt(memories.memoryDate, end))
     }
 
     if (weather) {

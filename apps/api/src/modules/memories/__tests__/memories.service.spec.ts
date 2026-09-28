@@ -14,6 +14,16 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
+// The service wraps every predicate in a single and(...), and the mock records
+// only the top of the chain, so assertions have to descend into `.conds`.
+const memoryOps = (op?: string) => {
+  const flat = mocks.state.memoryConditions.flatMap((c) => {
+    const condition = c as { op: string; conds?: unknown[] }
+    return condition.op === 'and' && condition.conds ? condition.conds : [c]
+  })
+  return op ? flat.filter((c) => (c as { op: string }).op === op) : flat
+}
+
 vi.mock('@chronicle/db', () => {
   const column = (name: string) => ({ __column: name })
 
@@ -217,7 +227,8 @@ describe('MemoriesService privacy', () => {
 
       const condition = mocks.state.memoryConditions[0] as { op: string; conds: unknown[] }
       expect(condition.op).toBe('and')
-      expect(condition.conds).toHaveLength(3)
+      // privacy + the two halves of the year range + search
+      expect(condition.conds).toHaveLength(4)
       expect(condition.conds[0]).toEqual({
         op: 'or',
         conds: [
@@ -231,6 +242,28 @@ describe('MemoriesService privacy', () => {
       await memoriesService.findAll(filters(), { userId: 'user-1' })
 
       expect(mocks.state.countConditions[0]).toEqual(mocks.state.memoryConditions[0])
+    })
+
+    it('uses a sargable range for the year filter instead of EXTRACT', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, year: 2026 })
+
+      expect(JSON.stringify(memoryOps())).not.toContain('EXTRACT')
+
+      const range = [...memoryOps('gte'), ...memoryOps('lt')]
+      expect(range).toHaveLength(2)
+
+      const [start, end] = range as Array<{ value: Date }>
+      expect(start.value.toISOString()).toBe('2026-01-01T00:00:00.000Z')
+      expect(end.value.toISOString()).toBe('2027-01-01T00:00:00.000Z')
+    })
+
+    it('narrows the range to a single month when month is given', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, year: 2026, month: 9 })
+
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+
+      expect(range[0].value.toISOString()).toBe('2026-09-01T00:00:00.000Z')
+      expect(range[1].value.toISOString()).toBe('2026-10-01T00:00:00.000Z')
     })
   })
 
