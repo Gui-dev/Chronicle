@@ -1,4 +1,4 @@
-import { getTableConfig } from 'drizzle-orm/pg-core'
+import { type PgTable, getTableConfig } from 'drizzle-orm/pg-core'
 import { describe, expect, it } from 'vitest'
 
 import { memories, memoryPeople, memoryPhotos, memoryTags, users } from '../index'
@@ -61,22 +61,39 @@ describe('Memories Schema', () => {
 })
 
 describe('Memories indexes', () => {
-  const indexNames = (table: Parameters<typeof getTableConfig>[0]) =>
-    getTableConfig(table).indexes.map((index) => index.config.name)
+  // Assert the columns, not just the name. A name-only test passes with the
+  // index on the wrong columns, which is the entire risk surface here: an index
+  // on the right name in the wrong order is unusable by the query it serves.
+  //
+  // `config.columns` is typed `Partial<IndexedColumn | SQL>[]` and only the
+  // former carries a name, so the `in` check narrows instead of casting. An
+  // expression column would read as undefined and fail the assertion below,
+  // which is the right outcome — these indexes are all on plain columns.
+  const indexOn = (table: PgTable, name: string) => {
+    const found = getTableConfig(table).indexes.find((index) => index.config.name === name)
+    if (!found) return undefined
+    return found.config.columns.map((column) => ('name' in column ? column.name : undefined))
+  }
 
-  it('indexes the owner timeline and the public feed', () => {
-    expect(indexNames(memories as never)).toEqual(
-      expect.arrayContaining(['memories_user_date_idx', 'memories_public_date_idx']),
+  it('indexes the owner timeline and the public feed, and not partially', () => {
+    expect(indexOn(memories, 'memories_user_date_idx')).toEqual(['user_id', 'memory_date'])
+
+    // Partial would read `WHERE is_public = true`, which the logged-in feed's
+    // `is_public = true OR user_id = $1` cannot be proven to imply.
+    const found = getTableConfig(memories).indexes.find(
+      (index) => index.config.name === 'memories_public_date_idx',
     )
+    expect(found?.config.where).toBeUndefined()
+    expect(indexOn(memories, 'memories_public_date_idx')).toEqual(['is_public', 'memory_date'])
   })
 
   it('indexes every junction table by memory_id', () => {
-    expect(indexNames(memoryPhotos as never)).toContain('memory_photos_memory_idx')
-    expect(indexNames(memoryPeople as never)).toContain('memory_people_memory_idx')
-    expect(indexNames(memoryTags as never)).toContain('memory_tags_memory_idx')
+    expect(indexOn(memoryPhotos, 'memory_photos_memory_idx')).toEqual(['memory_id'])
+    expect(indexOn(memoryPeople, 'memory_people_memory_idx')).toEqual(['memory_id'])
+    expect(indexOn(memoryTags, 'memory_tags_memory_idx')).toEqual(['memory_id'])
   })
 
   it('indexes tags by name for the #tag search', () => {
-    expect(indexNames(memoryTags as never)).toContain('memory_tags_name_idx')
+    expect(indexOn(memoryTags, 'memory_tags_name_idx')).toEqual(['name'])
   })
 })

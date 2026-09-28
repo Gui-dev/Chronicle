@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm'
 import {
   boolean,
   decimal,
@@ -41,10 +40,13 @@ export const memories = pgTable(
   (table) => [
     // Own timeline, already ordered newest-first by findAll.
     index('memories_user_date_idx').on(table.userId, table.memoryDate.desc()),
-    // Public feed. Partial, so it stays small instead of indexing every private row.
-    index('memories_public_date_idx')
-      .on(table.memoryDate.desc())
-      .where(sql`${table.isPublic} = true`),
+    // Public feed. NOT partial: the logged-in feed is
+    // `is_public = true OR user_id = $1`, and Postgres will not use a partial
+    // index for a query it cannot prove implies the index predicate — its
+    // implication check does not reason through OR. Indexed on (is_public,
+    // memory_date) instead, so it serves the is_public arm of that OR directly
+    // and still keeps the DESC ordering the timeline wants.
+    index('memories_public_date_idx').on(table.isPublic, table.memoryDate.desc()),
   ],
 )
 
