@@ -1,7 +1,7 @@
 'use client'
 
 import { api } from '@/lib/api-client'
-import type { MemoryFiltersInput } from '@chronicle/schemas'
+import type { MemoryFiltersInput, ParsedSearchQuery } from '@chronicle/schemas'
 import { useQuery } from '@tanstack/react-query'
 
 interface Memory {
@@ -48,6 +48,8 @@ interface PaginatedResponse {
     total: number
     totalPages: number
   }
+  /** The parsed form of the `search` filter, echoed back by the API. Null when no search was sent. */
+  searchMeta: ParsedSearchQuery | null
 }
 
 function buildQueryString(filters: MemoryFiltersInput): string {
@@ -66,7 +68,7 @@ function buildQueryString(filters: MemoryFiltersInput): string {
   return params.toString()
 }
 
-export function useMemories(filters: MemoryFiltersInput) {
+export function useMemories(filters: MemoryFiltersInput, options?: { enabled?: boolean }) {
   return useQuery<PaginatedResponse>({
     queryKey: ['memories', filters],
     queryFn: async () => {
@@ -74,6 +76,7 @@ export function useMemories(filters: MemoryFiltersInput) {
       const endpoint = `/api/memories${queryString ? `?${queryString}` : ''}`
       return api.get<PaginatedResponse>(endpoint)
     },
+    enabled: options?.enabled ?? true,
   })
 }
 
