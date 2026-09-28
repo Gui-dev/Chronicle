@@ -226,11 +226,15 @@ Spec detalhado da 7.0: `docs/superpowers/specs/2026-09-27-phase-7-0-foundation-d
 
 ### 7.0 Fundação — performance, busca e qualidade
 - [x] `EXTRACT` de ano/mês reescrito como intervalo (predicado sargável)
-- [ ] Equivalência de conjunto entre o intervalo e o `EXTRACT`, com dados cruzando 31/12 e 01/01
-      — **não automatizável nesta fase**: nenhum teste do repo roda `memoriesService` contra
-      Postgres real (`memories.integration.test.ts` é nome enganoso e mocka o service;
-      `packages/db/src/schema/__tests__/` é introspecção de `getTableConfig`, sem conexão).
-      Virou conferência manual em SQL na Task 5 do plano. Exige harness de Postgres real —
+- [x] Equivalência de conjunto entre o intervalo e o `EXTRACT`, com dados cruzando 31/12 e 01/01
+      — verificado em `docs/superpowers/evidence/7.0-index-plan.sql` (Parte 3), que roda as duas
+      condições lado a lado sobre 8 linhas de fronteira e reporta `divergencias = 0` nas 6 janelas,
+      incluindo `2025-12-31 23:59:59` (ainda dezembro) e `2026-01-01 00:00:00` (já janeiro).
+      Segue **conferência manual**, não teste automatizado: nenhum harness do repo roda
+      `memoriesService` contra Postgres real (`memories.integration.test.ts` é nome enganoso e
+      mocka o service). **Vale só com `SHOW TimeZone` = UTC** — `dateRange` monta instantes UTC e
+      `localDate` grava meia-noite local; com sessão fora de UTC os dois divergem, e isso é a
+      limitação já registrada no fim desta seção. Exige harness de Postgres real para virar teste —
       candidato a fase própria.
 - [x] Índices btree: `(user_id, memory_date DESC)`, `(is_public, memory_date DESC)`,
       `memory_photos/people/tags(memory_id)`, `memory_tags(name)`.
@@ -266,16 +270,37 @@ Spec detalhado da 7.0: `docs/superpowers/specs/2026-09-27-phase-7-0-foundation-d
       bater com a barra na 7.2, que é onde os controles de clima/local/tag voltam.
 - [x] `useDebouncedValue` extraído para `apps/web/src/hooks/`
 - [x] 3 `noExplicitAny` eliminados (wizard, `server.ts`, `auth.routes.spec.ts`)
-- [ ] `EXPLAIN ANALYZE` confirmando Index/Bitmap Index Scan em vez de Seq Scan — **manual, sem
-      resultado registrado**. Os índices estão declarados e testados no schema, e
-      `memories.service.sql.spec.ts` fixa o SQL emitido pelo serviço, mas nenhuma suíte toca um
-      planner. Nenhum artefato de `EXPLAIN` foi colado em lugar nenhum do repositório, então esta
-      caixa fica aberta.
+- [x] `EXPLAIN ANALYZE` confirmando Index/Bitmap Index Scan — artefato em
+      `docs/superpowers/evidence/7.0-index-plan.sql` (60k memórias, 50 usuários, tudo em transação
+      com `ROLLBACK`; o dev DB fica intacto). **Confirmado, com uma ressalva importante:**
+      - ✅ **Feed logado** (`is_public = true OR user_id = $1`, a consulta mais importante) →
+         `BitmapOr` com **os dois** braços em `Bitmap Index Scan`, um em `memories_public_date_idx` e
+         outro em `memories_user_date_idx`. É a prova de que o btree completo em
+         `(is_public, memory_date DESC)` faz o que a spec previa: um índice parcial nunca entraria no
+         `OR`.
+      - ✅ Trigram (`content ILIKE '%viagem%'`, ~1% das linhas) → `Bitmap Index Scan` em
+         `memories_content_trgm_idx`.
+      - ✅ `user_id = $1` isolado → `Bitmap Index Scan` em `memories_user_date_idx`.
+      - ⚠️ **Intervalo de ano/mês ainda dá `Seq Scan`.** Nenhum índice começa por `memory_date` — os
+         dois btree começam por `user_id` e por `is_public` — então um range na data pura não tem
+         por onde entrar. O predicado ficou sargável (o `EXTRACT` sobre a coluna nunca indexa), mas
+         sargável sem índice não vira Index Scan. Medido: `CREATE INDEX (memory_date DESC)` troca por
+         `Index Scan` e derruba de **4.01ms para 1.46ms**. Virou item de follow-up logo abaixo.
+      - Registrar também o caso em que o `Seq Scan` é a decisão **correta**: com 20% de memórias
+        públicas o planner prefere varrer a tabela, porque 12k de 60k linhas casam e ele quer só as 20
+        mais recentes. Não é índice falhando.
 - [x] E2E: `filter-memory.spec.ts` reescrito (sem o caso de input de busca) + **dois** specs novos,
       `search-dialog.spec.ts` (10 casos) e `search-page.spec.ts` (8 casos). O `search.spec.ts`
       único que este item propunha não existe: modal e página compartilham quase nada, e um
       arquivo só não diria o que quebrou. O caso "Nova Memória no header para anônimo" saiu junto
       com o CTA.
+
+**Dívida criada pela própria 7.0, achada no `EXPLAIN` acima e ainda aberta:**
+- [ ] Índice dedicado em `(memory_date DESC)` para o filtro de ano/mês, que hoje é `Seq Scan`
+      (medido 4.01ms → 1.46ms com o índice). Nenhum dos btree atuais começa por `memory_date`.
+      Migration nova, não emendada na `0001` — por isso ficou como item em vez de fait accompli.
+      Antes de escrever, decidir se é btree completo ou parcial em `WHERE is_public`: a mesma
+      armadilha do feed já foi resolvida uma vez, a favor do completo.
 
 > **Ações manuais desta fase que continuam abertas**, todas registradas em "Limitações conhecidas"
 > na spec: `pnpm db:migrate` não roda contra o dev DB (bookkeeping vazio, `0000` tenta recriar
