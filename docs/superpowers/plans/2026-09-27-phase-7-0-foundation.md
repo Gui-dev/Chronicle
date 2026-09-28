@@ -2017,7 +2017,43 @@ git commit -m "refactor(web): drop the timeline search input in favour of the di
 
 ---
 
-### Task 14: Página `/search` com chips removíveis
+### Task 14:
+
+> **O que a Task 13 deixou para o E2E da Task 16, escrito com o resultado medido.** O `onMonthChange`
+> usa `getUTCFullYear()` e a lista de anos do select passou a ser UTC também — as duas coisas juntas,
+> porque normalizar para UTC com a lista em local deixa o valor normalizado **um acima do topo** da
+> lista num fuso atrás de UTC na virada do ano, o React escreve um valor que nenhum `<option>` tem, e o
+> select volta a mostrar "Ano" enquanto o pedido carrega o ano. Medido em chromium com `page.clock` e
+> `timezoneId` fixado: UTC−3, 31 dez 21:00 → local 2026 / **UTC 2027**, lista `2027…2018`, select
+> mostra 2027, request `year=2027&month=1`. Com a lista em local, o mesmo caso mandava 2026 e a API
+> aplicava 2027.
+>
+> **O custo, explícito:** em fuso UTC+, o ano local novo não fica selecionável até a meia-noite UTC. Um
+> usuário de Berlim às 00:30 de 1º de janeiro não consegue filtrar 2027. É o bug invertido, menor — uma
+> opção, algumas horas, uma vez por ano — e vem do backend usar UTC, não do componente. Não foi
+> "consertado" com `Math.max(local, utc)`, que devolveria a opção e traria de volta a invariante de dois
+> relógios.
+>
+> **As três asserções que a Task 16 tem que fazer** (e o porquê de cada uma):
+> 1. `month.selectOption('9')` com ano vazio ⇒ `expect(page.locator('[data-testid="year"]')).toHaveValue(String(new Date().getUTCFullYear()))`.
+>    É o conserto inteiro numa linha: falha hoje, e falha no código antigo em qualquer fuso onde local e
+>    UTC discordam. O `data-testid="month"` foi adicionado na Task 13 porque o select não tinha nenhum e
+>    o `selectOption` do plano ia estourar timeout.
+> 2. Escolher 2025 e **depois** mês 9 ⇒ o ano continua 2025. O `onMonthChange` só normaliza quando o ano
+>    está vazio, e nada no código atual impede a regressão.
+> 3. `year=…&month=9` chegam **juntos** na API. O valor do select, sozinho, não prova que os dois
+>    parâmetros foram enviados.
+>
+> **Não é alcançável sem falsificar o relógio:** as janelas de virada de ano só aparecem com
+> `page.clock`. A asserção 1 passa trivialmente em setembro e só vale alguma coisa nas horas de
+> fronteira.
+>
+> **Consumidores de `MemoryFilters` são dois:** `page.tsx` e `my-memories/page.tsx:35`. Os dois perderam
+> o input de busca; nenhum dos dois precisou de outra mudança.
+>
+> `filter-memory.spec.ts:41` preenche `[data-testid="search"]` e **está falhando agora** — é o spec que
+> a Task 16 reescreve. O spec de ano em `:22` continua valendo: 2026 está na lista dos últimos 10 em
+> qualquer um dos relógios medidos. Página `/search` com chips removíveis
 
 **Files:**
 - Create: `apps/web/src/components/search-results.tsx`
