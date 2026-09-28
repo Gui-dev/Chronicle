@@ -31,6 +31,16 @@ function dateRange(year: number, month?: number) {
   }
 }
 
+function groupByMemory<T extends { memoryId: string }>(rows: T[]) {
+  const grouped = new Map<string, T[]>()
+  for (const row of rows) {
+    const bucket = grouped.get(row.memoryId)
+    if (bucket) bucket.push(row)
+    else grouped.set(row.memoryId, [row])
+  }
+  return grouped
+}
+
 export class MemoriesService {
   async create(
     userId: string,
@@ -178,23 +188,15 @@ export class MemoriesService {
         db.select().from(memoryTags).where(inArray(memoryTags.memoryId, ids)),
       ])
 
-      const groupByMemory = <T extends { memoryId: string }>(rows: T[]) => {
-        const grouped = new Map<string, T[]>()
-        for (const row of rows) {
-          const bucket = grouped.get(row.memoryId)
-          if (bucket) bucket.push(row)
-          else grouped.set(row.memoryId, [row])
-        }
-        return grouped
-      }
-
       const photoMap = groupByMemory(photoRows as MemoryPhoto[])
       const peopleMap = groupByMemory(peopleRows as MemoryPerson[])
       const tagMap = groupByMemory(tagRows as MemoryTag[])
 
       for (const memory of enrichedResults) {
-        // inArray gives no ordering guarantee, so photos are sorted here to keep
-        // the gallery in the order the user arranged them at upload time.
+        // inArray returns rows in an unspecified order, so photos are sorted by
+        // orderIndex once they are grouped. Nothing sets orderIndex on upload
+        // yet, so today the sort is a stable no-op; it stays because inArray
+        // will not start promising an order.
         const ordered = [...(photoMap.get(memory.id) ?? [])].sort(
           (a, b) => a.orderIndex - b.orderIndex,
         )

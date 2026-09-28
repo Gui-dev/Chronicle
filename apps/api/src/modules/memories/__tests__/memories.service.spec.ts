@@ -1,4 +1,4 @@
-import { memories } from '@chronicle/db'
+import { memories, memoryPeople, memoryPhotos, memoryTags } from '@chronicle/db'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../../errors/app-error'
 import { memoriesService } from '../memories.service'
@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
     count: 0,
     memoryConditions: [] as unknown[],
     countConditions: [] as unknown[],
+    junctionConditions: [] as unknown[],
     inserted: [] as Array<{ table: unknown; values: unknown }>,
     updates: [] as Array<Record<string, unknown>>,
     fromCalls: [] as string[],
@@ -25,6 +26,11 @@ const memoryOps = (op?: string) => {
   })
   return op ? flat.filter((c) => (c as { op: string }).op === op) : flat
 }
+
+// The junction predicates, unwrapped: each relation query filters with a bare
+// inArray, so the recorded condition is the `{ op, col, values }` triple.
+const junctionPredicates = () =>
+  mocks.state.junctionConditions as Array<{ op: string; col: unknown; values: unknown }>
 
 vi.mock('@chronicle/db', () => {
   const column = (name: string) => ({ __column: name })
@@ -89,6 +95,11 @@ vi.mock('@chronicle/db', () => {
         mocks.state.countConditions.push(cond)
       } else if (this.fromTable === tables.memories) {
         mocks.state.memoryConditions.push(cond)
+      } else {
+        // The batched relation queries carry the page's ids, so their predicates
+        // are the only observable trace of them. Discarding them here is what
+        // let a wrong id list or a wrong column pass the query-count tests.
+        mocks.state.junctionConditions.push(cond)
       }
       return this
     }
@@ -167,6 +178,7 @@ describe('MemoriesService privacy', () => {
     mocks.state.count = 0
     mocks.state.memoryConditions = []
     mocks.state.countConditions = []
+    mocks.state.junctionConditions = []
     mocks.state.inserted = []
     mocks.state.updates = []
     mocks.state.fromCalls = []
@@ -311,6 +323,38 @@ describe('MemoriesService privacy', () => {
       expect(times('memoryTags')).toBe(1)
       // rows + count
       expect(times('memories')).toBe(2)
+    })
+
+    it('scopes every relation query to the ids on the page', async () => {
+      mocks.state.rows = [
+        { id: 'm1', userId: 'u1', isPublic: true },
+        { id: 'm2', userId: 'u1', isPublic: true },
+        { id: 'm3', userId: 'u1', isPublic: true },
+        { id: 'm4', userId: 'u1', isPublic: true },
+      ]
+
+      await memoriesService.findAll({ page: 1, limit: 20 })
+
+      // Query counts alone cannot tell a correct batch from one that filters on
+      // the wrong ids or the wrong column, so bind each relation query to its
+      // own memoryId column and assert the ids that column carried. Exactly one
+      // match per column also rules out a query that never ran and a column
+      // copied from the wrong table. Do not swap this for
+      // `expect.arrayContaining`: it passed here with a wrong column in place
+      // and the expected column missing from the actual array.
+      const predicates = junctionPredicates()
+      expect(predicates.map((p) => p.op)).toEqual(['inArray', 'inArray', 'inArray'])
+      expect(predicates).toHaveLength(3)
+
+      const idsOn = (col: unknown) => {
+        const matches = predicates.filter((p) => p.col === col)
+        expect(matches).toHaveLength(1)
+        return matches[0].values
+      }
+
+      expect(idsOn(memoryPhotos.memoryId)).toEqual(['m1', 'm2', 'm3', 'm4'])
+      expect(idsOn(memoryPeople.memoryId)).toEqual(['m1', 'm2', 'm3', 'm4'])
+      expect(idsOn(memoryTags.memoryId)).toEqual(['m1', 'm2', 'm3', 'm4'])
     })
 
     it('keeps photos ordered by orderIndex after batching', async () => {
