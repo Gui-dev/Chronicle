@@ -1,19 +1,20 @@
 'use client'
 
+import { SearchDialog } from '@/components/search-dialog'
 import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { getInitials } from '@/lib/get-initials'
+import { Button } from '@chronicle/ui'
 import { Disc3, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 export function Navbar() {
   const { user, isAuthenticated, isLoading, invalidateSession } = useAuth()
-  const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
@@ -32,6 +33,38 @@ export function Navbar() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [menuOpen])
+
+  // Registered unconditionally, outside the dialog: a listener mounted with the
+  // dialog could only ever close it, never open it.
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setMenuOpen(false)
+        setSearchOpen(true)
+        return
+      }
+      if (event.key === '/' && !searchOpen) {
+        // Never steal the slash from a control the user is working in. SELECT is
+        // here next to the text fields because the timeline's year/month filters
+        // are native selects: they are not typed into, but they do own the
+        // keyboard, and Chromium runs its own type-ahead on them.
+        const target = event.target
+        const typing =
+          target instanceof HTMLElement &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.isContentEditable)
+        if (!typing) {
+          event.preventDefault()
+          setSearchOpen(true)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleShortcut)
+    return () => window.removeEventListener('keydown', handleShortcut)
+  }, [searchOpen])
 
   if (isLoading) {
     return (
@@ -77,7 +110,7 @@ export function Navbar() {
               type="button"
               onClick={() => {
                 setMenuOpen(false)
-                router.push('/search')
+                setSearchOpen(true)
               }}
               className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
               aria-label="Buscar"
@@ -85,6 +118,15 @@ export function Navbar() {
             >
               <Search className="h-5 w-5" />
             </button>
+
+            {isAuthenticated && (
+              <Link href="/memories/new" className="hidden sm:block" data-testid="nav-nova">
+                <Button className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+                  <Plus className="h-4 w-4" />
+                  Nova Memória
+                </Button>
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <div className="relative">
@@ -184,6 +226,8 @@ export function Navbar() {
           data-testid="user-menu-overlay"
         />
       )}
+
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   )
 }
