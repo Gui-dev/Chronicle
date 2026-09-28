@@ -29,7 +29,8 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 10. **Mês sem ano encolhe para o ano corrente, e isso é uma armadilha de UI.** O spec (linha 134) decide que `month` com `year` ausente usa o ano corrente, e é o que a Task 2 implementa. O comportamento antigo trazia setembro de *todos* os anos. Nos dois `mes:9` da busca isso é inofensivo, mas em `memory-filters.tsx` os `<select>` de ano e mês são independentes: escolher "Setembro" com "Ano" vazio passa a esconder todas as memórias de setembro dos anos anteriores, sem nenhuma indicação na UI. A Task 13 tem de fechar isso — ao escolher um mês, o ano tem de passar a corrente, ou o mês tem de ficar desabilitado até haver ano.
 11. **Ano corrente em UTC no backend, ano local no cliente — split conhecido e não resolvido nesta fase.** O serviço usa `getUTCFullYear()` e o `memory-filters.tsx:14` monta a lista de anos com `getFullYear()`. No caminho dos parâmetros REST o ano explícito vence e o usuário vê um resultado coerente, mas no caminho da busca, `mes:1` digitado às 00:30 de 1º de janeiro em UTC-3 faz o backend escolher o ano **UTC**, um atrás do ano em que a memória foi vivida. A raiz disso é o mesmo item do `SHOW TimeZone` da Task 5: `localDate` grava meia-noite local e o intervalo compara instantes UTC, então uma memória criada exatamente à meia-noite local do último dia do mês cai no mês seguinte. Não é regressão — o `EXTRACT` tinha o mesmo corte — mas registrar aqui para a fase de busca por documentos decidir se quer corrigir.
 12. **`pnpm lint` não linta a API.** Só `apps/web` define script `lint` (`biome check .`); `apps/api`, `packages/db`, `packages/schemas`, `packages/auth` e `packages/ui` não têm. Como `pnpm lint` é `turbo run lint`, um "lint passou" nesse comando só diz alguma coisa sobre `apps/web` — e quase todo o código deste plano é `apps/api` e `packages/*`. ParaTasks que tocam API, db ou schemas, o comando de verificação de verdade é `pnpm exec biome check <arquivos alterados>` a partir da raiz, e vale um `pnpm exec biome check .` de vez em quando para ver o inventário de avisos do repo. Os três `noExplicitAny` do baseline vivem em `auth.routes.spec.ts:25`, `server.ts:21` e `create-memory-wizard.tsx:58`. Pior: `pnpm lint` sai **0** mesmo com avisos (64 arquivos, 1 warning) enquanto `pnpm exec biome check .` da raiz vê 174 arquivos e 3 warnings. Ou seja, "lint passou" hoje é verdade *e* continuaria verdade se a Task 15 inteira fosse pulada — não é um gate, é enfeite. De agora em diante, nenhum passo deste plano deve citar `pnpm lint` como evidência.
-13. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
+13. **`pnpm db:migrate` não funciona contra o banco de desenvolvimento.** O dev DB foi provisionado com `db:push`, então `drizzle.__drizzle_migrations` não existia e a 0000 nunca foi registrada. O `db:migrate` cria a tabela de bookkeeping, não acha migração nenhuma registrada, e tenta reaplicar a 0000 contra tabelas que já existem: `ERROR: relation "accounts" already exists`. Não é um problema de task nem corrigível pelo arquivo de migration. Para verificar a 7.0 contra o Postgres, aplicar o SQL do próprio arquivo via `psql` numa transação, ou usar `pnpm db:push` num banco descartável. As migrations versionadas são para banco novo e produção. Não mexer em `drizzle.__drizzle_migrations` do dev DB: consertar o bookkeeping de 0000 faz a 0001 falhar em seguida, porque os índices dela já estão lá.
+14. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
@@ -704,10 +705,7 @@ usa `Date.UTC` e tem um `month ?? 12` que e o unico jeito de Dezembro virar 2027
 -- Dezembro: o limite exclusivo tem de cair em janeiro do ano seguinte
 SELECT count(*) FILTER (
   WHERE memory_date >= '2026-12-01 00:00:00+00' AND memory_date < '2027-01-01 00:00:00+00'
-) AS dec_2026,
-       count(*) FILTER (
-  WHERE memory_date >= '2026-12-01 00:00:00+00' AND memory_date < '2026-12-01 00:00:00+00'
-) AS dec_quebrado;
+) AS dec_2026;
 
 -- Mes sem ano: o spec diz que usa o ano corrente, entao precisa bater com EXTRACT
 -- restrito ao mesmo ano, e NAO com "setembro de todos os anos"
@@ -719,11 +717,29 @@ SELECT count(*) FILTER (
 ) AS new_setembro;
 ```
 
-Expected: `old_year = new_year`, `old_jan = new_jan`, `dec_quebrado = 0`,
-`old_setembro = new_setembro`.
+Expected: `old_year = new_year` e `old_setembro = new_setembro`.
 
-> `dec_quebrado = 0` e o alarme: se `month ?? 12` virar `month + 1` sem o `?? 12`, o fim
-> do intervalo de Dezembro colide com o comeco e a query devolve zero silenciosamente.
+> **Janeiro e dezembro quase nuncatem dados de verdade num banco de desenvolvimento.** As seis
+> memórias do dev DB caem todas em setembro de 2026, entao `old_jan` e `new_jan` dao 0 e a
+> comparacao passa sem provar nada. Para esses dois meses, usar um `VALUES` sintetico como CTE
+> somente-leitura e testar as bordas — 23:59:59.999 do dia anterior, 00:00:00 do primeiro dia,
+> 23:59:59.999 do ultimo dia, e 00:00:00 do dia seguinte, que tem de ficar de fora. Nao inserir
+> linhas no banco do usuario para fazer os numeros parecerem significativos.
+
+> O alarme aqui nao e "o intervalo de Dezembro devolve zero". Intervalo com inicio igual ao
+> fim e vazio em **qualquer** tabela, entao isso seria tautologia e nao provaria nada. O erro real
+> de trocar `month ?? 12` por `month + 1` e o oposto: `Date.UTC(2026, 12, 1)` da 2027-01-01,
+> enquanto `Date.UTC(2026, 13, 1)` da **2027-02-01** — um intervalo um mes largo demais, que
+> vaza janeiro para dentro de dezembro silenciosamente. Para pegar isso, comparar o intervalo de
+> dezembro contra `month + 1` e ver que o segundo e maior:
+>
+> ```sql
+> SELECT
+>   (date '2027-01-01' - date '2026-12-01') AS correto,
+>   (date '2027-02-01' - date '2026-12-01') AS com_o_bug;
+> ```
+>
+> Expected: `correto = 31`, `com_o_bug = 62`. E `?? 12` precisa continuar sendo `?? 12`.
 
 > O `month` sem `year` **mudou de comportamento** de proposito (o spec, linha 134, decide
 > assim): antes `EXTRACT(MONTH ...) = 9` trazia setembro de todos os anos, agora traz
