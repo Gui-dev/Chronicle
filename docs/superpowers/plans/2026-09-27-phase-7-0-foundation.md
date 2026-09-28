@@ -473,10 +473,13 @@ describe('Memories indexes', () => {
   // Assert the columns, not just the name. A name-only test passes with the
   // index on the wrong columns, which is the entire risk surface here: an index
   // on the right name in the wrong order is unusable by the query it serves.
+  // `IndexConfig.columns` is `Partial<IndexedColumn | SQL>[]`, so `column.name`
+  // does not typecheck directly. A SQL expression column reads `undefined` here
+  // and fails the assertion rather than passing silently.
   const indexOn = (table: PgTable, name: string) => {
     const found = getTableConfig(table).indexes.find((index) => index.config.name === name)
     if (!found) return undefined
-    return found.config.columns.map((column) => column.name)
+    return found.config.columns.map((column) => ('name' in column ? column.name : undefined))
   }
 
   it('indexes the owner timeline as user_id then memory_date descending', () => {
@@ -508,7 +511,7 @@ describe('Memories indexes', () => {
 E ampliar o import existente para incluir as tabelas junction e o tipo da tabela:
 
 ```ts
-import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core'
+import { type PgTable, getTableConfig } from 'drizzle-orm/pg-core'
 import { memories, memoryPeople, memoryPhotos, memoryTags, users } from '../index'
 ```
 
