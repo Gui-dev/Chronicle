@@ -1,9 +1,8 @@
 'use client'
 
 import type { MemoryFiltersInput } from '@chronicle/schemas'
-import { Button, Input } from '@chronicle/ui'
-import { Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Button } from '@chronicle/ui'
+import { X } from 'lucide-react'
 
 interface MemoryFiltersProps {
   filters: MemoryFiltersInput
@@ -12,7 +11,13 @@ interface MemoryFiltersProps {
 }
 
 export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFiltersProps) {
-  const currentYear = new Date().getFullYear()
+  // UTC, not local: the API reads a month without a year as "that month of the
+  // current UTC year", so the option list and the year `onMonthChange` writes
+  // below have to come from the same clock. A local clock would put an
+  // off-by-one year in the select for the few hours around New Year, and
+  // whichever way it fell, the select would show a year the API is not
+  // filtering by.
+  const currentYear = new Date().getUTCFullYear()
   const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
 
   const months = [
@@ -30,41 +35,23 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
     { value: 12, label: 'Dez' },
   ]
 
+  // `search` is deliberately absent: the timeline filter bar no longer edits it.
+  // The text query belongs to the navbar's search dialog and the /search page,
+  // which build their own query instead of going through this bar.
   const hasActiveFilters =
-    filters.search ||
-    filters.year ||
-    filters.month ||
-    filters.weather ||
-    filters.location ||
-    filters.tag
+    filters.year || filters.month || filters.weather || filters.location || filters.tag
 
-  const [searchInput, setSearchInput] = useState(filters.search || '')
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const next = searchInput || undefined
-      if (next !== filters.search) {
-        onFilterChange('search', next)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchInput, filters.search, onFilterChange])
+  const onMonthChange = (value: string) => {
+    onFilterChange('month', value ? Number(value) : undefined)
+    // A bare month is resolved server-side against the current year, which
+    // silently hides every other year's memories. Sending the year alongside it
+    // makes the applied range visible in the year select instead of implied.
+    if (value && !filters.year) onFilterChange('year', new Date().getUTCFullYear())
+  }
 
   return (
     <div className="mb-8 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-          <Input
-            type="text"
-            placeholder="Buscar memórias..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            data-testid="search"
-            className="h-10 rounded-lg border-2 border-card bg-card pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-
         <select
           value={filters.year || ''}
           onChange={(e) =>
@@ -83,9 +70,8 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
 
         <select
           value={filters.month || ''}
-          onChange={(e) =>
-            onFilterChange('month', e.target.value ? Number(e.target.value) : undefined)
-          }
+          onChange={(e) => onMonthChange(e.target.value)}
+          data-testid="month"
           className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Mês</option>
@@ -100,10 +86,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setSearchInput('')
-              onReset()
-            }}
+            onClick={onReset}
             className="h-10 text-muted hover:text-primary"
           >
             <X className="mr-1 h-4 w-4" />
