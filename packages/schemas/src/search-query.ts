@@ -108,6 +108,18 @@ function parseMonthValue(raw: string): number | null {
   return MONTH_NAMES[normalize(raw)] ?? null
 }
 
+// A quoted value reaches the parse loop as its own token, because the tokenizer
+// ends the bare token at the opening quote: `local:"praia do norte"` and
+// `#"praia do norte"` each arrive as two tokens. A sigil or prefix with no value
+// of its own therefore adopts the next quoted token as that value. `ano:` and
+// `mes:` are excluded by their callers: they validate a number and fall through
+// to text when it is not one, so a joined `ano:"99"` would push a bare `ano:` to
+// text and swallow the value.
+function quotedValueAfter(tokens: Token[], index: number): string | null {
+  const next = tokens[index + 1]
+  return next?.quoted ? next.value.trim() : null
+}
+
 export function parseSearchQuery(input: string): ParsedSearchQuery {
   const parsed: ParsedSearchQuery = {
     text: [],
@@ -140,7 +152,15 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
     }
 
     if (token.value.startsWith('#')) {
-      const tag = token.value.slice(1)
+      let tag = token.value.slice(1)
+      // A bare `#` is not a tag named nothing, so it adopts a quoted value.
+      if (!tag) {
+        const quoted = quotedValueAfter(tokens, index)
+        if (quoted !== null) {
+          tag = quoted
+          index += 1
+        }
+      }
       // Distinct tags are an AND and all of them are kept; an exact repeat is
       // the same condition twice, so it collapses.
       if (isWordLike(tag) && !parsed.tags.includes(tag)) parsed.tags.push(tag)
@@ -152,15 +172,11 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
 
     if (prefix) {
       let rest = token.value.slice(prefix.length)
-      // `local:"praia do norte"` reaches here as two tokens, because the
-      // tokenizer ends the bare token at the opening quote. A free-text
-      // dimension with no value of its own therefore takes the next quoted
-      // token as that value. Not the numeric ones: a quoted year is still just
-      // a number, so there is nothing to gain and a value to lose.
+      // A free-text dimension with no value of its own adopts a quoted one.
       if (!rest && (prefix === 'clima:' || prefix === 'local:')) {
-        const next = tokens[index + 1]
-        if (next?.quoted) {
-          rest = next.value.trim()
+        const quoted = quotedValueAfter(tokens, index)
+        if (quoted !== null) {
+          rest = quoted
           index += 1
         }
       }

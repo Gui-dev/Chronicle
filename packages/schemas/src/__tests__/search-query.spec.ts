@@ -119,6 +119,30 @@ describe('parseSearchQuery', () => {
     expect(parseSearchQuery('local:" praia "').location).toBe('praia')
   })
 
+  it('takes a quoted phrase as a tag value', () => {
+    const parsed = parseSearchQuery('#"praia do norte"')
+    expect(parsed.tags).toEqual(['praia do norte'])
+    expect(parsed.phrases).toEqual([])
+    expect(parsed.text).toEqual([])
+    // Distinct quoted tags are still an AND; an exact repeat still collapses.
+    expect(parseSearchQuery('#"a b" #"c d"').tags).toEqual(['a b', 'c d'])
+    expect(parseSearchQuery('#"a b" #"a b"').tags).toEqual(['a b'])
+    // A quoted value with nothing searchable in it is not a tag.
+    expect(parseSearchQuery('#"---"').tags).toEqual([])
+  })
+
+  it('leaves a quoted value on ano: and mes: as a phrase', () => {
+    // Deliberately not composed. These two validate a number and fall through
+    // to text when it is not one, so joining `ano:"99"` would push a bare
+    // `ano:` to text and swallow the quoted value — strictly worse than leaving
+    // it a phrase, and both spellings round-trip.
+    const parsed = parseSearchQuery('ano:"99"')
+    expect(parsed.year).toBeNull()
+    expect(parsed.text).toEqual(['ano:'])
+    expect(parsed.phrases).toEqual(['99'])
+    expect(parseSearchQuery('mes:"99"').month).toBeNull()
+  })
+
   it('keeps the last author and drops the rest', () => {
     // An author cannot be free text: Task 7 would AND `%@deb%` against
     // title/content, where no author name ever lives, so the extra term can
@@ -178,6 +202,9 @@ describe('serializeSearchQuery', () => {
       'local:"praia do norte"',
       'clima:"sol de janeiro"',
       'clima:"ceu limpo" #festa @bruce ano:2026 mes:setembro',
+      '#"praia do norte" #festa',
+      '#"a b" #"c d" #"a b"',
+      'local:"praia do norte" #"ano novo" @bruce',
       'local:praia clima:sol',
       '@bruce #festa #praia',
       'praia sol "fase com espaço"',
