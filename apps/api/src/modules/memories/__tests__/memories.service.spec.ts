@@ -265,6 +265,20 @@ describe('MemoriesService privacy', () => {
       expect(range[0].value.toISOString()).toBe('2026-09-01T00:00:00.000Z')
       expect(range[1].value.toISOString()).toBe('2026-10-01T00:00:00.000Z')
     })
+
+    it('defaults the year to the current UTC year when only month is given', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2031-03-15T12:00:00Z'))
+      try {
+        await memoriesService.findAll({ page: 1, limit: 20, month: 9 })
+
+        const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+        expect(range[0].value.toISOString()).toBe('2031-09-01T00:00:00.000Z')
+        expect(range[1].value.toISOString()).toBe('2031-10-01T00:00:00.000Z')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
   })
 
   describe('findById', () => {

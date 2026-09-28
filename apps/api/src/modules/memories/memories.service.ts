@@ -19,8 +19,10 @@ import { AppError } from '../../errors/app-error'
 
 // A range predicate, not EXTRACT: `EXTRACT(YEAR FROM memory_date) = 2026` wraps
 // the column in a function, so Postgres can never satisfy it with an index.
-// A half-open interval over the raw column is sargable. Bounds are UTC because
-// memoryDate is a `timestamp` fed by the localDate schema.
+// A half-open interval over the raw column is sargable. The bounds are UTC
+// instants, while `localDate` stores a local wall clock, so this only matches
+// the old EXTRACT when the server and the session run in UTC — checked by hand
+// in Task 5.
 function dateRange(year: number, month?: number) {
   return {
     start: new Date(Date.UTC(year, month ? month - 1 : 0, 1)),
@@ -116,6 +118,9 @@ export class MemoriesService {
       )
     }
 
+    // A month filter is only meaningful within a year, and the spec resolves
+    // `month` without `year` to the current one. `memory-filters.tsx` sets the
+    // year alongside the month so the UI never sends the bare case silently.
     const effectiveYear = year ?? (month ? new Date().getUTCFullYear() : undefined)
 
     if (effectiveYear) {
