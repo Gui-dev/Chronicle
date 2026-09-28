@@ -26,7 +26,8 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 8. **Nomes dos pacotes de workspace:** `apps/api` chama-se `api` e `apps/web` chama-se `web` — **sem** o escopo `@chronicle/`, que só existe em `packages/*`. O filtro `pnpm --filter @chronicle/api` não casa com nada. Use `pnpm --filter api` e `pnpm --filter web`.
 9. **`pnpm --filter api test -- -t 'nome'` não filtra.** O `--` é repassado literalmente e o vitest ignora o `-t`, rodando a suíte inteira — o passo "rodar para confirmar que falha" passaria à toa. A forma que filtra é `pnpm --filter api exec vitest run -t 'nome'`.
 10. **Mês sem ano encolhe para o ano corrente, e isso é uma armadilha de UI.** O spec (linha 134) decide que `month` com `year` ausente usa o ano corrente, e é o que a Task 2 implementa. O comportamento antigo trazia setembro de *todos* os anos. Nos dois `mes:9` da busca isso é inofensivo, mas em `memory-filters.tsx` os `<select>` de ano e mês são independentes: escolher "Setembro" com "Ano" vazio passa a esconder todas as memórias de setembro dos anos anteriores, sem nenhuma indicação na UI. A Task 13 tem de fechar isso — ao escolher um mês, o ano tem de passar a corrente, ou o mês tem de ficar desabilitado até haver ano.
-11. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
+11. **Ano corrente em UTC no backend, ano local no cliente — split conhecido e não resolvido nesta fase.** O serviço usa `getUTCFullYear()` e o `memory-filters.tsx:14` monta a lista de anos com `getFullYear()`. No caminho dos parâmetros REST o ano explícito vence e o usuário vê um resultado coerente, mas no caminho da busca, `mes:1` digitado às 00:30 de 1º de janeiro em UTC-3 faz o backend escolher o ano **UTC**, um atrás do ano em que a memória foi vivida. A raiz disso é o mesmo item do `SHOW TimeZone` da Task 5: `localDate` grava meia-noite local e o intervalo compara instantes UTC, então uma memória criada exatamente à meia-noite local do último dia do mês cai no mês seguinte. Não é regressão — o `EXTRACT` tinha o mesmo corte — mas registrar aqui para a fase de busca por documentos decidir se quer corrigir.
+12. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
 
@@ -208,7 +209,56 @@ Substituindo os blocos `if (year)` e `if (month)` por:
 Run: `pnpm --filter api test`
 Expected: PASS — inclui os dois testes novos e os de privacidade existentes.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Cobrir o padrão mês-sem-ano, que hoje não tem teste nenhum**
+
+`effectiveYear` é a linha mais surpreendente do diff e é a única que muda comportamento, e
+mesmo assim os dois testes novos passam `year`, então o ramo nunca é exercitado. Fixar o ano
+com `vi.setSystemTime` para o teste não depender de quando roda:
+
+```ts
+    it('defaults the year to the current UTC year when only month is given', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2031-03-15T12:00:00Z'))
+      try {
+        await memoriesService.findAll({ page: 1, limit: 20, month: 9 })
+
+        const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+        expect(range[0].value.toISOString()).toBe('2031-09-01T00:00:00.000Z')
+        expect(range[1].value.toISOString()).toBe('2031-10-01T00:00:00.000Z')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+```
+
+- [ ] **Step 7: Corrigir os comentários, que hoje justificam ao contrário**
+
+O comentário do `dateRange` diz que os limites são UTC "porque `memoryDate` é `timestamp`
+alimentado pelo schema `localDate`", mas `localDate` (`packages/schemas/src/local-date.ts:4-6`)
+constrói `new Date(y, m-1, d, 0,0,0,0)`, isto é, **meia-noite local**. Citar `localDate`
+justifica os limites locais, não os UTC — o comentário afirma uma coisa que o código não
+entrega, e é justamente a crença que a sonda `SHOW TimeZone` da Task 5 existe para desafiar.
+Trocar por:
+
+```ts
+// A range predicate, not EXTRACT: `EXTRACT(YEAR FROM memory_date) = 2026` wraps
+// the column in a function, so Postgres can never satisfy it with an index.
+// A half-open interval over the raw column is sargable. The bounds are UTC
+// instants, while `localDate` stores a local wall clock, so this only matches
+// the old EXTRACT when the server and the session run in UTC — checked by hand
+// in Task 5.
+```
+
+E comentar o `effectiveYear`, que hoje não tem nenhum:
+
+```ts
+    // A month filter is only meaningful within a year, and the spec resolves
+    // `month` without `year` to the current one. `memory-filters.tsx` sets the
+    // year alongside the month so the UI never sends the bare case silently.
+    const effectiveYear = year ?? (month ? new Date().getUTCFullYear() : undefined)
+```
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add apps/api/src/modules/memories/memories.service.ts apps/api/src/modules/memories/__tests__/memories.service.spec.ts
@@ -627,7 +677,7 @@ Expected: `old_year = new_year`, `old_jan = new_jan`, `dec_quebrado = 0`,
 
 > O `month` sem `year` **mudou de comportamento** de proposito (o spec, linha 134, decide
 > assim): antes `EXTRACT(MONTH ...) = 9` trazia setembro de todos os anos, agora traz
-> setembro do ano corrente. Ver pre-requisito 11 para o impacto na UI.
+> setembro do ano corrente. Ver pre-requisito 10 para o impacto na UI.
 
 > Se `SHOW TimeZone` **não** for `UTC`, os dois lados divergem. Nesse caso, construir os limites com o offset da sessão em vez de `Date.UTC`, ajustar a Task 2 e o teste de equivalidade, e reexecutar.
 
@@ -1662,7 +1712,7 @@ git commit -m "feat(web): open the search dialog from the navbar and add a heade
 
 Em `memory-filters.tsx`, apagar o bloco `const [searchInput, setSearchInput] = useState(...)` e o `useEffect` do `setTimeout`, e apagar o `<div className="relative flex-1 min-w-[200px]">` que contém o `Input` de busca.
 
-**Fechar a armadilha de mês-sem-ano (pre-requisito 11).** Os dois `<select>` são independentes e
+**Fechar a armadilha de mês-sem-ano (pre-requisito 10).** Os dois `<select>` são independentes e
 o serviço trata mês sem ano como "mês do ano corrente", o que esconderia as memórias dos anos
 anteriores sem aviso. Escolher o mês com o ano vazio tem de normalizar o ano para o corrente:
 
