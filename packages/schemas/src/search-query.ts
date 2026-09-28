@@ -146,7 +146,15 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
     }
 
     if (token.value.startsWith('@')) {
-      const author = token.value.slice(1)
+      let author = token.value.slice(1)
+      // A bare `@` is not an author named nothing, so it adopts a quoted value.
+      if (!author) {
+        const quoted = quotedValueAfter(tokens, index)
+        if (quoted !== null) {
+          author = quoted
+          index += 1
+        }
+      }
       if (isWordLike(author)) parsed.author = author
       continue
     }

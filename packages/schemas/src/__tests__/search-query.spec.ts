@@ -119,6 +119,24 @@ describe('parseSearchQuery', () => {
     expect(parseSearchQuery('local:" praia "').location).toBe('praia')
   })
 
+  it('takes a quoted phrase as an author value', () => {
+    const parsed = parseSearchQuery('@"author name"')
+    expect(parsed.author).toBe('author name')
+    // The quoted run must not survive as a free-text phrase: the user asked
+    // for an author filter, and a phrase search is a different, wrong answer.
+    expect(parsed.phrases).toEqual([])
+    expect(parsed.text).toEqual([])
+    // Author is a scalar, so last wins — including when the winner is quoted.
+    expect(parseSearchQuery('@"a b" @bruce').author).toBe('bruce')
+    expect(parseSearchQuery('@bruce @"a b"').author).toBe('a b')
+    // An exact repeat is the same author twice, so it collapses like a tag.
+    expect(parseSearchQuery('@"a b" @"a b"').author).toBe('a b')
+    expect(parseSearchQuery('@"a b" @"a b"').phrases).toEqual([])
+    // A quoted value with nothing searchable in it is not an author.
+    expect(parseSearchQuery('@"---"').author).toBeNull()
+    expect(parseSearchQuery('@').author).toBeNull()
+  })
+
   it('takes a quoted phrase as a tag value', () => {
     const parsed = parseSearchQuery('#"praia do norte"')
     expect(parsed.tags).toEqual(['praia do norte'])
@@ -204,6 +222,8 @@ describe('serializeSearchQuery', () => {
       'clima:"ceu limpo" #festa @bruce ano:2026 mes:setembro',
       '#"praia do norte" #festa',
       '#"a b" #"c d" #"a b"',
+      '@"author name" @"other name"',
+      '@bruce @"other name" @"a b"',
       'local:"praia do norte" #"ano novo" @bruce',
       'local:praia clima:sol',
       '@bruce #festa #praia',
