@@ -665,32 +665,66 @@ describe('MemoriesService privacy', () => {
       expect(allOps('ilike')).toHaveLength(0)
     })
 
-    it('joins users when the query names an author', async () => {
+    it('joins users on both queries when the query names an author', async () => {
       await memoriesService.findAll(filters({ search: '@bruce' }))
 
-      // The plan put this at `toHaveLength(1)`, which is the wrong number: the
-      // count query shares `conditions` with the rows query, so it needs the
-      // join too (see the count test below for the SQL that makes that
-      // mandatory). Two joins — one per query — is the correct count.
-      expect(mocks.state.leftJoins).toHaveLength(2)
+      // Two joins, one per query, and which is which. The plan asserted a
+      // single join, which is the wrong number: `conditions` is one array shared
+      // by both queries, so once the author predicate is in it the count query's
+      // `where` names `users.name` as well, and without the join Postgres
+      // answers `missing FROM-clause entry for table "users"` (verified against
+      // a real database). The plan's assertion could also not tell the count
+      // join from the rows join, so joining both twice, or joining the wrong
+      // query twice, looked the same to it.
+      expect(mocks.state.leftJoins.map((j) => j.isCount)).toEqual([false, true])
+      expect(mocks.state.countConditions).toHaveLength(1)
+      expect(mocks.state.countConditions[0]).toEqual(mocks.state.memoryConditions[0])
+    })
+
+    it('joins on memories.user_id = users.id, not on a same-typed users column', async () => {
+      await memoriesService.findAll(filters({ search: '@bruce' }))
+
+      // The condition is the whole claim, and it is a hole on its own: a
+      // leftJoin with a missing or wrong condition still leaves `leftJoins` at
+      // the right length, so every other test in this file passes. Measured
+      // against a real database (6 memories, 13 users, 8 of them matching the
+      // author filter):
+      //
+      //   ON `true`          -> count(*) 48. Every memory paired with every
+      //                          matching author, so paging walks a cross
+      //                          product: `total` overstates the feed and the
+      //                          same memory recurs across pages.
+      //   ON user_id = email -> count(*) 0. `memories.user_id` and `users.email`
+      //                          are both varchar(255), so nothing refuses to
+      //                          compile. Every row fails the ON, so
+      //                          `users.name`/`users.email` are NULL, the author
+      //                          ILIKE never matches, and `@bruce` answers HTTP
+      //                          200 with an empty feed and `total: 0`.
+      //
+      // Both mutations pass the length assertion, which is why this one is here.
+      expect(mocks.state.leftJoins.map((j) => j.condition)).toEqual([
+        { op: 'eq', col: memories.userId, value: users.id },
+        { op: 'eq', col: memories.userId, value: users.id },
+      ])
     })
 
     it('does not join users when no author is named', async () => {
       await memoriesService.findAll(filters({ search: 'praia' }))
 
+      // The plain-language counterpart to the matrix below, which is the
+      // exhaustive version over the grammar's dimensions.
       expect(mocks.state.leftJoins).toHaveLength(0)
     })
 
     it('puts the author predicate in the where, AND-ed with the privacy filter', async () => {
       await memoriesService.findAll(filters({ search: '@bruce' }))
 
-      // The assertion the plan's own two tests above could not make. A
-      // leftJoin whose condition is dropped still leaves `leftJoins` at
-      // length 1, so `joins users when the query names an author` passes on an
-      // implementation that joins and forgets the predicate — and that one
-      // answers `@bruce` with the entire public feed, which is exactly the
-      // silent failure this task exists to close. Sibling, not merged into the
-      // privacy `or`, so the two cannot be confused for each other.
+      // The assertion the plan's own two tests could not make. A leftJoin whose
+      // predicate is dropped still leaves `leftJoins` at length 2, so the length
+      // test passes on an implementation that joins and forgets the condition in
+      // the `where` — and that one answers `@bruce` with the entire public feed.
+      // Sibling, not merged into the privacy `or`, so the two cannot be confused
+      // for each other.
       expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'or'])
       expect(memoryOps()[1]).toEqual({
         op: 'or',
@@ -701,27 +735,16 @@ describe('MemoriesService privacy', () => {
       })
     })
 
-    it('joins the count query too, since its where reads users', async () => {
-      await memoriesService.findAll(filters({ search: '@bruce' }))
-
-      // Not redundant with the rows join. `conditions` is one array shared by
-      // both queries, so once the author predicate is in it the count query's
-      // `where` names `users.name` too — and without the join that is
-      // `missing FROM-clause entry for table "users"`. A join on the rows query
-      // alone passes the plan's length-1 assertion and 500s on the real thing.
-      expect(mocks.state.leftJoins.map((j) => j.isCount)).toEqual([false, true])
-      expect(mocks.state.countConditions).toHaveLength(1)
-      expect(mocks.state.countConditions[0]).toEqual(mocks.state.memoryConditions[0])
-    })
-
     it('joins if and only if the where carries an author predicate', async () => {
       // The invariant, over the searches that exercise every branch of the
-      // grammar. `needsAuthorJoin` is computed from `grammar.author` in one
-      // place while the predicate is pushed inside `if (hasGrammar)` in another,
-      // and those two agree today only because `isEmptySearch` happens to count
-      // `author`. A mismatch either way is a runtime failure: a `where`
-      // referencing an unjoined table, or a join with nothing to match on. The
-      // matrix is what makes the agreement structural instead of coincidental.
+      // grammar. The author predicate and `needsAuthorJoin` are both read off
+      // one `const author` declared above the `if (hasGrammar)` block, so they
+      // cannot disagree: either the `where` names `users` and both queries join
+      // it, or neither does. The predicate used to be pushed inside
+      // `if (hasGrammar)`, which agreed only because `isEmptySearch` happens to
+      // count `author` — a coupling nothing stated and nothing checked. A
+      // mismatch either way is a runtime failure: a `where` naming an unjoined
+      // table, or a join with nothing to match on. This matrix is the pin.
       let exercisedSome = false
 
       const searches = [
@@ -751,13 +774,23 @@ describe('MemoriesService privacy', () => {
         await memoriesService.findAll(filters({ search }))
 
         const authorInWhere = authorPredicates().length > 0
-        const rowsJoined = mocks.state.leftJoins.some((j) => !j.isCount)
-        const countJoined = mocks.state.leftJoins.some((j) => j.isCount)
+        const rowsJoins = mocks.state.leftJoins.filter((j) => !j.isCount)
+        const countJoins = mocks.state.leftJoins.filter((j) => j.isCount)
 
-        expect({ search, rowsJoined, countJoined, authorInWhere }).toEqual({
+        // Counts, not `some()`. `some()` is idempotent, so a query joined twice
+        // reads identically to a query joined once and a duplicated join sails
+        // straight through an equivalence check. Pinning the exact number per
+        // query also pins the two queries against each other, since one flag
+        // decides both: 2 joins on rows and 1 on count is as broken as 1 and 0.
+        expect({
           search,
-          rowsJoined: authorInWhere,
-          countJoined: authorInWhere,
+          rowsJoins: rowsJoins.length,
+          countJoins: countJoins.length,
+          authorInWhere,
+        }).toEqual({
+          search,
+          rowsJoins: authorInWhere ? 1 : 0,
+          countJoins: authorInWhere ? 1 : 0,
           authorInWhere,
         })
 
@@ -774,18 +807,25 @@ describe('MemoriesService privacy', () => {
     it('selects the memory columns and nothing from users', async () => {
       await memoriesService.findAll(filters({ search: '@bruce' }))
 
-      // The join makes a bare `select()` a `SELECT *` over both tables, which
-      // is how the plan as written would put `users.name`, `users.email`,
-      // `users.image` and `users.email_verified` on every row of a feed anyone
-      // can read. Asserting the exact key set is what catches that, and it also
-      // catches the opposite drift: a column dropped from the list here.
-      // `id` is asserted against `memories.id` specifically, because `id` is
-      // also where the star collides — both tables have one, the row object
-      // keeps a single key, and postgres.js resolves the duplicate to the LAST
-      // occurrence, so the star's `id` is the *user's*, not the memory's. That
-      // does not throw; it makes `results.map(r => r.id)` below feed the
-      // relation queries a list of user ids, and every card renders with no
-      // photos, people or tags.
+      // A bare `select()` joined to `users` is not `SELECT *` — Drizzle expands
+      // it to a fully-qualified list of both tables' columns, 21 from `memories`
+      // and 7 from `users`, and then `mapResultRow` nests each row by table path
+      // into `{ memories: {...}, users: {...} }`. Verified against a real
+      // database: the top-level keys are exactly `memories,users`.
+      //
+      // The leak is the point. A real returned row carried
+      // `users: { id, email: "bruce@email.com", name, image, emailVerified,
+      // createdAt, updatedAt }` — every author's real email address, on a feed
+      // readable by anyone. Asserting the exact key set catches that, and also
+      // catches the opposite drift, a column dropped from the list.
+      //
+      // It also rules out a shape I got wrong once: the nesting means there is
+      // NO `id` collision, because the two land under different keys. `row.id` is
+      // `undefined`, so `results.map(r => r.id)` feeds
+      // `inArray(memoryPhotos.memoryId, [undefined])` and postgres.js rejects it
+      // with `UNDEFINED_VALUE: Undefined values are not allowed` — a 500, not
+      // silently empty cards. The explicit list keeps `id` a real `memories.id`,
+      // which is what the relation batches need.
       const columns = rowsProjection()
 
       expect(Object.keys(columns)).toEqual([
@@ -824,9 +864,17 @@ describe('MemoriesService privacy', () => {
       mocks.state.projections = []
       await memoriesService.findAll(filters({ search: 'praia' }))
 
-      // The projection cannot depend on the join: one list, so a query with and
-      // without an author returns the same row shape and the client cannot tell
-      // which search produced a memory.
+      // Everything else here pins the *contents* of the list, so this is the one
+      // test that fails if the *choice* of list becomes conditional — say
+      // `needsAuthorJoin ? <star> : memoryColumns`, which is the shape a
+      // future author-search-only projection would take. Under that change the
+      // two searches stop agreeing, and the first call above has no column list
+      // to read at all, because a bare `select()` is `undefined` to the mock.
+      //
+      // It cannot catch a list that is merely the wrong constant, and it does
+      // not claim to: it guards one specific future regression. What it buys is
+      // that the response shape cannot start depending on which search ran, so a
+      // client cannot tell an author search from a plain one by looking at a row.
       expect(Object.keys(rowsProjection())).toEqual(withAuthor)
     })
   })

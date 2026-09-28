@@ -43,22 +43,30 @@ function groupByMemory<T extends { memoryId: string }>(rows: T[]) {
   return grouped
 }
 
-// Every `memories` column, named. A bare `select()` is `SELECT *`, and once the
-// author search joins `users` the star expands to `users.name`, `users.email`,
-// `users.image` and `users.email_verified` as well — every author's real email
-// address on every row of a feed that is readable by anyone.
+// Every `memories` column, named. The reason is the author join, and the
+// failure it prevents is a privacy leak.
 //
-// The star also collides on `id`, which is the worse of the two. Both tables
-// have one, the row object keeps a single `id` key, and postgres.js resolves the
-// duplicate to the LAST occurrence — so `id` becomes the *user's*. Nothing
-// throws: `results.map(r => r.id)` below hands the relation queries a list of
-// user ids, those `inArray` batches match nothing, and every card renders with
-// no photos, no people and no tags while the page looks otherwise healthy.
+// A bare `select()` does not survive the `users` join as `SELECT *`. Drizzle
+// expands it to a fully-qualified list of both tables' columns — 21 from
+// `memories` and 7 from `users` — and `mapResultRow` then nests each row by
+// table path, so what comes back is `{ memories: {...}, users: {...} }`. A real
+// database returns rows whose top-level keys are exactly `memories,users`, and
+// whose `users` value is
+// `{ id, email: "bruce@email.com", name, image, emailVerified, createdAt,
+// updatedAt }` — so the feed this service returns, readable by anyone, would
+// have carried every author's real email address and profile image on every
+// memory.
 //
-// Naming the columns keeps the returned row identical to the pre-join shape, so
-// `Memory` still infers correctly and the id the batches use is the memory's.
-// The spec pins this exact key set, so a column added to `memories` fails that
-// test and has to be listed here on purpose.
+// The nesting also means there is no `id` collision to guard against — the two
+// ids land under different keys. The cost is worse than a wrong value: `row.id`
+// is `undefined`, so `results.map(r => r.id)` below hands the relation queries
+// `[undefined]`, and postgres.js rejects that with `UNDEFINED_VALUE: Undefined
+// values are not allowed`. Every author search is a 500.
+//
+// Naming the columns keeps the row identical to the pre-join shape, so `Memory`
+// still infers correctly and the id the batches use is the memory's. The spec
+// pins this exact key set, so a column added to `memories` fails that test and
+// has to be listed here on purpose.
 const memoryColumns = {
   id: memories.id,
   userId: memories.userId,
