@@ -102,7 +102,25 @@ git commit -m "feat(db): export gte, lt and inArray for range and batch queries"
 - Modify: `apps/api/src/modules/memories/memories.service.ts:105-111`
 - Test: `apps/api/src/modules/memories/__tests__/memories.service.spec.ts`
 
-- [ ] **Step 1: Escrever o teste que falha**
+- [ ] **Step 1: Adicionar um helper que achata as condicoes no mock**
+
+O servico empurra todos os predicados num array e chama `and(...conditions)` uma vez so. O mock
+registra apenas o topo da cadeia, ou seja `memoryConditions[0]` e `{ op: 'and', conds: [...] }`.
+Filtrar `memoryConditions` por `op === 'gte'` no nivel de topo devolve `[]` - dai o helper, que
+desce um nivel. Definir no escopo do modulo do spec, **depois** do `vi.hoisted`:
+
+```ts
+// The service wraps every predicate in a single and(...), and the mock records
+// only the top of the chain, so assertions have to descend into `.conds`.
+const memoryOps = (op?: string) => {
+  const flat = mocks.state.memoryConditions.flatMap((c) => {
+    const condition = c as { op: string; conds?: unknown[] }
+    return condition.op === 'and' && condition.conds ? condition.conds : [c]
+  })
+  return op ? flat.filter((c) => (c as { op: string }).op === op) : flat
+}
+```
+- [ ] **Step 2: Escrever o teste que falha**
 
 Adicionar em `describe('findAll')`:
 
@@ -110,12 +128,9 @@ Adicionar em `describe('findAll')`:
     it('uses a sargable range for the year filter instead of EXTRACT', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, year: 2026 })
 
-      const serialized = JSON.stringify(mocks.state.memoryConditions)
-      expect(serialized).not.toContain('EXTRACT')
+      expect(JSON.stringify(memoryOps())).not.toContain('EXTRACT')
 
-      const range = mocks.state.memoryConditions.filter(
-        (c) => (c as { op: string }).op === 'gte' || (c as { op: string }).op === 'lt',
-      )
+      const range = [...memoryOps('gte'), ...memoryOps('lt')]
       expect(range).toHaveLength(2)
 
       const [start, end] = range as Array<{ value: Date }>
@@ -126,21 +141,19 @@ Adicionar em `describe('findAll')`:
     it('narrows the range to a single month when month is given', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, year: 2026, month: 9 })
 
-      const range = mocks.state.memoryConditions.filter(
-        (c) => (c as { op: string }).op === 'gte' || (c as { op: string }).op === 'lt',
-      ) as Array<{ value: Date }>
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
 
       expect(range[0].value.toISOString()).toBe('2026-09-01T00:00:00.000Z')
       expect(range[1].value.toISOString()).toBe('2026-10-01T00:00:00.000Z')
     })
 ```
 
-- [ ] **Step 2: Rodar e confirmar que falha**
+- [ ] **Step 3: Rodar e confirmar que falha**
 
 Run: `pnpm --filter api exec vitest run -t 'sargable'`
 Expected: FAIL — `EXTRACT` ainda está nas condições.
 
-- [ ] **Step 3: Implementar o intervalo**
+- [ ] **Step 4: Implementar o intervalo**
 
 Em `memories.service.ts`, adicionar `gte` e `lt` aos imports de `@chronicle/db` e substituir o bloco de `year`/`month`:
 
@@ -188,12 +201,12 @@ Substituindo os blocos `if (year)` e `if (month)` por:
     }
 ```
 
-- [ ] **Step 4: Rodar e confirmar que passa**
+- [ ] **Step 5: Rodar e confirmar que passa**
 
 Run: `pnpm --filter api test`
 Expected: PASS — inclui os dois testes novos e os de privacidade existentes.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/modules/memories/memories.service.ts apps/api/src/modules/memories/__tests__/memories.service.spec.ts
@@ -938,25 +951,20 @@ Adicionar em `describe('findAll')`:
     it('expands a bare term into a title/content OR condition', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: 'praia' })
 
-      const serialized = JSON.stringify(mocks.state.memoryConditions)
+      const serialized = JSON.stringify(memoryOps())
       expect(serialized).toContain('ilike')
     })
 
     it('ANDs multiple bare terms and ORs each across title and content', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: 'praia sol' })
 
-      const ilikes = mocks.state.memoryConditions.filter(
-        (c) => (c as { op: string }).op === 'ilike',
-      )
-      expect(ilikes).toHaveLength(4)
+      expect(memoryOps('ilike')).toHaveLength(4)
     })
 
     it('feeds ano: into the same date range as the year filter', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: 'ano:2026' })
 
-      const range = mocks.state.memoryConditions.filter(
-        (c) => (c as { op: string }).op === 'gte' || (c as { op: string }).op === 'lt',
-      ) as Array<{ value: Date }>
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
 
       expect(range[0].value.toISOString()).toBe('2026-01-01T00:00:00.000Z')
       expect(range[1].value.toISOString()).toBe('2027-01-01T00:00:00.000Z')
@@ -965,15 +973,15 @@ Adicionar em `describe('findAll')`:
     it('turns a tag into an EXISTS subquery', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: '#festa' })
 
-      const serialized = JSON.stringify(mocks.state.memoryConditions)
+      const serialized = JSON.stringify(memoryOps())
       expect(serialized).toContain('EXISTS')
     })
 
     it('adds no condition for a query with no searchable token', async () => {
-      const before = mocks.state.memoryConditions.length
       await memoriesService.findAll({ page: 1, limit: 20, search: '   ' })
 
-      expect(mocks.state.memoryConditions).toHaveLength(before)
+      // Only the privacy filter survives; no ilike, no EXISTS, no range.
+      expect(memoryOps()).toHaveLength(1)
     })
 ```
 
