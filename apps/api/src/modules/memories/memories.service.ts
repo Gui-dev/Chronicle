@@ -130,18 +130,30 @@ export class MemoriesService {
       )
     }
 
-    // The query string is parsed once and every dimension is read off the result,
-    // so `#festa` and `?tag=festa` build the same kind of condition while
-    // `?tag=` keeps working for the URLs that already carry it.
+    // The query string is parsed once and every dimension is read off the result.
     const grammar: ParsedSearchQuery | null = search ? parseSearchQuery(search) : null
     const hasGrammar = grammar !== null && !isEmptySearch(grammar)
 
+    // Precedence (spec §2.3): for the same dimension the grammar wins and the URL
+    // param is discarded with no trace. `?weather=Sol` with `clima:chuva` searches
+    // only `chuva`, and the caller is left showing `Sol` — the filter controls
+    // mirroring the query is the UI's problem, not a reason to change this.
+    // `?tag=` is the one deliberate exception: it is a separate filter rather than
+    // a grammar dimension, so the `if (tag)` block below ANDs its own EXISTS with
+    // the grammar's. The two rules differ on purpose; do not "fix" one of them
+    // into matching the other.
+    //
     // A month filter is only meaningful within a year, and the spec resolves
     // `month` without `year` to the current one. `memory-filters.tsx` sets the
     // year alongside the month so the UI never sends the bare case silently.
-    // `??` here is a nullish test, not a falsy one: `month` can be a string from
-    // the URL query, so `''` would read as "no month given" while a real `'9'`
-    // would not — and `dateRange` needs a number, hence the coercion.
+    //
+    // This service does not re-validate `filters` — `memoryFiltersSchema` at the
+    // route is what keeps a bad month out, and `?month=0` is a 400 there. The
+    // `Number`/`isFinite` pair is what survives a caller that skips that schema,
+    // and it has one live case: `NaN` is assignable to `number`, so a `month: NaN`
+    // would otherwise reach `dateRange` and build an Invalid Date. Under the
+    // schema both are dead, and they stay because that guarantee lives in another
+    // file and has to hold for whoever calls `findAll` next.
     const effectiveMonthRaw = grammar?.month ?? month
     const effectiveMonth = effectiveMonthRaw === undefined ? undefined : Number(effectiveMonthRaw)
     const hasMonth = effectiveMonth !== undefined && Number.isFinite(effectiveMonth)
