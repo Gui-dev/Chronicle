@@ -11,3 +11,6 @@ export { registerSchema, loginSchema } from './auth'
 export type { RegisterInput, LoginInput } from './auth'
 
 export { localDate } from './local-date'
+
+export { isEmptySearch, parseSearchQuery, serializeSearchQuery } from './search-query'
+export type { ParsedSearchQuery } from './search-query'
