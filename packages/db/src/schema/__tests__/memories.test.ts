@@ -1,7 +1,7 @@
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { describe, expect, it } from 'vitest'
 
-import { memories, users } from '../index'
+import { memories, memoryPeople, memoryPhotos, memoryTags, users } from '../index'
 
 describe('Memories Schema', () => {
   const cfg = getTableConfig(memories as never)
@@ -57,5 +57,26 @@ describe('Memories Schema', () => {
     const userId = userColumns.find((c) => c.name === 'id')
     expect(userId?.name).toBe('id')
     expect(userId?.primary).toBe(true)
+  })
+})
+
+describe('Memories indexes', () => {
+  const indexNames = (table: Parameters<typeof getTableConfig>[0]) =>
+    getTableConfig(table).indexes.map((index) => index.config.name)
+
+  it('indexes the owner timeline and the public feed', () => {
+    expect(indexNames(memories as never)).toEqual(
+      expect.arrayContaining(['memories_user_date_idx', 'memories_public_date_idx']),
+    )
+  })
+
+  it('indexes every junction table by memory_id', () => {
+    expect(indexNames(memoryPhotos as never)).toContain('memory_photos_memory_idx')
+    expect(indexNames(memoryPeople as never)).toContain('memory_people_memory_idx')
+    expect(indexNames(memoryTags as never)).toContain('memory_tags_memory_idx')
+  })
+
+  it('indexes tags by name for the #tag search', () => {
+    expect(indexNames(memoryTags as never)).toContain('memory_tags_name_idx')
   })
 })

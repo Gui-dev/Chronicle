@@ -1,31 +1,52 @@
-import { boolean, decimal, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  decimal,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 import { users } from './users'
 
-export const memories = pgTable('memories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: varchar('user_id', { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  content: text('content'),
-  memoryDate: timestamp('memory_date', { mode: 'date' }).notNull(),
-  locationName: varchar('location_name', { length: 255 }),
-  locationLat: decimal('location_lat', { precision: 10, scale: 8 }),
-  locationLng: decimal('location_lng', { precision: 11, scale: 8 }),
-  weatherTemp: decimal('weather_temp', { precision: 5, scale: 2 }),
-  weatherDesc: varchar('weather_desc', { length: 100 }),
-  weatherIcon: varchar('weather_icon', { length: 50 }),
-  musicTrack: varchar('music_track', { length: 255 }),
-  musicArtist: varchar('music_artist', { length: 255 }),
-  musicUrl: text('music_url'),
-  musicCover: text('music_cover'),
-  isPublic: boolean('is_public').notNull().default(true),
-  aiNarrative: text('ai_narrative'),
-  aiMood: varchar('ai_mood', { length: 50 }),
-  aiThemes: text('ai_themes').array(),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
-})
+export const memories = pgTable(
+  'memories',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: varchar('user_id', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    content: text('content'),
+    memoryDate: timestamp('memory_date', { mode: 'date' }).notNull(),
+    locationName: varchar('location_name', { length: 255 }),
+    locationLat: decimal('location_lat', { precision: 10, scale: 8 }),
+    locationLng: decimal('location_lng', { precision: 11, scale: 8 }),
+    weatherTemp: decimal('weather_temp', { precision: 5, scale: 2 }),
+    weatherDesc: varchar('weather_desc', { length: 100 }),
+    weatherIcon: varchar('weather_icon', { length: 50 }),
+    musicTrack: varchar('music_track', { length: 255 }),
+    musicArtist: varchar('music_artist', { length: 255 }),
+    musicUrl: text('music_url'),
+    musicCover: text('music_cover'),
+    isPublic: boolean('is_public').notNull().default(true),
+    aiNarrative: text('ai_narrative'),
+    aiMood: varchar('ai_mood', { length: 50 }),
+    aiThemes: text('ai_themes').array(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => [
+    // Own timeline, already ordered newest-first by findAll.
+    index('memories_user_date_idx').on(table.userId, table.memoryDate.desc()),
+    // Public feed. Partial, so it stays small instead of indexing every private row.
+    index('memories_public_date_idx')
+      .on(table.memoryDate.desc())
+      .where(sql`${table.isPublic} = true`),
+  ],
+)
 
 export type Memory = typeof memories.$inferSelect
 export type NewMemory = typeof memories.$inferInsert
