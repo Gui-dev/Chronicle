@@ -10,6 +10,7 @@ interface MemoryData {
   content?: string
   memoryDate: string
   locationName?: string
+  weatherDesc?: string
   people?: string[]
   tags?: string[]
   isPublic?: boolean
@@ -30,6 +31,7 @@ export async function createMemory(page: Page, data: MemoryData): Promise<string
       memoryDate: data.memoryDate,
       content: data.content,
       locationName: data.locationName,
+      weatherDesc: data.weatherDesc,
       people: data.people,
       tags: data.tags,
       isPublic: data.isPublic,
@@ -42,6 +44,32 @@ export async function createMemory(page: Page, data: MemoryData): Promise<string
 
   const body = (await response.json()) as { data: { id: string } }
   return body.data.id
+}
+
+/**
+ * Records every list request the page makes, returned as a live array.
+ *
+ * A test can only assert that a request did *not* happen by counting the ones
+ * that did, and the count is the whole point: a page that fetched twice, or
+ * fetched once with the wrong filter, renders the same DOM as a page that
+ * fetched once correctly — until you count.
+ *
+ * `page.on` is attached synchronously, unlike `waitForRequest`, whose listener
+ * is armed over an async round trip and misses a request the app fires during
+ * the navigation that follows.
+ */
+export function recordMemoryRequests(page: Page): string[] {
+  const urls: string[] = []
+
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') return
+    // The trailing `?` keeps `/api/memories/<id>` out: that is the detail read
+    // the edit page does, not the list.
+    if (!/\/api\/memories(\?|$)/.test(request.url())) return
+    urls.push(request.url())
+  })
+
+  return urls
 }
 
 /** Reads a memory back, to assert what a UI action actually persisted. */

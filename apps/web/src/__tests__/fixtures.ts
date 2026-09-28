@@ -38,9 +38,14 @@ export const test = base.extend<{ resetData: undefined; authenticatedPage: Page 
 
   // Declared only to order this after the reset, so a test never logs in
   // against an account the reset has not cleaned yet.
+  //
+  // `contextOptions` is passed through so a spec can pin browser-level context
+  // options — `timezoneId` above all, which decides what year a client component
+  // sees — with `test.use()` in a nested describe, instead of opening a second
+  // context by hand.
   // biome-ignore lint/correctness/noUnusedVariables: ordering dependency
-  authenticatedPage: async ({ browser, resetData }, use) => {
-    const context = await browser.newContext()
+  authenticatedPage: async ({ browser, resetData, contextOptions }, use) => {
+    const context = await browser.newContext(contextOptions)
     const page = await context.newPage()
     await login(page)
     await use(page)
