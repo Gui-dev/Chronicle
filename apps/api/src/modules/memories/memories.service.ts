@@ -16,6 +16,7 @@ import {
 } from '@chronicle/db'
 import type { Memory, MemoryPerson, MemoryPhoto, MemoryTag } from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
+import { type ParsedSearchQuery, isEmptySearch, parseSearchQuery } from '@chronicle/schemas'
 import { AppError } from '../../errors/app-error'
 
 // A range predicate, not EXTRACT: `EXTRACT(YEAR FROM memory_date) = 2026` wraps
@@ -129,28 +130,60 @@ export class MemoriesService {
       )
     }
 
+    // The query string is parsed once and every dimension is read off the result,
+    // so `#festa` and `?tag=festa` build the same kind of condition while
+    // `?tag=` keeps working for the URLs that already carry it.
+    const grammar: ParsedSearchQuery | null = search ? parseSearchQuery(search) : null
+    const hasGrammar = grammar !== null && !isEmptySearch(grammar)
+
     // A month filter is only meaningful within a year, and the spec resolves
     // `month` without `year` to the current one. `memory-filters.tsx` sets the
     // year alongside the month so the UI never sends the bare case silently.
-    const effectiveYear = year ?? (month ? new Date().getUTCFullYear() : undefined)
+    // `??` here is a nullish test, not a falsy one: `month` can be a string from
+    // the URL query, so `''` would read as "no month given" while a real `'9'`
+    // would not — and `dateRange` needs a number, hence the coercion.
+    const effectiveMonthRaw = grammar?.month ?? month
+    const effectiveMonth = effectiveMonthRaw === undefined ? undefined : Number(effectiveMonthRaw)
+    const hasMonth = effectiveMonth !== undefined && Number.isFinite(effectiveMonth)
+    const effectiveYear =
+      grammar?.year ?? year ?? (hasMonth ? new Date().getUTCFullYear() : undefined)
+    const effectiveWeather = grammar?.weather ?? weather
+    const effectiveLocation = grammar?.location ?? location
 
     if (effectiveYear) {
-      const { start, end } = dateRange(effectiveYear, month ?? undefined)
+      const { start, end } = dateRange(effectiveYear, hasMonth ? effectiveMonth : undefined)
       conditions.push(gte(memories.memoryDate, start), lt(memories.memoryDate, end))
     }
 
-    if (weather) {
-      conditions.push(ilike(memories.weatherDesc, `%${weather}%`))
+    if (effectiveWeather) {
+      conditions.push(ilike(memories.weatherDesc, `%${effectiveWeather}%`))
     }
 
-    if (location) {
-      conditions.push(ilike(memories.locationName, `%${location}%`))
+    if (effectiveLocation) {
+      conditions.push(ilike(memories.locationName, `%${effectiveLocation}%`))
     }
 
-    if (search) {
-      conditions.push(
-        sql`(${ilike(memories.title, `%${search}%`)} OR ${ilike(memories.content, `%${search}%`)})`,
-      )
+    if (hasGrammar) {
+      // Loose terms and quoted phrases are AND-ed with each other, each one OR-ed
+      // across title/content: "praia sol" means both words are present, each in
+      // either column. A phrase is a term that has to appear whole, and the
+      // padding is ours, so the quotes the user typed never reach the SQL.
+      const terms = [...grammar.text, ...grammar.phrases]
+      for (const term of terms) {
+        conditions.push(
+          sql`(${ilike(memories.title, `%${term}%`)} OR ${ilike(memories.content, `%${term}%`)})`,
+        )
+      }
+
+      for (const tag of grammar.tags) {
+        conditions.push(
+          sql`EXISTS (
+            SELECT 1 FROM ${memoryTags}
+            WHERE ${memoryTags.memoryId} = ${memories.id}
+            AND ${ilike(memoryTags.name, `%${tag}%`)}
+          )`,
+        )
+      }
     }
 
     if (tag) {

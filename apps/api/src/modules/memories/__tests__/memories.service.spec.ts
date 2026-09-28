@@ -17,6 +17,16 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
+type RecordedOp = {
+  op: string
+  conds?: unknown[]
+  values?: unknown[]
+  col?: unknown
+  pattern?: unknown
+  value?: unknown
+  text?: string
+}
+
 // The service wraps every predicate in a single and(...), and the mock records
 // only the top of the chain, so assertions have to descend into `.conds`.
 const memoryOps = (op?: string) => {
@@ -25,6 +35,28 @@ const memoryOps = (op?: string) => {
     return condition.op === 'and' && condition.conds ? condition.conds : [c]
   })
   return op ? flat.filter((c) => (c as { op: string }).op === op) : flat
+}
+
+// `sql` records the operands a template interpolated in `values`, so the
+// `ilike`s of a bare term or of a tag subquery sit one level below the
+// condition list. This walk keeps a node and everything nested inside it —
+// `and`/`or` children and `sql` operands alike — so a filter finds an operator
+// wherever the service put it. It leaves `memoryOps` alone: that one reports the
+// predicates as siblings of the privacy filter, which is the only shape that can
+// say whether they are AND-ed with each other.
+const collectOps = (node: unknown, into: RecordedOp[]): RecordedOp[] => {
+  if (node === null || typeof node !== 'object') return into
+  const recorded = node as RecordedOp
+  into.push(recorded)
+  for (const child of [...(recorded.conds ?? []), ...(recorded.values ?? [])]) {
+    collectOps(child, into)
+  }
+  return into
+}
+
+const allOps = (op?: string) => {
+  const collected = mocks.state.memoryConditions.flatMap((c) => collectOps(c, []))
+  return op ? collected.filter((c) => c.op === op) : collected
 }
 
 // The junction predicates, unwrapped: each relation query filters with a bare
@@ -368,6 +400,119 @@ describe('MemoriesService privacy', () => {
       const result = await memoriesService.findAll({ page: 1, limit: 20 })
 
       expect(result.data[0].photos.map((p) => p.id)).toEqual(['p0', 'p1', 'p2'])
+    })
+
+    it('expands a bare term into a title/content OR condition', async () => {
+      await memoriesService.findAll(filters({ search: 'praia' }))
+
+      const term = memoryOps()[1] as RecordedOp
+      expect(term.op).toBe('sql')
+      expect(term.text).toContain('OR')
+      expect(allOps('ilike')).toEqual([
+        { op: 'ilike', col: memories.title, pattern: '%praia%' },
+        { op: 'ilike', col: memories.content, pattern: '%praia%' },
+      ])
+    })
+
+    it('ANDs multiple bare terms and ORs each across title and content', async () => {
+      await memoriesService.findAll(filters({ search: 'praia sol' }))
+
+      // Sibling predicates, not one `or`: "praia sol" means both words, each in
+      // either column. An `or` here would return every memory holding either.
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'sql', 'sql'])
+      expect(allOps('ilike')).toHaveLength(4)
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual([
+        '%praia%',
+        '%praia%',
+        '%sol%',
+        '%sol%',
+      ])
+    })
+
+    it('ANDs a quoted phrase with the bare terms around it', async () => {
+      await memoriesService.findAll(filters({ search: 'praia "sol do norte"' }))
+
+      // A phrase is a term that has to appear whole in one column, so it
+      // narrows the same way a bare term does. Padding is `%phrase%`, not
+      // `"phrase"`, so the quotes never reach the SQL.
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual([
+        '%praia%',
+        '%praia%',
+        '%sol do norte%',
+        '%sol do norte%',
+      ])
+      expect(memoryOps().filter((c) => (c as RecordedOp).op === 'or')).toHaveLength(0)
+    })
+
+    it('feeds ano: into the same date range as the year filter', async () => {
+      await memoriesService.findAll(filters({ search: 'ano:2026' }))
+
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+
+      expect(range[0].value.toISOString()).toBe('2026-01-01T00:00:00.000Z')
+      expect(range[1].value.toISOString()).toBe('2027-01-01T00:00:00.000Z')
+    })
+
+    it('narrows the range to a month named in the query', async () => {
+      await memoriesService.findAll(filters({ search: 'ano:2026 mes:setembro' }))
+
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+
+      expect(range[0].value.toISOString()).toBe('2026-09-01T00:00:00.000Z')
+      expect(range[1].value.toISOString()).toBe('2026-10-01T00:00:00.000Z')
+    })
+
+    it('keeps an out-of-range month as text instead of collapsing the range', async () => {
+      await memoriesService.findAll(filters({ search: 'mes:0' }))
+
+      // The parser refuses 0, so no month reaches `dateRange`. `0` would read as
+      // a given month — `0 ?? x` is `0` — and `[Jan 1, Jan 1)` matches nothing,
+      // so this test is the pin on that staying unreachable from the grammar.
+      expect(memoryOps('gte')).toHaveLength(0)
+      expect(memoryOps('lt')).toHaveLength(0)
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual(['%mes:0%', '%mes:0%'])
+    })
+
+    it('maps clima: and local: to the same columns as the URL params', async () => {
+      await memoriesService.findAll(filters({ search: 'clima:sol local:praia' }))
+
+      // A recognised prefix is consumed as its dimension, so neither word
+      // reaches title/content as loose text.
+      expect(allOps('ilike')).toEqual([
+        { op: 'ilike', col: memories.weatherDesc, pattern: '%sol%' },
+        { op: 'ilike', col: memories.locationName, pattern: '%praia%' },
+      ])
+    })
+
+    it('turns a tag into an EXISTS subquery', async () => {
+      await memoriesService.findAll(filters({ search: '#festa' }))
+
+      const subquery = memoryOps()[1] as RecordedOp
+      expect(subquery.text).toContain('EXISTS')
+      // The tag is matched on the tag table only: a title/content ilike here
+      // would pass every memory whose text mentions the word.
+      expect(allOps('ilike')).toEqual([{ op: 'ilike', col: memoryTags.name, pattern: '%festa%' }])
+    })
+
+    it('ANDs the tag param with a #tag named in the query', async () => {
+      await memoriesService.findAll(filters({ search: '#bar', tag: 'foo' }))
+
+      // Two independent tag conditions, so a memory has to carry both tags. The
+      // order is what makes them two, not one: the grammar block runs before the
+      // `tag` param block, and no `or` joins them.
+      const conditions = memoryOps()
+      expect(conditions).toHaveLength(3)
+      expect(conditions.slice(1).map((c) => (c as RecordedOp).op)).toEqual(['sql', 'sql'])
+      expect(conditions.filter((c) => (c as RecordedOp).op === 'or')).toHaveLength(0)
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual(['%bar%', '%foo%'])
+    })
+
+    it('adds no condition for a query with no searchable token', async () => {
+      await memoriesService.findAll(filters({ search: '   ' }))
+
+      // Only the privacy filter survives; no ilike, no EXISTS, no range.
+      expect(memoryOps()).toHaveLength(1)
+      expect(allOps('ilike')).toHaveLength(0)
     })
   })
 
