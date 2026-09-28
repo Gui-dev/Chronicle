@@ -120,6 +120,7 @@ const memoryOps = (op?: string) => {
   return op ? flat.filter((c) => (c as { op: string }).op === op) : flat
 }
 ```
+
 - [ ] **Step 2: Escrever o teste que falha**
 
 Adicionar em `describe('findAll')`:
