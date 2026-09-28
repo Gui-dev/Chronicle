@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
     countConditions: [] as unknown[],
     inserted: [] as Array<{ table: unknown; values: unknown }>,
     updates: [] as Array<Record<string, unknown>>,
+    fromCalls: [] as string[],
+    junctionRows: {} as Record<string, Array<Record<string, unknown>>>,
   },
 }))
 
@@ -78,6 +80,7 @@ vi.mock('@chronicle/db', () => {
 
     from(table: unknown) {
       this.fromTable = table
+      mocks.state.fromCalls.push((table as { __table: string }).__table)
       return this
     }
 
@@ -109,6 +112,15 @@ vi.mock('@chronicle/db', () => {
       }
       if (this.fromTable === tables.memories) {
         return Promise.resolve(mocks.state.rows).then(resolve, reject)
+      }
+      if (this.fromTable === tables.memoryPhotos) {
+        return Promise.resolve(mocks.state.junctionRows.photos ?? []).then(resolve, reject)
+      }
+      if (this.fromTable === tables.memoryPeople) {
+        return Promise.resolve(mocks.state.junctionRows.people ?? []).then(resolve, reject)
+      }
+      if (this.fromTable === tables.memoryTags) {
+        return Promise.resolve(mocks.state.junctionRows.tags ?? []).then(resolve, reject)
       }
       return Promise.resolve([]).then(resolve, reject)
     }
@@ -157,6 +169,8 @@ describe('MemoriesService privacy', () => {
     mocks.state.countConditions = []
     mocks.state.inserted = []
     mocks.state.updates = []
+    mocks.state.fromCalls = []
+    mocks.state.junctionRows = {}
   })
 
   describe('findAll', () => {
@@ -278,6 +292,38 @@ describe('MemoriesService privacy', () => {
       } finally {
         vi.useRealTimers()
       }
+    })
+
+    it('loads photos, people and tags once per page, not once per memory', async () => {
+      mocks.state.rows = [
+        { id: 'm1', userId: 'u1', isPublic: true },
+        { id: 'm2', userId: 'u1', isPublic: true },
+        { id: 'm3', userId: 'u1', isPublic: true },
+        { id: 'm4', userId: 'u1', isPublic: true },
+      ]
+
+      await memoriesService.findAll({ page: 1, limit: 20 })
+
+      const times = (table: string) => mocks.state.fromCalls.filter((t) => t === table).length
+
+      expect(times('memoryPhotos')).toBe(1)
+      expect(times('memoryPeople')).toBe(1)
+      expect(times('memoryTags')).toBe(1)
+      // rows + count
+      expect(times('memories')).toBe(2)
+    })
+
+    it('keeps photos ordered by orderIndex after batching', async () => {
+      mocks.state.rows = [{ id: 'm1', userId: 'u1', isPublic: true }]
+      mocks.state.junctionRows.photos = [
+        { id: 'p2', memoryId: 'm1', orderIndex: 2 },
+        { id: 'p0', memoryId: 'm1', orderIndex: 0 },
+        { id: 'p1', memoryId: 'm1', orderIndex: 1 },
+      ]
+
+      const result = await memoriesService.findAll({ page: 1, limit: 20 })
+
+      expect(result.data[0].photos.map((p) => p.id)).toEqual(['p0', 'p1', 'p2'])
     })
   })
 

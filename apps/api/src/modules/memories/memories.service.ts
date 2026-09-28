@@ -14,6 +14,7 @@ import {
   or,
   sql,
 } from '@chronicle/db'
+import type { Memory, MemoryPerson, MemoryPhoto, MemoryTag } from '@chronicle/db'
 import type { MemoryFiltersInput } from '@chronicle/schemas'
 import { AppError } from '../../errors/app-error'
 
@@ -162,20 +163,46 @@ export class MemoriesService {
       .limit(limit)
       .offset(offset)
 
-    const enrichedResults = await Promise.all(
-      results.map(async (memory) => {
-        const [photos, people, tags] = await Promise.all([
-          db
-            .select()
-            .from(memoryPhotos)
-            .where(eq(memoryPhotos.memoryId, memory.id))
-            .orderBy(memoryPhotos.orderIndex),
-          db.select().from(memoryPeople).where(eq(memoryPeople.memoryId, memory.id)),
-          db.select().from(memoryTags).where(eq(memoryTags.memoryId, memory.id)),
-        ])
-        return { ...memory, photos, people, tags }
-      }),
-    )
+    // One query per relation for the whole page. The previous per-memory
+    // version issued 3N queries on top of the rows and count, which made the
+    // timeline cost grow with the page size.
+    const enrichedResults: Array<
+      Memory & { photos: MemoryPhoto[]; people: MemoryPerson[]; tags: MemoryTag[] }
+    > = results.map((memory) => ({ ...memory, photos: [], people: [], tags: [] }))
+
+    if (results.length > 0) {
+      const ids = results.map((m) => m.id)
+      const [photoRows, peopleRows, tagRows] = await Promise.all([
+        db.select().from(memoryPhotos).where(inArray(memoryPhotos.memoryId, ids)),
+        db.select().from(memoryPeople).where(inArray(memoryPeople.memoryId, ids)),
+        db.select().from(memoryTags).where(inArray(memoryTags.memoryId, ids)),
+      ])
+
+      const groupByMemory = <T extends { memoryId: string }>(rows: T[]) => {
+        const grouped = new Map<string, T[]>()
+        for (const row of rows) {
+          const bucket = grouped.get(row.memoryId)
+          if (bucket) bucket.push(row)
+          else grouped.set(row.memoryId, [row])
+        }
+        return grouped
+      }
+
+      const photoMap = groupByMemory(photoRows as MemoryPhoto[])
+      const peopleMap = groupByMemory(peopleRows as MemoryPerson[])
+      const tagMap = groupByMemory(tagRows as MemoryTag[])
+
+      for (const memory of enrichedResults) {
+        // inArray gives no ordering guarantee, so photos are sorted here to keep
+        // the gallery in the order the user arranged them at upload time.
+        const ordered = [...(photoMap.get(memory.id) ?? [])].sort(
+          (a, b) => a.orderIndex - b.orderIndex,
+        )
+        memory.photos = ordered
+        memory.people = peopleMap.get(memory.id) ?? []
+        memory.tags = tagMap.get(memory.id) ?? []
+      }
+    }
 
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
