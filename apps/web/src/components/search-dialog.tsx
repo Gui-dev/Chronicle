@@ -88,7 +88,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       }
       if (event.key === 'Enter' && results[activeIndex]) {
         event.preventDefault()
-        router.push(`/memories/${results[activeIndex].id}/edit`)
+        router.push(`/memories/${results[activeIndex].id}`)
         onOpenChange(false)
       }
     }
@@ -153,7 +153,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               <button
                 type="button"
                 onClick={() => {
-                  router.push(`/memories/${memory.id}/edit`)
+                  router.push(`/memories/${memory.id}`)
                   onOpenChange(false)
                 }}
                 onMouseEnter={() => setSelectedIndex(index)}
