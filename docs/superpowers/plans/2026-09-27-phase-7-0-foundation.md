@@ -1095,20 +1095,72 @@ git commit -m "feat(schemas): add the search query grammar parser"
 
 - [ ] **Step 1: Escrever o teste que falha**
 
+> **Correcao apos a execucao:** o `sql` do mock grava os operandos interpolados em `values`, ou
+> seja, os `ilike` ficam um nivel abaixo da lista de condicoes. `memoryOps('ilike')` nao os ve —
+> ele so desce um nivel no wrapper do `and` — e devolveria 0 em vez de 4. O mock esta certo; o
+> teste do plano estava errado sobre a forma gravada. A correcao e um walkers de teste que
+> coleta o no e tudo aninhado dentro dele (`conds` e `values`), deixando `memoryOps` intacto
+> porque ele e o unico que diz se as condicoes sao irmas (AND) ou irmas de um `or`:
+>
+> ```ts
+> type RecordedOp = {
+>   op: string
+>   conds?: unknown[]
+>   values?: unknown[]
+>   col?: unknown
+>   pattern?: unknown
+>   value?: unknown
+>   text?: string
+> }
+>
+> const collectOps = (node: unknown, into: RecordedOp[]): RecordedOp[] => {
+>   if (node === null || typeof node !== 'object') return into
+>   const recorded = node as RecordedOp
+>   into.push(recorded)
+>   for (const child of [...(recorded.conds ?? []), ...(recorded.values ?? [])]) {
+>     collectOps(child, into)
+>   }
+>   return into
+> }
+>
+> const allOps = (op?: string) => {
+>   const collected = mocks.state.memoryConditions.flatMap((c) => collectOps(c, []))
+>   return op ? collected.filter((c) => c.op === op) : collected
+> }
+> ```
+
 Adicionar em `describe('findAll')`:
 
 ```ts
     it('expands a bare term into a title/content OR condition', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: 'praia' })
 
-      const serialized = JSON.stringify(memoryOps())
-      expect(serialized).toContain('ilike')
+      const term = memoryOps()[1] as RecordedOp
+      expect(term.op).toBe('sql')
+      expect(term.text).toContain('OR')
+      expect(allOps('ilike')).toEqual([
+        { op: 'ilike', col: memories.title, pattern: '%praia%' },
+        { op: 'ilike', col: memories.content, pattern: '%praia%' },
+      ])
     })
 
     it('ANDs multiple bare terms and ORs each across title and content', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: 'praia sol' })
 
-      expect(memoryOps('ilike')).toHaveLength(4)
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'sql', 'sql'])
+      expect(allOps('ilike')).toHaveLength(4)
+    })
+
+    it('ANDs a quoted phrase with the bare terms around it', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, search: 'praia "sol do norte"' })
+
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual([
+        '%praia%',
+        '%praia%',
+        '%sol do norte%',
+        '%sol do norte%',
+      ])
+      expect(memoryOps().filter((c) => (c as RecordedOp).op === 'or')).toHaveLength(0)
     })
 
     it('feeds ano: into the same date range as the year filter', async () => {
@@ -1120,11 +1172,50 @@ Adicionar em `describe('findAll')`:
       expect(range[1].value.toISOString()).toBe('2027-01-01T00:00:00.000Z')
     })
 
+    it('narrows the range to a month named in the query', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, search: 'ano:2026 mes:setembro' })
+
+      const range = [...memoryOps('gte'), ...memoryOps('lt')] as Array<{ value: Date }>
+
+      expect(range[0].value.toISOString()).toBe('2026-09-01T00:00:00.000Z')
+      expect(range[1].value.toISOString()).toBe('2026-10-01T00:00:00.000Z')
+    })
+
+    it('keeps an out-of-range month as text instead of collapsing the range', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, search: 'mes:0' })
+
+      expect(memoryOps('gte')).toHaveLength(0)
+      expect(memoryOps('lt')).toHaveLength(0)
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual(['%mes:0%', '%mes:0%'])
+    })
+
+    it('maps clima: and local: to the same columns as the URL params', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, search: 'clima:sol local:praia' })
+
+      expect(allOps('ilike')).toEqual([
+        { op: 'ilike', col: memories.weatherDesc, pattern: '%sol%' },
+        { op: 'ilike', col: memories.locationName, pattern: '%praia%' },
+      ])
+    })
+
     it('turns a tag into an EXISTS subquery', async () => {
       await memoriesService.findAll({ page: 1, limit: 20, search: '#festa' })
 
-      const serialized = JSON.stringify(memoryOps())
-      expect(serialized).toContain('EXISTS')
+      const subquery = memoryOps()[1] as RecordedOp
+      expect(subquery.text).toContain('EXISTS')
+      expect(allOps('ilike')).toEqual([
+        { op: 'ilike', col: memoryTags.name, pattern: '%festa%' },
+      ])
+    })
+
+    it('ANDs the tag param with a #tag named in the query', async () => {
+      await memoriesService.findAll({ page: 1, limit: 20, search: '#bar', tag: 'foo' })
+
+      const conditions = memoryOps()
+      expect(conditions).toHaveLength(3)
+      expect(conditions.slice(1).map((c) => (c as RecordedOp).op)).toEqual(['sql', 'sql'])
+      expect(conditions.filter((c) => (c as RecordedOp).op === 'or')).toHaveLength(0)
+      expect(allOps('ilike').map((c) => c.pattern)).toEqual(['%bar%', '%foo%'])
     })
 
     it('adds no condition for a query with no searchable token', async () => {
@@ -1132,8 +1223,15 @@ Adicionar em `describe('findAll')`:
 
       // Only the privacy filter survives; no ilike, no EXISTS, no range.
       expect(memoryOps()).toHaveLength(1)
+      expect(allOps('ilike')).toHaveLength(0)
     })
 ```
+
+> **Sobre o `month`:** `0 ?? x` e `0`, nao `x`, entao um `month: 0` viraria `hasMonth === true` com
+> o intervalo colapsado em `[Jan 1, Jan 1)`. O buraco nao e alcancavel hoje:
+> `memoryFiltersSchema` tem `month: z.coerce.number().int().min(1).max(12)`, a rota faz
+> `memoryFiltersSchema.parse(request.query)`, e o parser nunca produz `month: 0` (`mes:0` e
+> `mes:13` caem para texto). O servico nao se defende, e a Task 7 nao pede que se defenda.
 
 - [ ] **Step 2: Rodar e confirmar que falha**
 
@@ -1150,7 +1248,6 @@ import { isEmptySearch, parseSearchQuery, type ParsedSearchQuery } from '@chroni
 
 Substituir os blocos `if (year)`, `if (month)`, `if (weather)`, `if (location)` e `if (search)` por um único bloco que faz o parse **uma vez** e alimenta todos os filtros. O bloco `if (tag)` original permanece intacto — o parâmetro `tag` da URL continua funcionando independente da gramática:
 
-```ts
 > **A composicao de `sql` aninhado foi verificada, nao assumida.** Interpolar `${ilike(...)}` e
 > `${memoryTags}` dentro de um template `sql` parece suspeito, e os testes desta task nao pegariam
 > se estivesse errado — eles olham os objetos JavaScript que o mock grava, nao o SQL gerado. Checado
@@ -1158,21 +1255,28 @@ Substituir os blocos `if (year)`, `if (month)`, `if (weather)`, `if (location)` 
 > compõe fragmentos `SQL` aninhados corretamente e produz
 >
 > ```sql
+> select "id", ... from "memories"
 > where (("memories"."is_public" = $1 or "memories"."user_id" = $2)
->        and ("memories"."title" ilike $3 OR "memories"."content" ilike $4)
->        and EXISTS (SELECT 1 FROM "memory_tags"
->                    WHERE "memory_tags"."memory_id" = "memories"."id"
->                    AND "memory_tags"."name" ilike $5)
->        and "memory_photos"."memory_id" in ($6, $7))
-> limit $8
+>        and "memories"."memory_date" >= $3 and "memories"."memory_date" < $4
+>        and ("memories"."title" ilike $5 OR "memories"."content" ilike $6)
+>        and EXISTS (
+>          SELECT 1 FROM "memory_tags"
+>          WHERE "memory_tags"."memory_id" = "memories"."id"
+>          AND "memory_tags"."name" ilike $7
+>        ))
+> order by "memories"."memory_date" desc limit $8
 > ```
 >
-> com `params = [true,"u1","%praia%","%praia%","%festa%","m1","m2",20]` — 8 placeholders, 8
-> params, na ordem certa. Dois cuidados se alguém repetir a checagem: o drizzle com
+> com `params = [true,"u1","2026-01-01T00:00:00.000Z","2027-01-01T00:00:00.000Z","%praia%",
+> "%praia%","%festa%",20]` — 8 placeholders, 8 params, na ordem certa. O `count(*)` da segunda
+> query sai igual sem o `limit`. Dois cuidados se alguém repetir a checagem: o drizzle com
 > `postgres-js` usa `$N` e nao `?`, entao contar `?` da zero e parece falha; e importar de
 > `@chronicle/db` dispara `env.ts`, que valida `DATABASE_URL` no import — importar de
-> `@chronicle/db/src/schema` para nao puxar isso.
+> `@chronicle/db/src/schema` para nao puxar isso. O `and "memory_photos"."memory_id" in (...)` que
+> estava nesta nota antes nao pertence a este `where`: e a query de relacao em lote da Task 3, com
+> o proprio `where`.
 
+```ts
     const grammar: ParsedSearchQuery | null = search ? parseSearchQuery(search) : null
     const hasGrammar = grammar !== null && !isEmptySearch(grammar)
 
