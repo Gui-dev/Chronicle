@@ -38,6 +38,11 @@ const MONTH_NAMES: Record<string, number> = {
 
 const PREFIXES = ['ano:', 'mes:', 'clima:', 'local:'] as const
 
+// A year and a month are plain decimal digits. `Number()` alone would also read
+// `2e3` as 2000, `0x7d2` as 2002 and `9.0` as 9 — syntax the grammar does not
+// describe, so it has to be rejected before the range check sees it.
+const PLAIN_INTEGER = /^\d{1,4}$/
+
 // A dimension whose value holds no letter or number is not a dimension: `@#` is
 // punctuation, not an author named `#`. Such a token is dropped rather than
 // demoted to text, because as text it would still reach the SQL as a LIKE and
@@ -97,7 +102,7 @@ function normalize(value: string): string {
 
 function parseMonthValue(raw: string): number | null {
   const asNumber = Number(raw)
-  if (Number.isInteger(asNumber)) {
+  if (PLAIN_INTEGER.test(raw) && Number.isInteger(asNumber)) {
     return asNumber >= 1 && asNumber <= 12 ? asNumber : null
   }
   return MONTH_NAMES[normalize(raw)] ?? null
@@ -115,23 +120,30 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
     location: null,
   }
 
-  for (const token of tokenize(input)) {
+  const tokens = tokenize(input)
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+
     if (token.quoted) {
-      if (isWordLike(token.value)) parsed.phrases.push(token.value)
+      // Task 7 wraps a phrase in `%…%`, so the padding a user typed inside the
+      // quotes would have to be part of the text to match.
+      const phrase = token.value.trim()
+      if (isWordLike(phrase)) parsed.phrases.push(phrase)
       continue
     }
 
     if (token.value.startsWith('@')) {
       const author = token.value.slice(1)
-      if (!isWordLike(author)) continue
-      if (parsed.author === null) parsed.author = author
-      else parsed.text.push(token.value)
+      if (isWordLike(author)) parsed.author = author
       continue
     }
 
     if (token.value.startsWith('#')) {
       const tag = token.value.slice(1)
-      if (isWordLike(tag)) parsed.tags.push(tag)
+      // Distinct tags are an AND and all of them are kept; an exact repeat is
+      // the same condition twice, so it collapses.
+      if (isWordLike(tag) && !parsed.tags.includes(tag)) parsed.tags.push(tag)
       continue
     }
 
@@ -139,11 +151,23 @@ export function parseSearchQuery(input: string): ParsedSearchQuery {
     const prefix = PREFIXES.find((p) => lowered.startsWith(p))
 
     if (prefix) {
-      const rest = token.value.slice(prefix.length)
+      let rest = token.value.slice(prefix.length)
+      // `local:"praia do norte"` reaches here as two tokens, because the
+      // tokenizer ends the bare token at the opening quote. A free-text
+      // dimension with no value of its own therefore takes the next quoted
+      // token as that value. Not the numeric ones: a quoted year is still just
+      // a number, so there is nothing to gain and a value to lose.
+      if (!rest && (prefix === 'clima:' || prefix === 'local:')) {
+        const next = tokens[index + 1]
+        if (next?.quoted) {
+          rest = next.value.trim()
+          index += 1
+        }
+      }
       if (rest) {
         if (prefix === 'ano:') {
           const year = Number(rest)
-          if (Number.isInteger(year) && year >= 2000 && year <= 2100) {
+          if (PLAIN_INTEGER.test(rest) && Number.isInteger(year) && year >= 2000 && year <= 2100) {
             parsed.year = year
             continue
           }
