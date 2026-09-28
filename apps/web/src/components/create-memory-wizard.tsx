@@ -89,7 +89,7 @@ export function CreateMemoryWizard() {
   const onSubmit = async (data: CreateMemoryInput) => {
     const memoryData: CreateMemoryInput = {
       ...data,
-      memoryDate: new Date(`${data.memoryDate}T00:00:00`),
+      memoryDate: data.memoryDate,
       people: people.length > 0 ? people : undefined,
       tags: tags.length > 0 ? tags : undefined,
     }
