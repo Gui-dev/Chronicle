@@ -2213,7 +2213,51 @@ git commit -m "feat(web): add the search results page with removable query chips
 
 # Frente C — Qualidade
 
-### Task 15: Eliminar os três `noExplicitAny`
+### Task 15:
+
+> **Seletores de chip: o plano usava o label cru e a Task 14 mudou para slug.** O `data-testid` do
+> chip é `search-chip-<slug>`, onde o slug tira acento (NFD), baixa a caixa, e troca qualquer corrida
+> fora de `[a-z0-9]` por `-`. O motivo é concreto: o label cru de uma frase é `"sol do norte"`, e o
+> testid virava `search-chip-"sol do norte"` — com aspas e espaços dentro do seletor. O seletor da
+> Task 16 acima foi corrigido de `search-chip-ano: 2026` para `search-chip-ano-2026`.
+>
+> Os testids que a Task 16 pode usar, com um exemplo cada:
+>
+> | testid | exemplo | de onde vem |
+> |---|---|---|
+> | `search-chips` | `search-chips` | container; **ausente** quando não há chip |
+> | `search-chip-festa` | `#festa` | tag |
+> | `search-chip-ano-2026` | `ano: 2026` | ano |
+> | `search-chip-mes-9` | `mês: 9` | mês |
+> | `search-chip-clima-ensolarado` | `clima: Ensolarado` | clima |
+> | `search-chip-local-porto-de-sao-joao` | `local: Porto de São João` | local |
+> | `search-chip-sol-do-norte` | `"sol do norte"` | frase |
+> | `search-chip-praia` | `praia` | termo solto |
+> | `search-chip-ana` | `@ana` | autor |
+> | `search-count` | `1 memória` / `N memórias` | total |
+>
+> A **única colisão** possível é tag e termo solto com o mesmo nome (`q=#sol sol`) — nesse caso use
+> `.nth()`. A ordem dos chips é: autor, tags, ano, mês, clima, local, frases, texto.
+>
+> **O que a Task 14 consertou e a Task 16 tem que provar:**
+> - O plano fazia `setFilter('search', …)` num `useEffect`, e `enabled` olhava só `query`, então **não**
+>   suprimia o primeiro request. Medido a frio em `/search?q=%23festa ano:2026`: o plano disparava
+>   **2** requests — `?page=1&limit=20` com `total=6` e `searchMeta=null`, depois o de verdade com
+>   `total=1`. Ou seja, a página **piscava as 6 memórias sem chip nenhum** antes de estreitar. Hoje
+>   `filters` é derivado de `query` no render, sem effect: **1** request.
+> - O `remove` do plano era `filter(t => t !== term)`, que remove **todos** os iguais. Com `text` sem
+>   dedupe no parser, `q=praia praia` renderizava dois chips idênticos com key colidindo, e clicar em
+>   um produzia `q=` vazio — o que liga `enabled: false` e **trava a página**. Agora remove por índice
+>   (`withoutAt`), e o round-trip de `local:"praia do norte" #festa ano:2026` foi medido em browser:
+>   clicar no chip de ano deixa `#festa local:"praia do norte"` num único valor citado, não três termos
+>   soltos.
+> - Remover o último chip dá `q=` e **zero** chamadas de API. Esse é o estado terminal correto, e um
+>   teste que espere a lista sumir passa por acidente se a página travar — vale checar a URL, não só a
+>   lista.
+> - `/search` **ignora** todo query param que não seja `q`. `/search?q=x&year=2024` joga o ano fora.
+>   É a lacuna já registrada, não corrigida.
+> - `searchParams` no Next 16 é Promise, aguardada no server component. `?q=a&q=b` chega como array e
+>   o page component pega `q[0]` — senão renderiza como React child. Eliminar os três `noExplicitAny`
 
 **Files:**
 - Modify: `apps/web/src/components/create-memory-wizard.tsx:58`
@@ -2364,7 +2408,7 @@ test.describe('Busca', () => {
     await authenticatedPage.goto('/search?q=%23festa%20ano:2026')
     await expect(authenticatedPage.locator('[data-testid="search-chips"]')).toBeVisible()
 
-    await authenticatedPage.locator('[data-testid="search-chip-ano: 2026"]').click()
+    await authenticatedPage.locator('[data-testid="search-chip-ano-2026"]').click()
     await expect(authenticatedPage).toHaveURL(/q=%23festa/)
   })
 
