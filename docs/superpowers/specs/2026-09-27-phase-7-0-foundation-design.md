@@ -123,7 +123,7 @@ Um único input cobre todas as dimensões:
 | `"fase com espaço"` | frase exata em título/conteúdo |
 | `praia sol` | texto solto em título OU conteúdo |
 
-Combina com AND: `#festa local:praia ano:2026`.
+Combina com AND **entre dimensões distintas**: `#festa local:praia ano:2026`.
 
 Decisões de parsing:
 
@@ -131,12 +131,31 @@ Decisões de parsing:
 - **Termos soltos são AND entre si**, OR dentro de cada termo (título OU conteúdo).
   `"praia sol"` = as duas palavras presentes; cada uma em título ou conteúdo.
 - **Validação:** `ano:` entre 2000–2100, `mes:` entre 1–12 ou nome em pt-BR. Valor inválido vira texto.
+  O valor tem de ser um inteiro de dígitos simples — `ano:2e3` e `ano:0x7d2` viram texto.
 - **`month` com `year` ausente** usa o ano corrente.
 - Query vazia ou só com pontuação → sem condições (não é erro).
+- **Valor sem caractere de palavra não é um valor.** `clima:#` e `clima:---` não viram condição nem
+  texto: são descartados. É a regra que faz uma query só com pontuação não produzir condição
+  nenhuma.
+- **Valor de dimensão é um token só.** `local:praia do norte` é `local:praia` **AND** texto
+  `do norte`, que é quase sempre zero resultado. Valor com espaço precisa de aspas:
+  `local:"praia do norte"`. Mesma convenção de busca do GitHub e do Slack.
+- **Dentro de uma dimensão, o último valor ganha.** `@bruce @deb` é `author: deb`;
+  `clima:sol clima:chuva` é `clima: chuva`; `ano:2026 ano:2020` é `2020`. O perdedor **não** vira
+  texto solto — autor mora em `users.name`/`users.email`, então um `ilike '%@deb%'` em
+  `title`/`content` nunca casaria e só estreitaria o resultado em silêncio. Tags repetidas
+  colapsam; tags distintas continuam sendo AND.
 
-### 2.2 Parser puro no servidor
+### 2.2 Parser puro, compartilhado
 
-`apps/api/src/modules/memories/search-query.ts`, sem dependência de Drizzle nem de Fastify:
+`packages/schemas/src/search-query.ts`, sem dependência de Drizzle nem de Fastify.
+
+> **Emenda ao spec original**, que previa `apps/api/src/modules/memories/search-query.ts` e uma
+> gramática "só no servidor". A razão declarada aqui era impedir divergência entre o web e a
+> API, e uma implementação única em pacote compartilhado serve essa razão melhor do que uma
+> cópia no servidor que o web reimplementaria por conta. O web precisa parsear de verdade, porque
+> a página de resultados renderiza chips a partir dos campos parseados e a remoção de chip muta o
+> objeto parseado. O que segue proibido é o web *decidir* o que um prefixo significa.
 
 ```ts
 export interface ParsedSearchQuery {
