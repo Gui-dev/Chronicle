@@ -1149,17 +1149,45 @@ import { isEmptySearch, parseSearchQuery, type ParsedSearchQuery } from '@chroni
 Substituir os blocos `if (year)`, `if (month)`, `if (weather)`, `if (location)` e `if (search)` por um único bloco que faz o parse **uma vez** e alimenta todos os filtros. O bloco `if (tag)` original permanece intacto — o parâmetro `tag` da URL continua funcionando independente da gramática:
 
 ```ts
+> **A composicao de `sql` aninhado foi verificada, nao assumida.** Interpolar `${ilike(...)}` e
+> `${memoryTags}` dentro de um template `sql` parece suspeito, e os testes desta task nao pegariam
+> se estivesse errado — eles olham os objetos JavaScript que o mock grava, nao o SQL gerado. Checado
+> com um cliente lazy (`postgres(..., { max: 0 })`, que nunca conecta) e `.toSQL()`: o drizzle
+> compõe fragmentos `SQL` aninhados corretamente e produz
+>
+> ```sql
+> where (("memories"."is_public" = $1 or "memories"."user_id" = $2)
+>        and ("memories"."title" ilike $3 OR "memories"."content" ilike $4)
+>        and EXISTS (SELECT 1 FROM "memory_tags"
+>                    WHERE "memory_tags"."memory_id" = "memories"."id"
+>                    AND "memory_tags"."name" ilike $5)
+>        and "memory_photos"."memory_id" in ($6, $7))
+> limit $8
+> ```
+>
+> com `params = [true,"u1","%praia%","%praia%","%festa%","m1","m2",20]` — 8 placeholders, 8
+> params, na ordem certa. Dois cuidados se alguém repetir a checagem: o drizzle com
+> `postgres-js` usa `$N` e nao `?`, entao contar `?` da zero e parece falha; e importar de
+> `@chronicle/db` dispara `env.ts`, que valida `DATABASE_URL` no import — importar de
+> `@chronicle/db/src/schema` para nao puxar isso.
+
     const grammar: ParsedSearchQuery | null = search ? parseSearchQuery(search) : null
     const hasGrammar = grammar !== null && !isEmptySearch(grammar)
 
-    const effectiveYear =
-      grammar?.year ?? year ?? ((grammar?.month || month) ? new Date().getUTCFullYear() : undefined)
-    const effectiveMonth = grammar?.month ?? month
+    // `||` here is a falsy test, not a default: `month` can be a string from the
+    // URL query, so `''` and `0` would read as "no month given" while a real
+    // '9' would not. `??` states the intent, and the month needs coercing to a
+    // number before it reaches `dateRange`.
+    const effectiveMonthRaw = grammar?.month ?? month
+    const effectiveMonth =
+      effectiveMonthRaw === undefined ? undefined : Number(effectiveMonthRaw)
+    const hasMonth = effectiveMonth !== undefined && Number.isFinite(effectiveMonth)
+    const effectiveYear = grammar?.year ?? year ?? (hasMonth ? new Date().getUTCFullYear() : undefined)
     const effectiveWeather = grammar?.weather ?? weather
     const effectiveLocation = grammar?.location ?? location
 
     if (effectiveYear) {
-      const { start, end } = dateRange(effectiveYear, effectiveMonth ?? undefined)
+      const { start, end } = dateRange(effectiveYear, hasMonth ? effectiveMonth : undefined)
       conditions.push(gte(memories.memoryDate, start), lt(memories.memoryDate, end))
     }
 
