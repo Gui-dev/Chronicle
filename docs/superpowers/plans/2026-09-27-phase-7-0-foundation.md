@@ -19,6 +19,7 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 1. `packages/db/src/index.ts:5` exporta apenas `{ eq, and, or, ilike, sql, desc, asc }` de `drizzle-orm`. **`gte`, `lt` e `inArray` não são exportados** — precisam ser adicionados (Task 1).
 2. `memories.service.spec.ts` faz `vi.mock('@chronicle/db')` com um `SelectChain` fake. O mock **não expõe `inArray`, `gte`, `lt`, `leftJoin` nem a tabela `users`** — cada task que precisar disso estende o mock.
 3. **Nenhum teste do repo roda `memoriesService` contra banco real.** `memories.integration.test.ts` é nome enganoso: mocka o service e testa só as rotas. Consequência: equivalência de predicado e uso de índice **não são automatizáveis** hoje e viram verificação manual (Task 5). Automatizar exigiria um harness de Postgres real, fora do escopo da 7.0.
+   Atenção ao que parece um harness e não é: `packages/db/src/schema/__tests__/` importa `getTableConfig` de `drizzle-orm/pg-core`, que é **introspecção do objeto de schema, sem conexão e sem rows**. `better-sqlite3` é devDependency de `packages/db` mas não é importado em lugar nenhum do repo. Ou seja: dá para afirmar que um índice está *declarado* no schema (é o que a Task 4 faz, checando o nome em `getTableConfig(table).indexes`), e **não** dá para afirmar que ele é criado no Postgres, muito menos que o planner o usa. Tudo além disso é a verificação manual da Task 5.
 4. `memoryDate` é `timestamp(..., { mode: 'date' })`, não `date`. O `EXTRACT` atual usa o `TimeZone` da sessão do Postgres; o intervalo usa UTC. Daí a verificação manual obrigatória da Task 5.
 5. `useFilters` expõe `search` como chave comum de `MemoryFiltersInput`; o `MemoryTimeline` já resolve `isOwner` internamente (linha 110) e tem skeleton, erro com retry, vazio e paginação — a página `/search` reaproveita tudo.
 6. `user-menu.spec.ts:21,43` dependem de `data-testid="menu-nova"` (o item "Nova Memória" do dropdown). **`search-button` não é usado por nenhum spec.** Só um spec quebra com a remoção do input de busca: `filter-memory.spec.ts:41`.
@@ -27,7 +28,7 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 9. **`pnpm --filter api test -- -t 'nome'` não filtra.** O `--` é repassado literalmente e o vitest ignora o `-t`, rodando a suíte inteira — o passo "rodar para confirmar que falha" passaria à toa. A forma que filtra é `pnpm --filter api exec vitest run -t 'nome'`.
 10. **Mês sem ano encolhe para o ano corrente, e isso é uma armadilha de UI.** O spec (linha 134) decide que `month` com `year` ausente usa o ano corrente, e é o que a Task 2 implementa. O comportamento antigo trazia setembro de *todos* os anos. Nos dois `mes:9` da busca isso é inofensivo, mas em `memory-filters.tsx` os `<select>` de ano e mês são independentes: escolher "Setembro" com "Ano" vazio passa a esconder todas as memórias de setembro dos anos anteriores, sem nenhuma indicação na UI. A Task 13 tem de fechar isso — ao escolher um mês, o ano tem de passar a corrente, ou o mês tem de ficar desabilitado até haver ano.
 11. **Ano corrente em UTC no backend, ano local no cliente — split conhecido e não resolvido nesta fase.** O serviço usa `getUTCFullYear()` e o `memory-filters.tsx:14` monta a lista de anos com `getFullYear()`. No caminho dos parâmetros REST o ano explícito vence e o usuário vê um resultado coerente, mas no caminho da busca, `mes:1` digitado às 00:30 de 1º de janeiro em UTC-3 faz o backend escolher o ano **UTC**, um atrás do ano em que a memória foi vivida. A raiz disso é o mesmo item do `SHOW TimeZone` da Task 5: `localDate` grava meia-noite local e o intervalo compara instantes UTC, então uma memória criada exatamente à meia-noite local do último dia do mês cai no mês seguinte. Não é regressão — o `EXTRACT` tinha o mesmo corte — mas registrar aqui para a fase de busca por documentos decidir se quer corrigir.
-12. **`pnpm lint` não linta a API.** Só `apps/web` define script `lint` (`biome check .`); `apps/api`, `packages/db`, `packages/schemas`, `packages/auth` e `packages/ui` não têm. Como `pnpm lint` é `turbo run lint`, um "lint passou" nesse comando só diz alguma coisa sobre `apps/web` — e quase todo o código deste plano é `apps/api` e `packages/*`. ParaTasks que tocam API, db ou schemas, o comando de verificação de verdade é `pnpm exec biome check <arquivos alterados>` a partir da raiz, e vale um `pnpm exec biome check .` de vez em quando para ver o inventário de avisos do repo. Os três `noExplicitAny` do baseline vivem em `auth.routes.spec.ts:25`, `server.ts:21` e `create-memory-wizard.tsx:58`.
+12. **`pnpm lint` não linta a API.** Só `apps/web` define script `lint` (`biome check .`); `apps/api`, `packages/db`, `packages/schemas`, `packages/auth` e `packages/ui` não têm. Como `pnpm lint` é `turbo run lint`, um "lint passou" nesse comando só diz alguma coisa sobre `apps/web` — e quase todo o código deste plano é `apps/api` e `packages/*`. ParaTasks que tocam API, db ou schemas, o comando de verificação de verdade é `pnpm exec biome check <arquivos alterados>` a partir da raiz, e vale um `pnpm exec biome check .` de vez em quando para ver o inventário de avisos do repo. Os três `noExplicitAny` do baseline vivem em `auth.routes.spec.ts:25`, `server.ts:21` e `create-memory-wizard.tsx:58`. Pior: `pnpm lint` sai **0** mesmo com avisos (64 arquivos, 1 warning) enquanto `pnpm exec biome check .` da raiz vê 174 arquivos e 3 warnings. Ou seja, "lint passou" hoje é verdade *e* continuaria verdade se a Task 15 inteira fosse pulada — não é um gate, é enfeite. De agora em diante, nenhum passo deste plano deve citar `pnpm lint` como evidência.
 13. `apps/web` **não tem** script `test`, só `test:e2e`. Por isso `pnpm test` na raiz roda 8 tarefas e o web não aparece entre elas. Baseline da API: 17 arquivos, 101 testes. `memories.service.spec.ts` sozinho tem 21.
 
 ## Desvios documentados do spec
@@ -259,7 +260,21 @@ E comentar o `effectiveYear`, que hoje não tem nenhum:
     const effectiveYear = year ?? (month ? new Date().getUTCFullYear() : undefined)
 ```
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 8: Fechar o ponto cego do mock, senão os testes da Task 3 são falsos-positivos**
+
+O `where()` do mock só registra a condição quando há projeção (`countConditions`) ou quando a
+tabela é `memories` (`memoryConditions`). As três condições das tabelas junção são **descartadas
+em silêncio**, e o `inArray` do mock é um gravador que ninguém inspeciona. Consequência
+verificada: substituindo `results.map((m) => m.id)` por `['bogus-id-not-in-page']`, os dois
+testes novos da Task 3 continuam verdes. A query em lote virou ponto único de falha de todas as
+relações da página, e é justamente o que o mock não checa — um erro de digitação em
+`memoryPhotos.memoryId` passa com a suíte verde e a galeria sai vazia.
+
+Registrar as condições de junção em `mocks.state` (`junctionConditions`) e assertar no teste
+que o lote usa os ids da página. Fazer isso agora, antes da Task 8 jogar `leftJoin` e a tabela
+`users` no mesmo fake e o ponto cego crescer junto.
+
+- [ ] **Step 9: Commit**
 
 ```bash
 git add apps/api/src/modules/memories/memories.service.ts apps/api/src/modules/memories/__tests__/memories.service.spec.ts
