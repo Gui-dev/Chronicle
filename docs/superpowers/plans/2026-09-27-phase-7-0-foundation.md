@@ -32,9 +32,38 @@ Estes fatos mudam o desenho e **não** estão no spec. Cada task abaixo já os r
 13. **`pnpm db:migrate` não funciona contra o banco de desenvolvimento.** O dev DB foi provisionado com `db:push`, então `drizzle.__drizzle_migrations` não existia e a 0000 nunca foi registrada. O `db:migrate` cria a tabela de bookkeeping, não acha migração nenhuma registrada, e tenta reaplicar a 0000 contra tabelas que já existem: `ERROR: relation "accounts" already exists`. Não é um problema de task nem corrigível pelo arquivo de migration. Para verificar a 7.0 contra o Postgres, aplicar o SQL do próprio arquivo via `psql` numa transação, ou usar `pnpm db:push` num banco descartável. As migrations versionadas são para banco novo e produção. Não mexer em `drizzle.__drizzle_migrations` do dev DB: consertar o bookkeeping de 0000 faz a 0001 falhar em seguida, porque os índices dela já estão lá.
 14. **Limitação conhecida da gramática: nenhum valor de dimensão pode conter `"`.** O tokenizer não tem sintaxe de escape — a barra é um caractere comum — então `local:"a\"b"` quebra em `local: 'a'` mais a frase `b"`. O serializer **não** inventa um escape, porque um escape falso seria pior que o wrap: `local:"a\"b"` reinterpretaria como `a\` mais a frase `b"`, que parece correto e não é. O teste `has no way to represent a double quote inside a dimension value` fixa a invariante do parser; se alguém adicionar escape, ele é o sinal de que o serializer precisa ser revisitado. `parse → serialize → parse` é sem perda em tudo que a gramática consegue expressar.
 15. **`drizzle-orm` está pinado por `pnpm.overrides` no `package.json` da raiz** (`^0.38.0`), porque
-    `apps/api` passou a depender dele direto na Task 8. Sem o pin, cada pacote resolve sua própria
-    faixa e o `drizzle-orm` novo da API podia ser uma versão diferente do `@chronicle/db` — mesma
-    tabela, duas identidades de classe. O lockfile agora tem `0.38.4` em todo lugar.
+     `apps/api` passou a depender dele direto na Task 8. Sem o pin, cada pacote resolve sua própria
+     faixa e o `drizzle-orm` novo da API podia ser uma versão diferente do `@chronicle/db` — mesma
+     tabela, duas identidades de classe. O lockfile agora tem `0.38.4` em todo lugar.
+16. **A correção de `memoryDate` no wizard destapou um bug de data, e há uma loss de dia a leste do UTC.** A
+    Task 15 tinha que trocar `useForm<any>` por um tipo derivado do schema, e isso obrigou a ler a linha
+    92 do `create-memory-wizard.tsx` de verdade. Ela fazia `new Date(\`${data.memoryDate}T00:00:00\`)` —
+    mas `zodResolver` entrega o **output parseado** do schema, e `localDate` já devolve um `Date`. Então
+    o template produzia `Invalid Date`, que o `JSON.stringify` manda como `null`, e o `localDate` do
+    servidor transforma `null` em `new Date()`. **O seletor de data do wizard de criação não funcionava:
+    toda memória criada por ele era salva com o instante da criação, não com a data escolhida.** Corrigido
+    para `memoryDate: data.memoryDate` e provado no browser antes/depois, lendo a linha de volta do banco
+    (antes: `memory_date` = `2026-09-28 08:32:53`, o instante da criação; depois: `2026-09-27 03:00:00`, o
+    dia escolhido).
+
+    **O que sobrou:** o `parseLocalDate` faz match em `^(\d{4})-(\d{2})-(\d{2})` e joga fora a hora e o
+    offset, então o servidor fica com o dia **escrito na string**. E o `JSON.stringify` renderiza o `Date`
+    em **UTC**, logo a parte de data da string é o dia UTC, não o dia local do usuário. Medido em browser
+    real:
+
+    | fuso do cliente | vai pro fio | guardado |
+    |---|---|---|
+    | UTC | `2026-09-27T00:00:00Z` | `2026-09-27` certo |
+    | America/Los_Angeles (UTC−7) | `2026-09-27T07:00:00Z` | `2026-09-27` certo |
+    | Asia/Tokyo (UTC+9) | `2026-09-26T15:00:00Z` | `2026-09-26` **um dia antes** |
+
+    Ou seja: **quem está a leste do UTC (+1..+14) perde um dia**, e a dependência é do offset do *cliente*,
+    não do servidor. Isso não piora o item 11 — antes todo mundo ganhava o dia de hoje, agora só o leste
+    do UTC fica um dia atrás. É estritamente melhor e nunca pior, mas continua sendo bug: a entrada do
+    formulário é um dia civil e não deveria cruzar o fio como um instante. A correção de raiz é mandar
+    `'YYYY-MM-DD'` pelo wire e deixar o `localDate` do servidor montar a meia-noite local, em vez de
+    mandar um `Date` que o `JSON.stringify` converte para UTC. Fora do escopo desta fase, e o item 11 já
+    é da mesma família.
 16. **O que o pin NÃO resolve:** o `.pnpm` ainda materializa 4 instâncias de `drizzle-orm@0.38.4`,
     com hashes diferentes, porque `better-auth` traz um conjunto enorme de peers opcionais que
     varia por consumidor (`react` 19.2.8 vs 19.3.0, `better-sqlite3` 11 vs 12). `apps/api` e
