@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
     junctionConditions: [] as unknown[],
     inserted: [] as Array<{ table: unknown; values: unknown }>,
     updates: [] as Array<Record<string, unknown>>,
+    hardDeletes: [] as unknown[],
     fromCalls: [] as string[],
     junctionRows: {} as Record<string, Array<Record<string, unknown>>>,
     leftJoins: [] as Array<{ from: string; isCount: boolean; condition: unknown }>,
@@ -101,6 +102,7 @@ vi.mock('@chronicle/db', () => {
       content: column('content'),
       weatherDesc: column('weather_desc'),
       locationName: column('location_name'),
+      deletedAt: column('deleted_at'),
     },
     memoryPeople: {
       __table: 'memoryPeople',
@@ -131,6 +133,8 @@ vi.mock('@chronicle/db', () => {
   const ilike = (col: unknown, pattern: unknown) => ({ op: 'ilike', col, pattern })
   const gte = (col: unknown, value: unknown) => ({ op: 'gte', col, value })
   const lt = (col: unknown, value: unknown) => ({ op: 'lt', col, value })
+  const isNull = (col: unknown) => ({ op: 'isNull', col })
+  const isNotNull = (col: unknown) => ({ op: 'isNotNull', col })
   const inArray = (col: unknown, values: unknown) => ({ op: 'inArray', col, values })
   const sql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
     op: 'sql',
@@ -251,10 +255,15 @@ vi.mock('@chronicle/db', () => {
         },
       }
     },
-    delete: () => ({ where: async () => undefined }),
+    delete: (table: unknown) => ({
+      where: async () => {
+        mocks.state.hardDeletes.push(table)
+        return undefined
+      },
+    }),
   }
 
-  return { ...tables, eq, or, and, ilike, sql, desc, asc, gte, lt, inArray, db }
+  return { ...tables, eq, or, and, ilike, sql, desc, asc, gte, lt, inArray, isNull, isNotNull, db }
 })
 
 const filters = (overrides: Record<string, unknown> = {}) =>
@@ -273,6 +282,7 @@ describe('MemoriesService privacy', () => {
     mocks.state.junctionConditions = []
     mocks.state.inserted = []
     mocks.state.updates = []
+    mocks.state.hardDeletes = []
     mocks.state.fromCalls = []
     mocks.state.junctionRows = {}
     mocks.state.leftJoins = []
@@ -286,7 +296,10 @@ describe('MemoriesService privacy', () => {
       expect(mocks.state.memoryConditions).toHaveLength(1)
       expect(mocks.state.memoryConditions[0]).toEqual({
         op: 'and',
-        conds: [{ op: 'eq', col: memories.isPublic, value: true }],
+        conds: [
+          { op: 'eq', col: memories.isPublic, value: true },
+          { op: 'isNull', col: memories.deletedAt },
+        ],
       })
       expect(JSON.stringify(mocks.state.memoryConditions)).not.toContain('user_id')
     })
@@ -304,6 +317,7 @@ describe('MemoriesService privacy', () => {
               { op: 'eq', col: memories.userId, value: 'user-1' },
             ],
           },
+          { op: 'isNull', col: memories.deletedAt },
         ],
       })
     })
@@ -321,6 +335,7 @@ describe('MemoriesService privacy', () => {
               { op: 'eq', col: memories.userId, value: 'user-1' },
             ],
           },
+          { op: 'isNull', col: memories.deletedAt },
         ],
       })
     })
@@ -330,7 +345,10 @@ describe('MemoriesService privacy', () => {
 
       expect(mocks.state.memoryConditions[0]).toEqual({
         op: 'and',
-        conds: [{ op: 'eq', col: memories.userId, value: 'user-1' }],
+        conds: [
+          { op: 'eq', col: memories.userId, value: 'user-1' },
+          { op: 'isNull', col: memories.deletedAt },
+        ],
       })
     })
 
@@ -347,8 +365,8 @@ describe('MemoriesService privacy', () => {
 
       const condition = mocks.state.memoryConditions[0] as { op: string; conds: unknown[] }
       expect(condition.op).toBe('and')
-      // privacy + the two halves of the year range + search
-      expect(condition.conds).toHaveLength(4)
+      // privacy + soft-delete + the two halves of the year range + search
+      expect(condition.conds).toHaveLength(5)
       expect(condition.conds[0]).toEqual({
         op: 'or',
         conds: [
@@ -471,8 +489,9 @@ describe('MemoriesService privacy', () => {
       // `strings.join('?')`, so `toContain('OR')` only proved the letters are in
       // the source; pinning the text is what catches the parentheses going away,
       // which would read as `… AND title ILIKE $n OR content ILIKE $n+1` and
-      // hand every other filter a different meaning.
-      expect(memoryOps()[1]).toEqual({
+      // hand every other filter a different meaning. Index 2, not 1: privacy
+      // and the soft-delete filter occupy the first two slots.
+      expect(memoryOps()[2]).toEqual({
         op: 'sql',
         text: '(? OR ?)',
         values: [
@@ -487,7 +506,7 @@ describe('MemoriesService privacy', () => {
 
       // Sibling predicates, not one `or`: "praia sol" means both words, each in
       // either column. An `or` here would return every memory holding either.
-      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'sql', 'sql'])
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'isNull', 'sql', 'sql'])
       expect(allOps('ilike')).toHaveLength(4)
       expect(allOps('ilike').map((c) => c.pattern)).toEqual([
         '%praia%',
@@ -507,7 +526,7 @@ describe('MemoriesService privacy', () => {
       // count at zero, because the node is `sql` and not `or` — so the sibling
       // count is what has to catch it. Padding is `%phrase%`, not `"phrase"`,
       // so the quotes the user typed never reach the SQL.
-      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'sql', 'sql'])
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'isNull', 'sql', 'sql'])
       expect(allOps('ilike').map((c) => c.pattern)).toEqual([
         '%praia%',
         '%praia%',
@@ -630,7 +649,8 @@ describe('MemoriesService privacy', () => {
     it('turns a tag into an EXISTS subquery', async () => {
       await memoriesService.findAll(filters({ search: '#festa' }))
 
-      const subquery = memoryOps()[1] as RecordedOp
+      // Index 2: privacy and the soft-delete filter come first.
+      const subquery = memoryOps()[2] as RecordedOp
       expect(subquery.text).toContain('EXISTS')
       // The tag is matched on the tag table only: a title/content ilike here
       // would pass every memory whose text mentions the word.
@@ -641,14 +661,15 @@ describe('MemoriesService privacy', () => {
       await memoriesService.findAll(filters({ search: '#bar', tag: 'foo' }))
 
       // What makes these two conditions rather than one is that each is its own
-      // `push` into the same `and(...)`, and nothing merges them: three
-      // conditions, both of them `sql`, and no `or` anywhere at that level. The
-      // order they are pushed in says nothing about it — moving the `tag` block
-      // above the grammar block leaves the query identical — so the tags are
-      // compared as a set rather than in sequence.
+      // `push` into the same `and(...)`, and nothing merges them: four
+      // conditions (privacy, soft-delete, tag param, grammar tag), both tags
+      // `sql`, and no `or` anywhere at that level. The order they are pushed in
+      // says nothing about it — moving the `tag` block above the grammar block
+      // leaves the query identical — so the tags are compared as a set rather
+      // than in sequence.
       const conditions = memoryOps()
-      expect(conditions).toHaveLength(3)
-      expect(conditions.slice(1).map((c) => (c as RecordedOp).op)).toEqual(['sql', 'sql'])
+      expect(conditions).toHaveLength(4)
+      expect(conditions.slice(2).map((c) => (c as RecordedOp).op)).toEqual(['sql', 'sql'])
       expect(conditions.filter((c) => (c as RecordedOp).op === 'or')).toHaveLength(0)
 
       const tagIlikes = allOps('ilike')
@@ -660,8 +681,9 @@ describe('MemoriesService privacy', () => {
     it('adds no condition for a query with no searchable token', async () => {
       await memoriesService.findAll(filters({ search: '   ' }))
 
-      // Only the privacy filter survives; no ilike, no EXISTS, no range.
-      expect(memoryOps()).toHaveLength(1)
+      // Only the privacy and soft-delete filters survive; no ilike, no EXISTS,
+      // no range.
+      expect(memoryOps()).toHaveLength(2)
       expect(allOps('ilike')).toHaveLength(0)
     })
 
@@ -725,8 +747,8 @@ describe('MemoriesService privacy', () => {
       // the `where` — and that one answers `@bruce` with the entire public feed.
       // Sibling, not merged into the privacy `or`, so the two cannot be confused
       // for each other.
-      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'or'])
-      expect(memoryOps()[1]).toEqual({
+      expect(memoryOps().map((c) => (c as RecordedOp).op)).toEqual(['eq', 'isNull', 'or'])
+      expect(memoryOps()[2]).toEqual({
         op: 'or',
         conds: [
           { op: 'ilike', col: users.name, pattern: '%bruce%' },
@@ -848,6 +870,7 @@ describe('MemoriesService privacy', () => {
         'aiNarrative',
         'aiMood',
         'aiThemes',
+        'deletedAt',
         'createdAt',
         'updatedAt',
       ])
@@ -1087,6 +1110,77 @@ describe('MemoriesService privacy', () => {
       mocks.state.rows = [{ id: 'mem-1', userId: 'user-1', isPublic: false }]
 
       await expect(memoriesService.delete('mem-1', 'user-1')).resolves.toBeUndefined()
+    })
+
+    it('soft-deletes: stamps deletedAt and never removes the row', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1', isPublic: false }]
+
+      await memoriesService.delete('mem-1', 'user-1')
+
+      expect(mocks.state.updates).toHaveLength(1)
+      expect(mocks.state.updates[0].deletedAt).toBeInstanceOf(Date)
+      expect(mocks.state.hardDeletes).toHaveLength(0)
+    })
+  })
+
+  describe('restore', () => {
+    it('clears deletedAt for a memory the signed-in user owns', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1', isPublic: false }]
+
+      await memoriesService.restore('mem-1', 'user-1')
+
+      expect(mocks.state.updates).toHaveLength(1)
+      expect(mocks.state.updates[0].deletedAt).toBeNull()
+      expect(mocks.state.hardDeletes).toHaveLength(0)
+    })
+
+    it('refuses to restore a memory owned by someone else', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-2', isPublic: false }]
+
+      await expect(memoriesService.restore('mem-1', 'user-1')).rejects.toMatchObject({
+        statusCode: 403,
+      })
+      expect(mocks.state.updates).toHaveLength(0)
+    })
+
+    it('reports a missing memory as not found', async () => {
+      mocks.state.rows = []
+
+      await expect(memoriesService.restore('gone', 'user-1')).rejects.toMatchObject({
+        statusCode: 404,
+      })
+    })
+  })
+
+  describe('trash listing', () => {
+    it('scopes deleted=true to the owner and flips the predicate to isNotNull', async () => {
+      // Without `mine`: the trash is owner-scoped by `deleted=true` alone, so
+      // another account's deleted memories can never appear in this list.
+      await memoriesService.findAll(filters({ deleted: true }), { userId: 'user-1' })
+
+      expect(mocks.state.memoryConditions[0]).toEqual({
+        op: 'and',
+        conds: [
+          { op: 'eq', col: memories.userId, value: 'user-1' },
+          { op: 'isNotNull', col: memories.deletedAt },
+        ],
+      })
+    })
+
+    it('returns an empty page for deleted=true when no user is given', async () => {
+      const result = await memoriesService.findAll(filters({ deleted: true }))
+
+      expect(result.data).toEqual([])
+      expect(mocks.state.memoryConditions).toHaveLength(0)
+    })
+
+    it('keeps the normal feed free of soft-deleted rows', async () => {
+      await memoriesService.findAll(filters())
+
+      expect(memoryOps('isNotNull')).toHaveLength(0)
+      expect(memoryOps('isNull').map((c) => (c as { col: unknown }).col)).toEqual([
+        memories.deletedAt,
+      ])
     })
   })
 })

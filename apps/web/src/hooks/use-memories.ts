@@ -25,6 +25,7 @@ interface Memory {
   aiMood: string | null
   aiThemes: string[] | null
   isPublic: boolean
+  deletedAt: string | null
   createdAt: string
   updatedAt: string
   people: Array<{ id: string; memoryId: string; name: string }>
@@ -65,6 +66,15 @@ function buildQueryString(filters: MemoryFiltersInput): string {
   if (filters.page) params.set('page', filters.page.toString())
   if (filters.limit) params.set('limit', filters.limit.toString())
   if (filters.mine) params.set('mine', 'true')
+  // `hasArtwork` and `deleted` are tri-state: undefined means "leave the
+  // predicate out", so both branches of a defined value have to be written out
+  // — an `if (filters.x)` would silently drop `false`.
+  if (filters.hasArtwork !== undefined) {
+    params.set('hasArtwork', filters.hasArtwork ? 'true' : 'false')
+  }
+  if (filters.deleted !== undefined) {
+    params.set('deleted', filters.deleted ? 'true' : 'false')
+  }
 
   return params.toString()
 }

@@ -38,6 +38,7 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
       people: body.people,
       tags: body.tags,
       isPublic: body.isPublic,
+      aiMood: body.aiMood,
     })
 
     return reply.status(201).send({ data: memory })
@@ -51,7 +52,9 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
 
     const filters = memoryFiltersSchema.parse(request.query)
 
-    if (filters.mine === true && !session) {
+    // `deleted=true` is the trash view and is owner-scoped, so it needs a
+    // session just like `mine=true` does.
+    if ((filters.mine === true || filters.deleted === true) && !session) {
       return reply.status(401).send({
         error: {
           code: 'UNAUTHORIZED',
@@ -136,6 +139,28 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
 
     await memoriesService.delete(id, session.user.id)
+
+    return reply.status(204).send()
+  })
+
+  // POST /api/memories/:id/restore
+  fastify.post('/api/memories/:id/restore', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    const { id } = request.params as { id: string }
+
+    await memoriesService.restore(id, session.user.id)
 
     return reply.status(204).send()
   })

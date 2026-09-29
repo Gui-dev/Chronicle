@@ -15,4 +15,17 @@ export type {
   MemoryTag,
   NarrativeVersion,
 } from './schema'
-export { eq, and, or, ilike, sql, desc, asc, gte, lt, inArray } from 'drizzle-orm'
+export {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'

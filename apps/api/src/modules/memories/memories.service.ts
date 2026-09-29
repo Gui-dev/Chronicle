@@ -6,6 +6,8 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
+  isNull,
   lt,
   memories,
   memoryPeople,
@@ -87,6 +89,7 @@ const memoryColumns = {
   aiNarrative: memories.aiNarrative,
   aiMood: memories.aiMood,
   aiThemes: memories.aiThemes,
+  deletedAt: memories.deletedAt,
   createdAt: memories.createdAt,
   updatedAt: memories.updatedAt,
 } as const
@@ -111,6 +114,7 @@ export class MemoriesService {
       people?: string[]
       tags?: string[]
       isPublic?: boolean
+      aiMood?: string
     },
   ) {
     const [memory] = await db
@@ -131,6 +135,7 @@ export class MemoriesService {
         musicUrl: data.musicUrl,
         musicCover: data.musicCover,
         isPublic: data.isPublic ?? true,
+        aiMood: data.aiMood,
       })
       .returning()
 
@@ -158,12 +163,19 @@ export class MemoriesService {
   }
 
   async findAll(filters: MemoryFiltersInput, options?: { userId?: string }) {
-    const { year, month, weather, location, tag, hasArtwork, search, page, limit, mine } = filters
+    const { year, month, weather, location, tag, hasArtwork, search, page, limit, mine, deleted } =
+      filters
     const userId = options?.userId
 
     const conditions = []
 
-    if (mine === true) {
+    // The trash is always the caller's own. `deleted=true` takes the owner
+    // branch the way `mine` does, because a memory its owner deleted is data
+    // out of the feed for everyone else — a deleted public memory must not
+    // become readable again through `?deleted=true`.
+    const ownerScoped = mine === true || deleted === true
+
+    if (ownerScoped) {
       if (!userId) {
         return {
           data: [],
@@ -183,6 +195,13 @@ export class MemoriesService {
           : eq(memories.isPublic, true),
       )
     }
+
+    // Soft-deleted memories are invisible to every read path. The filter is
+    // here rather than in each caller so a new query cannot forget it. The one
+    // exception is the trash view: `deleted=true` flips the predicate instead
+    // of skipping it, because a skipped filter would hand the trash every
+    // memory in the account.
+    conditions.push(deleted === true ? isNotNull(memories.deletedAt) : isNull(memories.deletedAt))
 
     if (hasArtwork !== undefined) {
       conditions.push(
@@ -394,7 +413,11 @@ export class MemoriesService {
   }
 
   async findById(id: string, userId?: string) {
-    const [memory] = await db.select().from(memories).where(eq(memories.id, id)).limit(1)
+    const [memory] = await db
+      .select()
+      .from(memories)
+      .where(and(eq(memories.id, id), isNull(memories.deletedAt)))
+      .limit(1)
 
     if (!memory) {
       throw AppError.notFound('Memória não encontrada')
@@ -504,7 +527,15 @@ export class MemoriesService {
 
   async delete(id: string, userId: string) {
     await this.assertOwner(id, userId)
-    await db.delete(memories).where(eq(memories.id, id))
+    // Soft delete: the row stays for restore, but every read path filters
+    // `deletedAt IS NULL` so it is invisible. Hard delete remains available
+    // for account deletion, where the data must actually go.
+    await db.update(memories).set({ deletedAt: new Date() }).where(eq(memories.id, id))
+  }
+
+  async restore(id: string, userId: string) {
+    await this.assertOwner(id, userId)
+    await db.update(memories).set({ deletedAt: null }).where(eq(memories.id, id))
   }
 
   private async assertOwner(id: string, userId: string) {

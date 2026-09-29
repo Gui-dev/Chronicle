@@ -50,9 +50,15 @@ export const createMemorySchema = z.object({
   people: z.array(z.string().max(255)).optional(),
   tags: z.array(z.string().max(100)).optional(),
   isPublic: z.boolean().optional(),
+  // The select renders an empty option ("Deixar a IA decidir"), and an empty
+  // string is not a member of the enum — without the `or(z.literal(''))` the
+  // wizard's default submit 400s before anything is saved. Same shape as the
+  // music URLs above.
   aiMood: z
     .enum(['nostalgic', 'joyful', 'melancholic', 'energetic', 'peaceful', 'romantic'])
-    .optional(),
+    .optional()
+    .or(z.literal(''))
+    .transform((v) => v || undefined),
 })
 
 export type CreateMemoryInput = z.infer<typeof createMemorySchema>

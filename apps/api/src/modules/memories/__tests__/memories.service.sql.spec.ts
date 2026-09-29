@@ -57,7 +57,7 @@ const executed = vi.hoisted(() => [] as Array<{ sql: string; params: unknown[] }
 // is the one place the second copy is used, and it only ever hands real operators
 // to the service — the same situation `memories.service.ts` is already in.
 vi.mock('@chronicle/db', async () => {
-  const { and, desc, eq, gte, ilike, inArray, lt, or, sql } = await import('drizzle-orm')
+  const { and, desc, eq, gte, ilike, inArray, isNull, lt, or, sql } = await import('drizzle-orm')
   const { drizzle } = await import('drizzle-orm/pg-proxy')
   const { memories, memoryPeople, memoryPhotos, memoryTags, users } = await import(
     '@chronicle/db/src/schema'
@@ -73,6 +73,7 @@ vi.mock('@chronicle/db', async () => {
     gte,
     ilike,
     inArray,
+    isNull,
     lt,
     or,
     sql,
@@ -167,10 +168,12 @@ describe('MemoriesService generated SQL', () => {
     // The whole clause, placeholders included. `$1`/`$2` are the privacy pair
     // and `$3`/`$4` the author pair, and the numbering is what ties the text to
     // the params below: `is_public = true` first, then the *signed-in* user's
-    // id. The claim is the shape — a single `and` whose two operands are each a
-    // parenthesised `or` — not the spacing.
+    // id. The soft-delete filter takes no placeholder and sits between the two
+    // pairs. The claim is the shape — a single `and` whose operands are two
+    // parenthesised `or`s and an `is null` — not the spacing.
     expect(whereOf(rows.sql)).toBe(
       '(("memories"."is_public" = $1 or "memories"."user_id" = $2)' +
+        ' and "memories"."deleted_at" is null' +
         ' and ("users"."name" ilike $3 or "users"."email" ilike $4))',
     )
 
@@ -187,7 +190,8 @@ describe('MemoriesService generated SQL', () => {
     // is not "are there parentheses" but "does any `or` sit *beside* the
     // top-level `and`". The `drizzle-orm` `and`/`or` helpers always wrap two or
     // more operands, so that outermost pair is the top-level `and`'s own — hence
-    // `and` at depth 1 with each `or` at depth 2.
+    // `and` at depth 1 with each `or` at depth 2. Three operands (privacy,
+    // soft-delete, author) give two `and` nodes, both at depth 1.
     //
     // The failure this exists for: an `or` written as a `sql` template rather
     // than as `or(...)` carries no parentheses of its own, because the template
@@ -204,6 +208,7 @@ describe('MemoriesService generated SQL', () => {
     // do not survive it.
     expect(booleanOps(whereOf(rows.sql))).toEqual([
       { op: 'or', depth: 2 },
+      { op: 'and', depth: 1 },
       { op: 'and', depth: 1 },
       { op: 'or', depth: 2 },
     ])

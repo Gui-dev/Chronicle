@@ -17,6 +17,10 @@ export const memoryFiltersSchema = z.object({
     .enum(['true', 'false'])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === 'true')),
+  deleted: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
 })
 
 export type MemoryFiltersInput = z.infer<typeof memoryFiltersSchema>

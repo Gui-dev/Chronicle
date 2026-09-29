@@ -36,6 +36,7 @@ describe('Memories Schema', () => {
       ['ai_narrative', 'PgText', false],
       ['ai_mood', 'PgVarchar', false],
       ['ai_themes', 'PgArray', false],
+      ['deleted_at', 'PgTimestamp', false],
       ['created_at', 'PgTimestamp', true],
       ['updated_at', 'PgTimestamp', true],
     ].map(([name, type, notNull]) => ({ name, type, notNull }))

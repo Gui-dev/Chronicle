@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { db, eq, users } from '@chronicle/db'
+import { db, eq, memories, memoryPhotos, users } from '@chronicle/db'
 import { AppError } from '../../errors/app-error'
 import { BUCKET_NAME, s3Client } from '../../plugins/minio'
 
@@ -63,6 +63,49 @@ export class UsersService {
     )
 
     await db.update(users).set({ image: null }).where(eq(users.id, userId))
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+
+    if (!user) {
+      throw AppError.notFound('Usuário não encontrado')
+    }
+
+    // Delete all photos from MinIO. The DB rows go with the user via cascade,
+    // but S3 objects have to be removed by hand.
+    const photos = await db
+      .select({ url: memoryPhotos.url })
+      .from(memoryPhotos)
+      .innerJoin(memories, eq(memoryPhotos.memoryId, memories.id))
+      .where(eq(memories.userId, userId))
+    await Promise.all(
+      photos
+        .filter((p) => p.url)
+        .map((p) =>
+          s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: BUCKET_NAME,
+              Key: p.url!.replace(`/${BUCKET_NAME}/`, ''),
+            }),
+          ),
+        ),
+    )
+
+    // Delete avatar from MinIO
+    if (user.image) {
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: user.image.replace(`/${BUCKET_NAME}/`, ''),
+        }),
+      )
+    }
+
+    // Delete the user. Memories, photos, people, tags, sessions, accounts all
+    // cascade. The memories are hard-deleted here because the account is going
+    // away — soft delete is for the trash, not for account deletion.
+    await db.delete(users).where(eq(users.id, userId))
   }
 }
 

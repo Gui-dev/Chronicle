@@ -1,5 +1,9 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
+// For requests the typed client cannot express — file downloads, uploads with
+// progress. The client itself stays the default for everything else.
+export { API_BASE_URL }
+
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
 }

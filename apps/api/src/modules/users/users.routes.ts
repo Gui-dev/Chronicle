@@ -55,4 +55,23 @@ export async function usersRoutes(fastify: FastifyInstance) {
 
     return reply.status(204).send()
   })
+
+  fastify.delete('/api/users/account', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    await usersService.deleteAccount(session.user.id)
+
+    return reply.status(204).send()
+  })
 }

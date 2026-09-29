@@ -23,7 +23,10 @@ test.describe('Home pública', () => {
     await expect(page.locator('[data-testid="user-menu-toggle"]')).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible()
 
-    await page.getByRole('link', { name: 'Nova Memória' }).first().click()
+    // The timeline CTA is gone (phase 7.1): no creation entry point at all
+    // for an anonymous visitor, and the login link is the way in.
+    await expect(page.getByRole('link', { name: 'Nova Memória' })).toHaveCount(0)
+    await page.getByRole('link', { name: 'Entrar' }).click()
     await page.waitForURL('**/login')
   })
 

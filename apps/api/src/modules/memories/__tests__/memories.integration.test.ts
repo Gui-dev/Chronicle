@@ -16,6 +16,7 @@ vi.mock('../memories.service', () => ({
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    restore: vi.fn(),
   },
 }))
 
@@ -132,6 +133,39 @@ describe('Memories Integration Tests', () => {
 
       expect(response.statusCode).toBe(401)
     })
+
+    it('returns 401 for the trash filter without a session', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/memories?deleted=true',
+      })
+
+      expect(response.statusCode).toBe(401)
+    })
+
+    it('forwards the trash filter to the service for a signed-in user', async () => {
+      signIn()
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/memories?deleted=true',
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(service.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ deleted: true }),
+        expect.objectContaining({ userId: 'user-1' }),
+      )
+    })
+
+    it('rejects an unrecognised deleted value', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/memories?deleted=maybe',
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
   })
 
   describe('GET /api/memories/:id', () => {
@@ -178,6 +212,31 @@ describe('Memories Integration Tests', () => {
       })
 
       expect(response.statusCode).toBe(401)
+    })
+  })
+
+  describe('POST /api/memories/:id/restore', () => {
+    it('should return 401 for unauthenticated request', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/memories/123e4567-e89b-12d3-a456-426614174000/restore',
+      })
+
+      expect(response.statusCode).toBe(401)
+      expect(service.restore).not.toHaveBeenCalled()
+    })
+
+    it('restores for the signed-in owner and answers 204', async () => {
+      signIn()
+      service.restore.mockResolvedValue(undefined)
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/memories/mem-1/restore',
+      })
+
+      expect(response.statusCode).toBe(204)
+      expect(service.restore).toHaveBeenCalledWith('mem-1', 'user-1')
     })
   })
 })

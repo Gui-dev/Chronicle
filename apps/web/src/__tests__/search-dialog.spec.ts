@@ -122,9 +122,12 @@ test.describe('Diálogo de busca', () => {
     await expect(recente).not.toHaveClass(/bg-primary\/10/)
     await expect(antigo).toHaveClass(/bg-primary\/10/)
 
-    // And the highlight is what Enter acts on, so it is the one that gets opened.
+    // And the highlight is what Enter acts on, so it is the one that gets
+    // opened — on the memory's own page, not the editor (phase 7.1).
     await authenticatedPage.keyboard.press('Enter')
-    await authenticatedPage.waitForURL(`**/memories/${maisAntigo}/edit`)
+    await authenticatedPage.waitForURL(`**/memories/${maisAntigo}`)
+    await expect(authenticatedPage.locator('[data-testid^="memory-card-"]')).toHaveCount(1)
+    await expect(authenticatedPage.locator('text=Voltar para timeline')).toBeVisible()
   })
 
   test('Escape closes the dialog and "see all" carries the query to /search', async ({
