@@ -158,7 +158,7 @@ export class MemoriesService {
   }
 
   async findAll(filters: MemoryFiltersInput, options?: { userId?: string }) {
-    const { year, month, weather, location, tag, search, page, limit, mine } = filters
+    const { year, month, weather, location, tag, hasArtwork, search, page, limit, mine } = filters
     const userId = options?.userId
 
     const conditions = []
@@ -181,6 +181,12 @@ export class MemoriesService {
         userId
           ? or(eq(memories.isPublic, true), eq(memories.userId, userId))
           : eq(memories.isPublic, true),
+      )
+    }
+
+    if (hasArtwork !== undefined) {
+      conditions.push(
+        hasArtwork ? sql`${memories.musicCover} IS NOT NULL` : sql`${memories.musicCover} IS NULL`,
       )
     }
 

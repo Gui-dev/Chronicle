@@ -6,6 +6,10 @@ export const memoryFiltersSchema = z.object({
   weather: z.string().optional(),
   location: z.string().optional(),
   tag: z.string().optional(),
+  hasArtwork: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

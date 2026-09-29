@@ -7,6 +7,15 @@ interface StepBasicInfoProps {
   form: UseFormReturn<CreateMemoryFormValues, unknown, CreateMemoryInput>
 }
 
+const MOOD_OPTIONS = [
+  { value: 'nostalgic', label: 'Nostálgico' },
+  { value: 'joyful', label: 'Alegre' },
+  { value: 'melancholic', label: 'Melancólico' },
+  { value: 'energetic', label: 'Energético' },
+  { value: 'peaceful', label: 'Tranquilo' },
+  { value: 'romantic', label: 'Romântico' },
+] as const
+
 export function StepBasicInfo({ form }: StepBasicInfoProps) {
   const {
     register,
@@ -63,6 +72,28 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             rows={4}
             className="w-full rounded-lg border-2 border-card bg-background px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="aiMood" className="text-sm font-medium text-text">
+            Tono da narrativa
+          </Label>
+          <select
+            id="aiMood"
+            {...register('aiMood')}
+            data-testid="aiMood"
+            className="h-10 w-full rounded-lg border-2 border-card bg-background px-3 text-text focus:border-primary focus:outline-none"
+          >
+            <option value="">Deixar a IA decidir</option>
+            {MOOD_OPTIONS.map((mood) => (
+              <option key={mood.value} value={mood.value}>
+                {mood.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted">
+            Se escolhido, aplica-se à geração e regeneração da narrativa.
+          </p>
         </div>
       </div>
     </div>

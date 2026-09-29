@@ -1,7 +1,7 @@
 'use client'
 
 import type { MemoryFiltersInput } from '@chronicle/schemas'
-import { Button } from '@chronicle/ui'
+import { Button, Input } from '@chronicle/ui'
 import { X } from 'lucide-react'
 
 interface MemoryFiltersProps {
@@ -39,7 +39,12 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
   // The text query belongs to the navbar's search dialog and the /search page,
   // which build their own query instead of going through this bar.
   const hasActiveFilters =
-    filters.year || filters.month || filters.weather || filters.location || filters.tag
+    filters.year ||
+    filters.month ||
+    filters.weather ||
+    filters.location ||
+    filters.tag ||
+    filters.hasArtwork !== undefined
 
   const onMonthChange = (value: string) => {
     onFilterChange('month', value ? Number(value) : undefined)
@@ -80,6 +85,46 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
               {month.label}
             </option>
           ))}
+        </select>
+
+        <Input
+          value={filters.weather || ''}
+          onChange={(e) => onFilterChange('weather', e.target.value || undefined)}
+          placeholder="Clima"
+          data-testid="weather"
+          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+
+        <Input
+          value={filters.location || ''}
+          onChange={(e) => onFilterChange('location', e.target.value || undefined)}
+          placeholder="Local"
+          data-testid="location"
+          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+
+        <Input
+          value={filters.tag || ''}
+          onChange={(e) => onFilterChange('tag', e.target.value || undefined)}
+          placeholder="Tag"
+          data-testid="tag"
+          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+
+        <select
+          value={filters.hasArtwork === undefined ? '' : filters.hasArtwork ? 'true' : 'false'}
+          onChange={(e) =>
+            onFilterChange(
+              'hasArtwork',
+              e.target.value === '' ? undefined : e.target.value === 'true',
+            )
+          }
+          data-testid="hasArtwork"
+          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          <option value="">Artwork</option>
+          <option value="true">Com artwork</option>
+          <option value="false">Sem artwork</option>
         </select>
 
         {hasActiveFilters && (

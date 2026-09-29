@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -89,12 +90,21 @@ function photoSizes(photoCount: number): string {
 
 export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [isPlaying, setIsPlaying] = useState(false)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const owner = isOwner
   const deleteMemory = useDeleteMemory()
+
+  const filterByTag = (tag: string) => {
+    router.push(`/search?q=${encodeURIComponent(`#${tag}`)}`)
+  }
+
+  const filterByPerson = (person: string) => {
+    router.push(`/search?q=${encodeURIComponent(`@${person}`)}`)
+  }
 
   const toggleVisibility = useMutation({
     mutationFn: async (isPublic: boolean) => {
@@ -303,18 +313,31 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
           {memory.people.length > 0 && (
             <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
               <Users className="h-3 w-3" />
-              {memory.people.map((p) => p.name).join(', ')}
+              {memory.people.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => filterByPerson(p.name)}
+                  className="cursor-pointer transition-colors hover:text-primary"
+                  data-testid={`card-person-${p.name}`}
+                >
+                  {p.name}
+                </button>
+              ))}
             </span>
           )}
           {memory.tags.length > 0 &&
             memory.tags.map((tag) => (
-              <span
+              <button
                 key={tag.id}
-                className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-primary"
+                type="button"
+                onClick={() => filterByTag(tag.name)}
+                data-testid={`card-tag-${tag.name}`}
+                className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-primary transition-colors hover:bg-primary/20"
               >
                 <Tag className="h-3 w-3" />
                 {tag.name}
-              </span>
+              </button>
             ))}
         </div>
 

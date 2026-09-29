@@ -13,6 +13,9 @@ export type { MemoryPerson, NewMemoryPerson } from './memory-people'
 export { memoryTags } from './memory-tags'
 export type { MemoryTag, NewMemoryTag } from './memory-tags'
 
+export { narrativeVersions } from './narrative-versions'
+export type { NarrativeVersion, NewNarrativeVersion } from './narrative-versions'
+
 export { sessions, accounts, verifications } from './auth'
 export type {
   Session,

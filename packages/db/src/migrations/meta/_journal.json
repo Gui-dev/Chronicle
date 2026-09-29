@@ -15,6 +15,13 @@
       "when": 1790555863961,
       "tag": "0001_superb_hellcat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790648076258,
+      "tag": "0002_productive_mongu",
+      "breakpoints": true
     }
   ]
 }

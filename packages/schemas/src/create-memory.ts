@@ -50,6 +50,9 @@ export const createMemorySchema = z.object({
   people: z.array(z.string().max(255)).optional(),
   tags: z.array(z.string().max(100)).optional(),
   isPublic: z.boolean().optional(),
+  aiMood: z
+    .enum(['nostalgic', 'joyful', 'melancholic', 'energetic', 'peaceful', 'romantic'])
+    .optional(),
 })
 
 export type CreateMemoryInput = z.infer<typeof createMemorySchema>
