@@ -373,10 +373,64 @@ puro, e nenhuma query do serviço é assim. Ver a nota ⚠️ do item do `EXPLAI
       `useRouter` do Next.js.
 
 ### 7.3 Confiança do Usuário
-- [ ] Exportação dos dados (JSON + mídia) com request autenticado e job assíncrono
-- [ ] Lixeira com `deletedAt` e restauração, em vez de hard delete
-- [ ] Exclusão de conta com confirmação e limpeza de MinIO
-- [ ] Tela de privacidade e gestão de dados
+- [x] Exportação dos dados (JSON + mídia) com request autenticado e job assíncrono —
+      `POST /api/export` (autenticado) cria um job e responde 202 com a view
+      `{ jobId, status, error, createdAt, finishedAt, downloadReady }`; `GET
+      /api/export/:jobId` é o poll de status e `GET /api/export/:jobId/download` entrega o
+      arquivo com `Content-Disposition`. O job roda em background (`setImmediate`), monta o
+      JSON e embute a mídia das fotos em base64 (objetos lidos do MinIO em lotes de 8; um
+      objeto inacessível vira `media: null` sem falhar o job). O job fica num `Map` em
+      memória com TTL de 1h — sem fila nem tabela, decisão registrada no próprio serviço:
+      restart perde o job (retentável) em vez de deixar row órfã. Dono errado responde
+      404 (não revela existência), download antes de pronto responde 409. Frontend
+      (`/privacy`) inicia o job, faz polling a cada 400ms (teto de 2min) e baixa via blob,
+      com o botão desabilitado durante o preparo. Testes: 6 de serviço (ciclo de vida,
+      mídia, media-null, 404 de dono, 409, filtro de soft delete na collect) e 6 de
+      integração (401/202/200/404/409/attachment), 1 E2E (download com as memórias
+      dentro).
+- [x] Lixeira com `deletedAt` e restauração, em vez de hard delete — coluna `deleted_at`
+      em `memories` (migration `0003_overjoyed_killer_shrike.sql`, aplicada via psql;
+      `pnpm db:migrate` continua quebrado no dev DB). `DELETE /api/memories/:id` agora só
+      carimba `deletedAt`; novo `POST /api/memories/:id/restore` limpa. Todo read path
+      filtra `deletedAt IS NULL` no serviço (não em cada chamador). Filtro `deleted=true`
+      no `memoryFiltersSchema`: é sempre owner-scoped (mesmo sem `mine=true`, para
+      `deleted public` não vazar para a conta errada) e a rota responde 401 sem sessão.
+      UI: página `/trash` (RequireAuth) lista as excluídas com botão "Restaurar" e estado
+      vazio; link "Lixeira" no perfil (`profile-trash-link`); `use-restore-memory.ts`
+      invalida `['memories']` para timeline e lixeira refizerem juntas. Testes: 6 de
+      serviço (soft delete sem `db.delete`, restore 403/404, isNotNull owner-scoped,
+      feed normal limpo), 4 de integração (401, forward do filtro, 400 de valor inválido,
+      restore 204), 2 E2E (excluir → lixeira → restaurar → timeline; lixeira vazia).
+      Nesse item entrou também o bug da 7.2: `hasArtwork` estava na UI e no schema mas
+      **nunca era serializado** no `buildQueryString` — o filtro nunca chegava à API.
+- [x] Exclusão de conta com confirmação e limpeza de MinIO — `DELETE /api/users/account`
+      (autenticado) em `users.service.deleteAccount`: remove todos os objetos das fotos do
+      usuário (join `memoryPhotos` ← `memories`), depois o avatar, e só então o `users`
+      (sessions/accounts/memórias em cascade). Hard delete aqui é de propósito: soft
+      delete é o mecanismo da lixeira, não da conta. UI com confirmação dupla em dois
+      passos (`delete-account-start` → `delete-account-confirm`, com "Cancelar").
+- [x] Tela de privacidade e gestão de dados — `/privacy` (RequireAuth) reúne exportação
+      de dados (job assíncrono), exclusão de conta com os dois passos de confirmação e o
+      cartão "Seus dados"; link `profile-privacy-link` no perfil.
+
+#### Correções fechadas junto com a 7.3
+- [x] `aiMood` quebrava todo submit do wizard (regressão da 7.2) — o select renderiza a
+      opção `""` ("Deixar a IA decidir") e `z.enum([...]).optional()` rejeita string
+      vazia, então `POST /api/memories` respondia 400 e o wizard falhava em silêncio (sem
+      toast, sem navegação): `create-memory` e os 3 testes de `wizard-upload` estavam
+      quebrados. O schema agora aceita `''` e transforma em `undefined` (mesmo padrão de
+      `musicUrl`). Ainda nisso: a rota e o serviço **nunca encaminhavam `aiMood`** — o
+      campo era validado e descartado; agora é persistido. Fixes de schema com 2 testes
+      novos.
+- [x] Dois testes E2E desatualizados desde a 7.1: `public-home` clicava no CTA "Nova
+      Memória" que a fase removeu (agora pinna a ausência e entra por "Entrar");
+      `search-dialog` esperava `/memories/:id/edit` após Enter, mas a fase mudou a
+      navegação para a página de visualização (agora espera o card e o "Voltar para
+      timeline").
+
+#### Gates da 7.3
+`pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 8/8 (API 175, schemas 57,
+db 10, auth 3) · `biome check` 198 arquivos, 0 avisos · Playwright chromium **65/65**
 
 ### 7.4 Compartilhamento
 - [ ] Link privado com token expirável para memórias não públicas
