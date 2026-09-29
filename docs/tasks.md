@@ -348,12 +348,29 @@ puro, e nenhuma query do serviço é assim. Ver a nota ⚠️ do item do `EXPLAI
       rejeição de não-imagem, deleção da memória em falha parcial).
 
 ### 7.2 Filtros e IA Editorial
-- [ ] Inputs de clima, localização e tag na UI (estado já existe, falta renderizar)
-- [ ] Filtro por artwork exposto no schema e na API
-- [ ] Tono (`aiMood`) selecionável pelo usuário e aplicado à regeneração da narrativa
-- [ ] Regeração parcial (só narrativa, sem tocar em data/fotos/pessoas)
-- [ ] Versões da narrativa com histórico e restauração
-- [ ] Chips de tag/pessoa clicáveis a partir do card
+- [x] Inputs de clima, localização e tag na UI — `memory-filters.tsx` agora renderiza
+      `weather`, `location` e `tag` além de ano e mês. O estado já existia no schema e na
+      API; faltava renderizar os controles.
+- [x] Filtro por artwork exposto no schema e na API — `hasArtwork` adicionado ao
+      `memoryFiltersSchema` e à `findAll`. Filtra por `music_cover IS NOT NULL` (ou `IS
+      NULL` quando `false`). Select na UI com "Com artwork" / "Sem artwork".
+- [x] Tono (`aiMood`) selecionável pelo usuário e aplicado à regeneração da narrativa —
+      `aiMood` adicionado ao `createMemorySchema` (enum: nostalgic, joyful, melancholic,
+      energetic, peaceful, romantic). Select no wizard (`step-basic-info.tsx`) com "Deixar
+      a IA decidir" como default. O serviço de narrativa aceita `mood` e injeta a instrução
+      de tom no prompt.
+- [x] Regeração parcial (só narrativa, sem tocar em data/fotos/pessoas) — o serviço de
+      narrativa aceita `partial: boolean`. Quando `true`, o update só toca
+      `aiNarrative`/`aiMood`/`aiThemes`. O flag é explícito para não acidentalmente
+      reescrever a row inteira.
+- [x] Versões da narrativa com histórico e restauração — nova tabela `narrative_versions`
+      (migration `0002_productive_mongu.sql`). A cada regeneração, a narrativa atual é
+      salva como versão antes de ser sobrescrita. Novas rotas: `GET
+      /api/memories/:id/narrative-versions` (lista) e `POST
+      /api/memories/:id/narrative-versions/:versionId/restore` (restaura).
+- [x] Chips de tag/pessoa clicáveis a partir do card — tags e pessoas no card agora são
+      `<button>` que navegam para `/search?q=#tag` ou `/search?q=@pessoa`. O card usa
+      `useRouter` do Next.js.
 
 ### 7.3 Confiança do Usuário
 - [ ] Exportação dos dados (JSON + mídia) com request autenticado e job assíncrono
