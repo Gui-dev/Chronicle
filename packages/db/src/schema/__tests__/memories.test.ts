@@ -33,6 +33,8 @@ describe('Memories Schema', () => {
       ['music_url', 'PgText', false],
       ['music_cover', 'PgText', false],
       ['is_public', 'PgBoolean', true],
+      ['share_token', 'PgText', false],
+      ['share_expires_at', 'PgTimestamp', false],
       ['ai_narrative', 'PgText', false],
       ['ai_mood', 'PgVarchar', false],
       ['ai_themes', 'PgArray', false],
@@ -86,6 +88,19 @@ describe('Memories indexes', () => {
     )
     expect(found?.config.where).toBeUndefined()
     expect(indexOn(memories, 'memories_public_date_idx')).toEqual(['is_public', 'memory_date'])
+  })
+
+  it('has a partial unique index on the share token', () => {
+    // One active link per memory. Partial so the (common) no-link case is a
+    // NULL that the unique constraint ignores — several memories without a
+    // link all store NULL and must not collide.
+    const found = getTableConfig(memories).indexes.find(
+      (index) => index.config.name === 'memories_share_token_idx',
+    )
+    expect(found).toBeDefined()
+    expect(found?.config.unique).toBe(true)
+    expect(found?.config.where).toBeDefined()
+    expect(indexOn(memories, 'memories_share_token_idx')).toEqual(['share_token'])
   })
 
   it('indexes every junction table by memory_id', () => {

@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   decimal,
@@ -5,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core'
@@ -31,6 +33,13 @@ export const memories = pgTable(
     musicUrl: text('music_url'),
     musicCover: text('music_cover'),
     isPublic: boolean('is_public').notNull().default(true),
+    // Share link (7.4). NULL means "no link". The shared state is derived, never
+    // stored: `!is_public && share_token && share_expires_at > now()`. Rotation
+    // replaces the token in place (one active link per memory, enforced by the
+    // partial unique index below); any update that carries `isPublic` clears
+    // both columns so a public → private toggle can never resurrect a link.
+    shareToken: text('share_token'),
+    shareExpiresAt: timestamp('share_expires_at', { mode: 'date' }),
     aiNarrative: text('ai_narrative'),
     aiMood: varchar('ai_mood', { length: 50 }),
     aiThemes: text('ai_themes').array(),
@@ -48,6 +57,11 @@ export const memories = pgTable(
     // memory_date) instead, so it serves the is_public arm of that OR directly
     // and still keeps the DESC ordering the timeline wants.
     index('memories_public_date_idx').on(table.isPublic, table.memoryDate.desc()),
+    // One active share token per memory. Partial: without WHERE, two memories
+    // with no link (both NULL) would collide under UNIQUE.
+    uniqueIndex('memories_share_token_idx')
+      .on(table.shareToken)
+      .where(sql`${table.shareToken} is not null`),
   ],
 )
 

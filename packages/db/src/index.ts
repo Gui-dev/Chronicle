@@ -20,6 +20,7 @@ export {
   asc,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,
