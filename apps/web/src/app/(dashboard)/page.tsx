@@ -1,5 +1,6 @@
 'use client'
 
+import { HomeRetrospectStrip } from '@/components/home-retrospect-strip'
 import { MemoryFilters } from '@/components/memory-filters'
 import { MemoryTimeline } from '@/components/memory-timeline'
 import { useAuth } from '@/hooks/use-auth'
@@ -25,24 +26,28 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {isAuthenticated && <HomeRetrospectStrip />}
+
       <MemoryFilters filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
 
-      <MemoryTimeline
-        memories={memories}
-        pagination={pagination}
-        isLoading={isLoading}
-        error={error}
-        onRetry={refetch}
-        onPageChange={setPage}
-        emptyTitle={
-          isAuthenticated ? 'Nenhuma memória encontrada' : 'Nenhuma memória pública encontrada'
-        }
-        emptyDescription={
-          isAuthenticated
-            ? 'Crie sua primeira memória para começar!'
-            : 'Entre na sua conta para criar sua primeira memória.'
-        }
-      />
+      <div id="timeline">
+        <MemoryTimeline
+          memories={memories}
+          pagination={pagination}
+          isLoading={isLoading}
+          error={error}
+          onRetry={refetch}
+          onPageChange={setPage}
+          emptyTitle={
+            isAuthenticated ? 'Nenhuma memória encontrada' : 'Nenhuma memória pública encontrada'
+          }
+          emptyDescription={
+            isAuthenticated
+              ? 'Crie sua primeira memória para começar!'
+              : 'Entre na sua conta para criar sua primeira memória.'
+          }
+        />
+      </div>
     </div>
   )
 }
