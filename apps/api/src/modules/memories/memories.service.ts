@@ -3,6 +3,7 @@ import {
   db,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,
@@ -336,8 +337,15 @@ export class MemoriesService {
     // One query per relation for the whole page. The previous per-memory
     // version issued 3N queries on top of the rows and count, which made the
     // timeline cost grow with the page size.
+    //
+    // The row type is `Memory` restricted to `memoryColumns`, not `Memory`
+    // itself: the share columns are deliberately absent from that projection
+    // (feeds must never select them), so claiming the full row type here would
+    // assert fields the query never selected. Keying off the projection rather
+    // than omitting two names means a column added to `memoryColumns` is picked
+    // up automatically.
     const enrichedResults: Array<
-      Memory & {
+      Pick<Memory, keyof typeof memoryColumns> & {
         photos: MemoryPhoto[]
         people: MemoryPerson[]
         tags: MemoryTag[]
@@ -412,6 +420,45 @@ export class MemoriesService {
     }
   }
 
+  // The owner's active share links. The expiry predicate runs in SQL so an
+  // expired link never reaches the list (spec §2.4); `shareToken IS NOT NULL`
+  // is redundant with `gt` (NULL > now is NULL) and stays as documentation of
+  // the derived-state rule. No pagination on purpose: one user's shareable
+  // memories are a handful of rows, and the route is owner-scoped.
+  async findShared(userId: string) {
+    const rows = await db
+      .select({
+        id: memories.id,
+        title: memories.title,
+        memoryDate: memories.memoryDate,
+        shareToken: memories.shareToken,
+        shareExpiresAt: memories.shareExpiresAt,
+      })
+      .from(memories)
+      .where(
+        and(
+          eq(memories.userId, userId),
+          eq(memories.isPublic, false),
+          isNotNull(memories.shareToken),
+          gt(memories.shareExpiresAt, new Date()),
+          isNull(memories.deletedAt),
+        ),
+      )
+      .orderBy(desc(memories.memoryDate))
+
+    // `shareToken`/`shareExpiresAt` are non-null by the predicate above; the
+    // select cannot express that, so the rename to the public DTO shape is the
+    // cast. Everything else in the response is named here too — feeds sharing
+    // this table must never see the token (spec §2.4).
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      memoryDate: row.memoryDate,
+      token: row.shareToken as string,
+      expiresAt: row.shareExpiresAt as Date,
+    }))
+  }
+
   async findById(id: string, userId?: string) {
     const [memory] = await db
       .select()
@@ -443,8 +490,16 @@ export class MemoriesService {
       .where(eq(memoryPhotos.memoryId, id))
       .orderBy(memoryPhotos.orderIndex)
 
+    // The share token is the owner's secret and the detail route is readable by
+    // anyone for a public memory, so the two fields ride along only for the
+    // owner. Feeds never even select them: `memoryColumns` deliberately omits
+    // `shareToken`/`shareExpiresAt`, which is why this destructure is the one
+    // place a token can leave the service.
+    const { shareToken, shareExpiresAt, ...rest } = memory
+
     return {
-      ...memory,
+      ...rest,
+      ...(memory.userId === userId && userId !== undefined ? { shareToken, shareExpiresAt } : {}),
       userName: author?.name ?? null,
       people: peopleRows,
       tags: tagRows,
@@ -493,6 +548,12 @@ export class MemoriesService {
         musicUrl: data.musicUrl,
         musicCover: data.musicCover,
         isPublic: data.isPublic,
+        // Any explicit visibility change ends the current share cycle (spec §1):
+        // choosing "Privado" and choosing "Público" both kill the link, so a
+        // public → private toggle can never resurrect a shared state. Omitting
+        // the field must leave the link alone — editing a title does not revoke
+        // someone's link.
+        ...(data.isPublic !== undefined ? { shareToken: null, shareExpiresAt: null } : {}),
         updatedAt: new Date(),
       })
       .where(eq(memories.id, id))

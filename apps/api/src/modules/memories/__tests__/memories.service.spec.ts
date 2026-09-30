@@ -97,6 +97,8 @@ vi.mock('@chronicle/db', () => {
       id: column('id'),
       userId: column('user_id'),
       isPublic: column('is_public'),
+      shareToken: column('share_token'),
+      shareExpiresAt: column('share_expires_at'),
       memoryDate: column('memory_date'),
       title: column('title'),
       content: column('content'),
@@ -132,6 +134,7 @@ vi.mock('@chronicle/db', () => {
   const and = (...conds: unknown[]) => ({ op: 'and', conds })
   const ilike = (col: unknown, pattern: unknown) => ({ op: 'ilike', col, pattern })
   const gte = (col: unknown, value: unknown) => ({ op: 'gte', col, value })
+  const gt = (col: unknown, value: unknown) => ({ op: 'gt', col, value })
   const lt = (col: unknown, value: unknown) => ({ op: 'lt', col, value })
   const isNull = (col: unknown) => ({ op: 'isNull', col })
   const isNotNull = (col: unknown) => ({ op: 'isNotNull', col })
@@ -263,7 +266,23 @@ vi.mock('@chronicle/db', () => {
     }),
   }
 
-  return { ...tables, eq, or, and, ilike, sql, desc, asc, gte, lt, inArray, isNull, isNotNull, db }
+  return {
+    ...tables,
+    eq,
+    or,
+    and,
+    ilike,
+    sql,
+    desc,
+    asc,
+    gte,
+    gt,
+    lt,
+    inArray,
+    isNull,
+    isNotNull,
+    db,
+  }
 })
 
 const filters = (overrides: Record<string, unknown> = {}) =>
@@ -1041,6 +1060,35 @@ describe('MemoriesService privacy', () => {
         statusCode: 404,
       })
     })
+
+    it('includes the share token in the owner detail only', async () => {
+      mocks.state.rows = [
+        {
+          id: 'mem-1',
+          userId: 'user-1',
+          isPublic: true,
+          shareToken: 'tok-owner',
+          shareExpiresAt: new Date('2026-10-06T12:00:00Z'),
+        },
+      ]
+
+      const owner = await memoriesService.findById('mem-1', 'user-1')
+      expect(owner.shareToken).toBe('tok-owner')
+      expect(owner.shareExpiresAt).toEqual(new Date('2026-10-06T12:00:00Z'))
+    })
+
+    it('omits the share token from a non-owner read', async () => {
+      mocks.state.rows = [
+        { id: 'mem-1', userId: 'user-2', isPublic: true, shareToken: 'tok-secret' },
+      ]
+
+      const reader = await memoriesService.findById('mem-1', 'user-1')
+      expect(reader.shareToken).toBeUndefined()
+      expect(reader.shareExpiresAt).toBeUndefined()
+
+      const anon = await memoriesService.findById('mem-1')
+      expect(anon.shareToken).toBeUndefined()
+    })
   })
 
   describe('create', () => {
@@ -1094,6 +1142,64 @@ describe('MemoriesService privacy', () => {
           statusCode: 403,
         },
       )
+    })
+
+    it('clears the share token whenever isPublic is sent', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1' }]
+
+      await memoriesService.update('mem-1', 'user-1', { isPublic: false })
+
+      expect(mocks.state.updates[0]).toMatchObject({
+        shareToken: null,
+        shareExpiresAt: null,
+      })
+    })
+
+    it('leaves the share token alone when isPublic is omitted', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1' }]
+
+      await memoriesService.update('mem-1', 'user-1', { title: 'Novo título' })
+
+      expect(mocks.state.updates[0].shareToken).toBeUndefined()
+      expect(mocks.state.updates[0].shareExpiresAt).toBeUndefined()
+    })
+  })
+
+  describe('findShared', () => {
+    it('selects only the owner active links and maps the DTO', async () => {
+      const expiresAt = new Date(Date.now() + 86_400_000)
+      mocks.state.rows = [
+        {
+          id: 'mem-1',
+          title: 'Segredo',
+          memoryDate: new Date('2026-09-01T00:00:00Z'),
+          shareToken: 'tok-1',
+          shareExpiresAt: expiresAt,
+        },
+      ]
+
+      const rows = await memoriesService.findShared('user-1')
+
+      expect(rows).toEqual([
+        {
+          id: 'mem-1',
+          title: 'Segredo',
+          memoryDate: new Date('2026-09-01T00:00:00Z'),
+          token: 'tok-1',
+          expiresAt,
+        },
+      ])
+      expect(memoryOps('eq')).toEqual(
+        expect.arrayContaining([
+          { op: 'eq', col: memories.userId, value: 'user-1' },
+          { op: 'eq', col: memories.isPublic, value: false },
+        ]),
+      )
+      expect(memoryOps('isNotNull')).toEqual([{ op: 'isNotNull', col: memories.shareToken }])
+      expect(memoryOps('isNull')).toEqual([{ op: 'isNull', col: memories.deletedAt }])
+      const gtOps = memoryOps('gt')
+      expect(gtOps).toHaveLength(1)
+      expect((gtOps[0] as { col: unknown }).col).toBe(memories.shareExpiresAt)
     })
   })
 
