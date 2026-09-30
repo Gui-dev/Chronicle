@@ -91,9 +91,9 @@ describe('Memories indexes', () => {
   })
 
   it('has a partial unique index on the share token', () => {
-    // One active link per memory. Partial so the (common) no-link case is a
-    // NULL that the unique constraint ignores — several memories without a
-    // link all store NULL and must not collide.
+    // One active link per memory. Partial so the (common) no-link NULLs stay
+    // out of the index entirely, and the WHERE clause documents the
+    // derived-state rule the API relies on.
     const found = getTableConfig(memories).indexes.find(
       (index) => index.config.name === 'memories_share_token_idx',
     )

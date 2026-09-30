@@ -57,8 +57,11 @@ export const memories = pgTable(
     // memory_date) instead, so it serves the is_public arm of that OR directly
     // and still keeps the DESC ordering the timeline wants.
     index('memories_public_date_idx').on(table.isPublic, table.memoryDate.desc()),
-    // One active share token per memory. Partial: without WHERE, two memories
-    // with no link (both NULL) would collide under UNIQUE.
+    // One active share token per memory. Partial: NULLs (the common no-link
+    // case) stay out of the index entirely — fewer entries, and the predicate
+    // documents the derived-state rule (a row is linkable iff token IS NOT
+    // NULL). Postgres would not collide the NULLs anyway (NULLS DISTINCT is
+    // the default); the WHERE matches the spec's SQL.
     uniqueIndex('memories_share_token_idx')
       .on(table.shareToken)
       .where(sql`${table.shareToken} is not null`),
