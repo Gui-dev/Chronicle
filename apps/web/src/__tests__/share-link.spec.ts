@@ -41,7 +41,11 @@ test.describe('Compartilhamento', () => {
 
     await expect(anonPage.getByTestId('share-title')).toHaveText(title)
     await expect(anonPage.getByText('Todo mundo cantou junto.')).toBeVisible()
-    await expect(anonPage.getByTestId('share-author')).toBeVisible()
+    await expect(anonPage.getByTestId('share-author')).toContainText('DebUser')
+    // Shared pages must never be indexed (spec §4).
+    expect(await anonPage.locator('meta[name="robots"]').getAttribute('content')).toContain(
+      'noindex',
+    )
     // The redaction is the whole point of the preview: no author PII, ever.
     await expect(anonPage.locator('body')).not.toContainText('deb@test.com')
     await expect(anonPage.locator('body')).not.toContainText('locationLat')
@@ -83,9 +87,11 @@ test.describe('Compartilhamento', () => {
         'expira em',
       )
 
+      const expectedUrl = `${authenticatedPage.url().split('/share')[0]}/share/${data.token}`
       await authenticatedPage.locator(`[data-testid="share-copy-${memoryId}"]`).click()
-      const clipboard = await authenticatedPage.evaluate(() => navigator.clipboard.readText())
-      expect(clipboard).toBe(`${authenticatedPage.url().split('/share')[0]}/share/${data.token}`)
+      await expect
+        .poll(() => authenticatedPage.evaluate(() => navigator.clipboard.readText()))
+        .toBe(expectedUrl)
 
       await authenticatedPage.locator(`[data-testid="share-revoke-${memoryId}"]`).click()
       await expect(authenticatedPage.getByTestId(`share-item-${memoryId}`)).toHaveCount(0)
