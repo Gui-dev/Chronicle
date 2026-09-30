@@ -1,12 +1,17 @@
-import { memories } from '@chronicle/db'
+import { memories, memoryPeople, memoryPhotos, memoryTags } from '@chronicle/db'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { shareService } from '../share.service'
 
 const mocks = vi.hoisted(() => ({
   state: {
     rows: {} as Record<string, Array<Record<string, unknown>>>,
-    updates: [] as Array<{ table: unknown; values: Record<string, unknown> }>,
+    updates: [] as Array<{
+      table: unknown
+      values: Record<string, unknown>
+      condition: unknown
+    }>,
     selects: [] as Array<{ table: string; condition: unknown }>,
+    orderBys: [] as Array<{ table: string; args: unknown[] }>,
   },
 }))
 
@@ -84,7 +89,8 @@ vi.mock('@chronicle/db', () => {
       return this
     }
 
-    orderBy() {
+    orderBy(...args: unknown[]) {
+      mocks.state.orderBys.push({ table: this.fromTable?.__table ?? '', args })
       return this
     }
 
@@ -104,8 +110,14 @@ vi.mock('@chronicle/db', () => {
     update(table: unknown) {
       return {
         set(values: Record<string, unknown>) {
-          mocks.state.updates.push({ table, values })
-          return { where: async () => [] }
+          mocks.state.updates.push({ table, values, condition: undefined })
+          return {
+            where: async (condition: unknown) => {
+              const entry = mocks.state.updates.at(-1)
+              if (entry) entry.condition = condition
+              return []
+            },
+          }
         },
       }
     },
@@ -140,11 +152,27 @@ const ownerMemory = (overrides: Record<string, unknown> = {}) => ({
 
 const updateValues = () => mocks.state.updates.at(-1)?.values as Record<string, unknown>
 
+const updateCondition = () => mocks.state.updates.at(-1)?.condition
+
+type OpNode = { op?: string; conds?: unknown[]; col?: unknown; value?: unknown }
+
+// Flattens an op-tree — and(...) children included — so an assertion can find a
+// predicate wherever the service put it. A node without a string `op` is not a
+// predicate (a column object or a Date), so it is skipped.
+const flattenOps = (node: unknown): OpNode[] => {
+  if (!node || typeof node !== 'object') return []
+  const n = node as OpNode
+  const found: OpNode[] = typeof n.op === 'string' ? [n] : []
+  for (const child of n.conds ?? []) found.push(...flattenOps(child))
+  return found
+}
+
 describe('ShareService.share', () => {
   beforeEach(() => {
     mocks.state.rows = {}
     mocks.state.updates = []
     mocks.state.selects = []
+    mocks.state.orderBys = []
   })
 
   it('creates a base64url token expiring in 7 days', async () => {
@@ -160,6 +188,17 @@ describe('ShareService.share', () => {
     expect(result.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 7 * 24 * 60 * 60 * 1000)
     expect(updateValues()).toMatchObject({ shareToken: result.token })
     expect(updateValues().shareExpiresAt).toEqual(result.expiresAt)
+    // The UPDATE is scoped to this one memory — dropping .where() would write
+    // the token to every row and this pins it.
+    expect(flattenOps(updateCondition())).toEqual(
+      expect.arrayContaining([{ op: 'eq', col: memories.id, value: 'mem-1' }]),
+    )
+    // requireOwnedMemory looks the memory up by id, not by owner alone.
+    const lookup = mocks.state.selects.find((s) => s.table === 'memories')
+    expect(lookup).toBeDefined()
+    expect(flattenOps(lookup?.condition)).toEqual(
+      expect.arrayContaining([{ op: 'eq', col: memories.id, value: 'mem-1' }]),
+    )
   })
 
   it('rotates by overwriting whatever token was there', async () => {
@@ -208,6 +247,7 @@ describe('ShareService.revoke', () => {
     mocks.state.rows = {}
     mocks.state.updates = []
     mocks.state.selects = []
+    mocks.state.orderBys = []
   })
 
   it('clears both share columns', async () => {
@@ -218,6 +258,9 @@ describe('ShareService.revoke', () => {
     await shareService.revoke('mem-1', 'user-1')
 
     expect(updateValues()).toMatchObject({ shareToken: null, shareExpiresAt: null })
+    expect(flattenOps(updateCondition())).toEqual(
+      expect.arrayContaining([{ op: 'eq', col: memories.id, value: 'mem-1' }]),
+    )
   })
 
   it('is idempotent when there was no link', async () => {
@@ -239,6 +282,7 @@ describe('ShareService.resolve', () => {
     mocks.state.rows = {}
     mocks.state.updates = []
     mocks.state.selects = []
+    mocks.state.orderBys = []
   })
 
   it('returns the whitelisted preview and nothing else', async () => {
@@ -340,19 +384,55 @@ describe('ShareService.resolve', () => {
 
     const memorySelect = mocks.state.selects.find((s) => s.table === 'memories')
     expect(memorySelect).toBeDefined()
-    const flat: Array<{ op: string; col?: unknown; value?: unknown }> = []
-    const walk = (node: unknown) => {
-      if (!node || typeof node !== 'object') return
-      const n = node as { op?: string; conds?: unknown[]; col?: unknown; value?: unknown }
-      if (typeof n.op === 'string') flat.push(n as never)
-      for (const child of n.conds ?? []) walk(child)
-    }
-    walk(memorySelect?.condition)
-    expect(flat).toEqual(
+    expect(flattenOps(memorySelect?.condition)).toEqual(
       expect.arrayContaining([
         { op: 'eq', col: memories.shareToken, value: 'tok' },
         { op: 'isNull', col: memories.deletedAt },
       ]),
     )
+
+    // Every junction query is scoped to the shared memory — dropping any of
+    // these would serve people/tags/photos of OTHER memories on a public URL.
+    for (const [table, col] of [
+      ['memoryPeople', memoryPeople.memoryId],
+      ['memoryTags', memoryTags.memoryId],
+      ['memoryPhotos', memoryPhotos.memoryId],
+    ] as const) {
+      const selects = mocks.state.selects.filter((s) => s.table === table)
+      expect(selects).toHaveLength(1)
+      expect(flattenOps(selects[0]?.condition)).toEqual(
+        expect.arrayContaining([{ op: 'eq', col, value: 'mem-1' }]),
+      )
+    }
+
+    // Photos come back ordered — dropping .orderBy(memoryPhotos.orderIndex)
+    // would silently scramble the gallery.
+    const photoOrder = mocks.state.orderBys.find((o) => o.table === 'memoryPhotos')
+    expect(photoOrder?.args).toEqual([expect.objectContaining({ __column: 'order_index' })])
+  })
+
+  it('answers with a null author when the user row is gone', async () => {
+    mocks.state.rows.memories = [
+      ownerMemory({ shareToken: 'tok', shareExpiresAt: new Date(Date.now() + 60_000) }),
+    ]
+    mocks.state.rows.users = []
+
+    const result = await shareService.resolve('tok')
+
+    expect(result.author).toEqual({ name: null, image: null })
+  })
+
+  it('serves the preview for a public memory (isPublic is not checked)', async () => {
+    mocks.state.rows.memories = [
+      ownerMemory({
+        isPublic: true,
+        shareToken: 'tok',
+        shareExpiresAt: new Date(Date.now() + 60_000),
+      }),
+    ]
+
+    const result = await shareService.resolve('tok')
+
+    expect(result.memory.id).toBe('mem-1')
   })
 })
