@@ -8,16 +8,9 @@ import { Copy, Share2, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
+// Renders UTC dd/mm/yyyy to match share-dialog's formatDate — a local-tz
+// value and the dialog's UTC value disagree near midnight.
 function formatDay(dateStr: string): string {
-  const d = new Date(dateStr)
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-  return `${day}/${month}/${d.getUTCFullYear()}`
-}
-
-// Expiry is rendered in UTC so it matches the share dialog's formatDate —
-// a local-tz expiry and the dialog's UTC expiry disagree near midnight.
-function formatUtcDay(dateStr: string): string {
   const d = new Date(dateStr)
   const day = String(d.getUTCDate()).padStart(2, '0')
   const month = String(d.getUTCMonth() + 1).padStart(2, '0')
@@ -33,7 +26,7 @@ export default function SharedLinksPage() {
 }
 
 function SharedLinksContent() {
-  const { data, isLoading } = useSharedLinks()
+  const { data, isLoading, isError } = useSharedLinks()
   const revoke = useRevokeShare()
 
   const handleCopy = async (link: SharedLink) => {
@@ -66,6 +59,10 @@ function SharedLinksContent() {
         <p className="text-sm text-muted" data-testid="share-list-loading">
           Carregando...
         </p>
+      ) : isError ? (
+        <p className="text-sm text-red-500" data-testid="share-list-error">
+          Não foi possível carregar os compartilhamentos. Tente novamente.
+        </p>
       ) : !data || data.data.length === 0 ? (
         <Card className="border-card bg-card p-6">
           <p className="text-sm text-muted" data-testid="share-list-empty">
@@ -86,7 +83,7 @@ function SharedLinksContent() {
                       {link.title}
                     </p>
                     <p className="text-xs text-muted" data-testid={`share-expires-${link.id}`}>
-                      {formatDay(link.memoryDate)} · expira em {formatUtcDay(link.expiresAt)}
+                      {formatDay(link.memoryDate)} · expira em {formatDay(link.expiresAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
