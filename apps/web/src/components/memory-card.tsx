@@ -115,6 +115,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
     },
     onSuccess: (_data, newIsPublic) => {
       queryClient.invalidateQueries({ queryKey: ['memories'] })
+      queryClient.invalidateQueries({ queryKey: ['memory', memory.id] })
       toast.success(`Memória agora é ${newIsPublic ? 'pública' : 'privada'}`)
     },
     onError: (error) => {

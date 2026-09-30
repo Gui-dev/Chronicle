@@ -22,11 +22,10 @@ interface ShareDialogProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  const d = new Date(iso)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${day}/${month}/${d.getUTCFullYear()}`
 }
 
 export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) {
@@ -58,6 +57,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memory', memoryId] })
+      queryClient.invalidateQueries({ queryKey: ['shared-links'] })
       toast.success('Link gerado!')
     },
     onError: (error) => {
@@ -100,7 +100,11 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
           </div>
         ) : (
           <div className="space-y-4">
-            {token && expiresAt ? (
+            {detail.isError ? (
+              <p className="text-sm text-red-500" data-testid="share-error">
+                Não foi possível carregar o estado do link. Tente novamente.
+              </p>
+            ) : token && expiresAt ? (
               <div className="space-y-2">
                 <p className="text-sm text-text" data-testid="share-active">
                   Link ativo — expira em {formatDate(expiresAt)}
@@ -121,7 +125,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => shareMutation.mutate()}
-                disabled={shareMutation.isPending}
+                disabled={shareMutation.isPending || detail.isError}
                 data-testid="share-generate"
                 className="bg-primary text-background hover:bg-secondary"
               >
@@ -138,7 +142,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
               <Button
                 variant="outline"
                 onClick={handleCopy}
-                disabled={!token}
+                disabled={!token || shareMutation.isPending}
                 data-testid="share-copy"
                 className="border-card text-text hover:border-primary hover:text-primary"
               >
@@ -149,7 +153,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
               <Button
                 variant="outline"
                 onClick={handleRevoke}
-                disabled={!token || revoke.isPending}
+                disabled={!token || revoke.isPending || shareMutation.isPending}
                 data-testid="share-revoke"
                 className="border-card text-red-500 hover:border-red-500 hover:text-red-600"
               >
