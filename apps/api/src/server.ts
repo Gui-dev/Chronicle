@@ -9,6 +9,7 @@ import { integrationsRoutes } from './modules/integrations'
 import { memoriesRoutes } from './modules/memories'
 import { narrativeRoutes } from './modules/narrative'
 import { photosRoutes } from './modules/photos'
+import { retrospectivesRoutes } from './modules/retrospectives'
 import { shareRoutes } from './modules/share'
 import { usersRoutes } from './modules/users'
 import { authPlugin } from './plugins/auth'
@@ -63,6 +64,7 @@ export function buildServer() {
   server.register(usersRoutes)
   server.register(exportRoutes)
   server.register(shareRoutes)
+  server.register(retrospectivesRoutes)
 
   server.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() }
