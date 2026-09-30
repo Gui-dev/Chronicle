@@ -8,6 +8,9 @@ export const users = pgTable('users', {
   emailVerified: boolean('email_verified').default(false).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  // Null until the home strip records the first visit (7.5). No default: a
+  // missing stamp must read as "never visited", not as "visited at row creation".
+  lastVisitAt: timestamp('last_visit_at', { mode: 'date' }),
 })
 
 export type User = typeof users.$inferSelect

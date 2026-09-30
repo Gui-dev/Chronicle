@@ -24,6 +24,7 @@ describe('Users Schema', () => {
       ['email_verified', 'PgBoolean', true],
       ['created_at', 'PgTimestamp', true],
       ['updated_at', 'PgTimestamp', true],
+      ['last_visit_at', 'PgTimestamp', false],
     ].map(([name, type, notNull]) => ({ name, type, notNull }))
     expect(cols).toEqual(expected)
   })
