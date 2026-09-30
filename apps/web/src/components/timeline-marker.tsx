@@ -1,21 +1,40 @@
+const MONTH_NAMES = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+]
+
 interface TimelineMarkerProps {
   date: string
-  isLast?: boolean
 }
 
-export function TimelineMarker({ date, isLast = false }: TimelineMarkerProps) {
-  const formattedDate = new Date(date).toLocaleDateString('pt-BR', {
-    month: 'short',
-    year: 'numeric',
-  })
+// Month header for the timeline: `setembro de 2026`, UTC (spec §4, decision
+// 11). Deliberately not toLocaleDateString — a local timezone would move a
+// card across the month boundary near midnight, disagreeing with the UTC
+// windows the API filters on. This component was dead code before 7.5; the
+// old `set. 2026` local format and the isLast rule/vertical-line visuals are
+// gone with the rewrite.
+export function TimelineMarker({ date }: TimelineMarkerProps) {
+  const d = new Date(date)
+  const label = `${MONTH_NAMES[d.getUTCMonth()]} de ${d.getUTCFullYear()}`
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex flex-col items-center">
-        <div className="h-4 w-4 rounded-full border-2 border-primary bg-primary/20 shadow-[0_0_8px_rgba(240,192,64,0.5)]" />
-        {!isLast && <div className="h-full w-0.5 bg-card" />}
-      </div>
-      <span className="text-sm font-medium text-primary">{formattedDate}</span>
+    <div
+      data-testid="timeline-marker"
+      className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted"
+    >
+      {label}
     </div>
   )
 }
+
+export { MONTH_NAMES }

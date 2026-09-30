@@ -1,6 +1,7 @@
 'use client'
 
 import { MemoryCardFull } from '@/components/memory-card'
+import { TimelineMarker } from '@/components/timeline-marker'
 import { useAuth } from '@/hooks/use-auth'
 import type { Memory, PaginatedResponse } from '@/hooks/use-memories'
 import { formatElapsed } from '@/lib/format-elapsed'
@@ -45,6 +46,11 @@ function TimelineSkeleton() {
       ))}
     </div>
   )
+}
+
+function monthKey(dateStr: string): string {
+  const d = new Date(dateStr)
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}`
 }
 
 export function MemoryTimeline({
@@ -98,6 +104,10 @@ export function MemoryTimeline({
       <div className="space-y-8">
         {memories.map((memory, index) => (
           <div key={memory.id}>
+            {(index === 0 ||
+              monthKey(memories[index - 1].memoryDate) !== monthKey(memory.memoryDate)) && (
+              <TimelineMarker date={memory.memoryDate} />
+            )}
             {index > 0 && (
               <div className="my-6 flex items-center gap-3 pl-4">
                 <div className="h-px flex-1 bg-card" />
