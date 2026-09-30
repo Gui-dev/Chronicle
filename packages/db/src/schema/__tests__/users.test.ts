@@ -15,17 +15,23 @@ describe('Users Schema', () => {
       name: c.name,
       type: c.columnType,
       notNull: c.notNull,
+      hasDefault: c.hasDefault,
     }))
     const expected = [
-      ['id', 'PgVarchar', true],
-      ['email', 'PgVarchar', true],
-      ['name', 'PgVarchar', true],
-      ['image', 'PgVarchar', false],
-      ['email_verified', 'PgBoolean', true],
-      ['created_at', 'PgTimestamp', true],
-      ['updated_at', 'PgTimestamp', true],
-      ['last_visit_at', 'PgTimestamp', false],
-    ].map(([name, type, notNull]) => ({ name, type, notNull }))
+      ['id', 'PgVarchar', true, false],
+      ['email', 'PgVarchar', true, false],
+      ['name', 'PgVarchar', true, false],
+      ['image', 'PgVarchar', false, false],
+      ['email_verified', 'PgBoolean', true, true],
+      ['created_at', 'PgTimestamp', true, true],
+      ['updated_at', 'PgTimestamp', true, true],
+      ['last_visit_at', 'PgTimestamp', false, false],
+    ].map(([name, type, notNull, hasDefault]) => ({
+      name,
+      type,
+      notNull,
+      hasDefault,
+    }))
     expect(cols).toEqual(expected)
   })
 
