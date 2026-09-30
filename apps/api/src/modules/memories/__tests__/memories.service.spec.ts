@@ -1088,6 +1088,7 @@ describe('MemoriesService privacy', () => {
 
       const anon = await memoriesService.findById('mem-1')
       expect(anon.shareToken).toBeUndefined()
+      expect(anon.shareExpiresAt).toBeUndefined()
     })
   })
 
@@ -1148,6 +1149,17 @@ describe('MemoriesService privacy', () => {
       mocks.state.rows = [{ id: 'mem-1', userId: 'user-1' }]
 
       await memoriesService.update('mem-1', 'user-1', { isPublic: false })
+
+      expect(mocks.state.updates[0]).toMatchObject({
+        shareToken: null,
+        shareExpiresAt: null,
+      })
+    })
+
+    it('clears the share token when isPublic is set to true', async () => {
+      mocks.state.rows = [{ id: 'mem-1', userId: 'user-1' }]
+
+      await memoriesService.update('mem-1', 'user-1', { isPublic: true })
 
       expect(mocks.state.updates[0]).toMatchObject({
         shareToken: null,

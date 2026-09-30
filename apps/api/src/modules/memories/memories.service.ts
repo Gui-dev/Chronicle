@@ -490,16 +490,60 @@ export class MemoriesService {
       .where(eq(memoryPhotos.memoryId, id))
       .orderBy(memoryPhotos.orderIndex)
 
-    // The share token is the owner's secret and the detail route is readable by
-    // anyone for a public memory, so the two fields ride along only for the
-    // owner. Feeds never even select them: `memoryColumns` deliberately omits
-    // `shareToken`/`shareExpiresAt`, which is why this destructure is the one
-    // place a token can leave the service.
-    const { shareToken, shareExpiresAt, ...rest } = memory
+    // Spec §2.5: the detail mapper never spreads the row — every field is
+    // named one by one, so a column added to `memories` tomorrow cannot ride
+    // into a public or anonymous response by spread. The share pair is the
+    // owner's secret and joins the response only for the owner.
+    const isOwner = memory.userId === userId && userId !== undefined
+    const {
+      id: memoryId,
+      userId: memoryUserId,
+      title,
+      content,
+      memoryDate,
+      locationName,
+      locationLat,
+      locationLng,
+      weatherTemp,
+      weatherDesc,
+      weatherIcon,
+      musicTrack,
+      musicArtist,
+      musicUrl,
+      musicCover,
+      isPublic,
+      aiNarrative,
+      aiMood,
+      aiThemes,
+      deletedAt,
+      createdAt,
+      updatedAt,
+    } = memory
 
     return {
-      ...rest,
-      ...(memory.userId === userId && userId !== undefined ? { shareToken, shareExpiresAt } : {}),
+      id: memoryId,
+      userId: memoryUserId,
+      title,
+      content,
+      memoryDate,
+      locationName,
+      locationLat,
+      locationLng,
+      weatherTemp,
+      weatherDesc,
+      weatherIcon,
+      musicTrack,
+      musicArtist,
+      musicUrl,
+      musicCover,
+      isPublic,
+      aiNarrative,
+      aiMood,
+      aiThemes,
+      deletedAt,
+      createdAt,
+      updatedAt,
+      ...(isOwner ? { shareToken: memory.shareToken, shareExpiresAt: memory.shareExpiresAt } : {}),
       userName: author?.name ?? null,
       people: peopleRows,
       tags: tagRows,
