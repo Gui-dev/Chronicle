@@ -13,6 +13,7 @@ vi.mock('../memories.service', () => ({
   memoriesService: {
     findAll: vi.fn(),
     findById: vi.fn(),
+    findShared: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -64,6 +65,7 @@ describe('Memories Routes', () => {
     service.findById.mockResolvedValue({ id: 'mem-1' } as unknown as Awaited<
       ReturnType<typeof service.findById>
     >)
+    service.findShared.mockResolvedValue([] as never)
   })
 
   describe('GET /api/memories', () => {
@@ -241,6 +243,37 @@ describe('Memories Routes', () => {
 
       expect(response.statusCode).toBe(204)
       expect(service.delete).toHaveBeenCalledWith('123', 'user-1')
+    })
+  })
+
+  describe('GET /api/memories/shared', () => {
+    it('returns 401 without a session', async () => {
+      const response = await server.inject({ method: 'GET', url: '/api/memories/shared' })
+
+      expect(response.statusCode).toBe(401)
+      expect(service.findShared).not.toHaveBeenCalled()
+    })
+
+    it("lists the signed-in owner's links without routing through :id", async () => {
+      signIn('user-1')
+      service.findShared.mockResolvedValue([
+        {
+          id: 'mem-1',
+          title: 'Segredo',
+          memoryDate: '2026-09-01T00:00:00.000Z',
+          token: 'tok-1',
+          expiresAt: '2026-10-06T12:00:00.000Z',
+        },
+      ] as never)
+
+      const response = await server.inject({ method: 'GET', url: '/api/memories/shared' })
+
+      expect(response.statusCode).toBe(200)
+      expect(service.findShared).toHaveBeenCalledWith('user-1')
+      // Static segments beat `:id` in find-my-way; this is the regression that
+      // would otherwise silently send "shared" down the detail route.
+      expect(service.findById).not.toHaveBeenCalled()
+      expect(response.json().data).toHaveLength(1)
     })
   })
 })

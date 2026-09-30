@@ -81,6 +81,30 @@ export async function memoriesRoutes(fastify: FastifyInstance) {
     return reply.send({ data: memory })
   })
 
+  // GET /api/memories/shared — the owner's active share links. Static path,
+  // registered by the same plugin as `/:id`: find-my-way prefers the static
+  // segment, so "shared" never reaches the detail handler (pinned by test).
+  // Always owner-scoped and always 401 without a session — no query param to
+  // misuse, same reasoning as `deleted=true`.
+  fastify.get('/api/memories/shared', async (request, reply) => {
+    const session = await auth.api.getSession({
+      headers: request.headers as Record<string, string>,
+    })
+
+    if (!session) {
+      return reply.status(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+        },
+      })
+    }
+
+    const links = await memoriesService.findShared(session.user.id)
+
+    return reply.send({ data: links })
+  })
+
   // PUT /api/memories/:id
   fastify.put('/api/memories/:id', async (request, reply) => {
     const session = await auth.api.getSession({
