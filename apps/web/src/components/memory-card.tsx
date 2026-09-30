@@ -2,12 +2,14 @@
 
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { PhotoGallery } from '@/components/photo-gallery'
+import { ShareDialog } from '@/components/share-dialog'
 import { useDeleteMemory } from '@/hooks/use-delete-memory'
 import type { Memory } from '@/hooks/use-memories'
 import { api } from '@/lib/api-client'
 import { Button } from '@chronicle/ui'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  Link2,
   Loader2,
   Lock,
   MapPin,
@@ -94,6 +96,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   const owner = isOwner
   const deleteMemory = useDeleteMemory()
@@ -256,6 +259,20 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                     <Sparkles className="h-4 w-4" />
                   )}
                 </Button>
+
+                {!memory.isPublic && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    data-testid="card-share"
+                    aria-label="Compartilhar link"
+                    title="Compartilhar link"
+                    onClick={() => setShareOpen(true)}
+                    className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                  >
+                    <Link2 className="h-4 w-4" />
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
@@ -442,6 +459,8 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
         onConfirm={handleDelete}
         isPending={deleteMemory.isPending}
       />
+
+      <ShareDialog memoryId={memory.id} open={shareOpen} onOpenChange={setShareOpen} />
     </article>
   )
 }

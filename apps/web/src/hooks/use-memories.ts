@@ -25,6 +25,12 @@ interface Memory {
   aiMood: string | null
   aiThemes: string[] | null
   isPublic: boolean
+  /**
+   * Owner-only detail fields (7.4). Present in `GET /api/memories/:id` for the
+   * owner and nowhere else — feeds never return them, so they are optional.
+   */
+  shareToken?: string | null
+  shareExpiresAt?: string | null
   deletedAt: string | null
   createdAt: string
   updatedAt: string
