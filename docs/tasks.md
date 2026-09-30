@@ -433,10 +433,44 @@ puro, e nenhuma query do serviço é assim. Ver a nota ⚠️ do item do `EXPLAI
 db 10, auth 3) · `biome check` 198 arquivos, 0 avisos · Playwright chromium **65/65**
 
 ### 7.4 Compartilhamento
-- [ ] Link privado com token expirável para memórias não públicas
-- [ ] Nível de acesso por memória além de público/privado
-- [ ] Prévia redigida para memória compartilhada (sem dados sensíveis do autor)
-- [ ] Lista de memórias compartilhadas e revogação de acesso
+- [x] Link privado com token expirável para memórias não públicas — colunas
+      `share_token`/`share_expires_at` em `memories` + índice parcial único
+      (migration `0004`, gerada por `drizzle-kit generate` e aplicada via `psql`).
+      `POST /api/memories/:id/share` cria ou rotaciona (token de 32 bytes
+      base64url, expira em 7 dias), `DELETE .../share` revoga (idempotente),
+      `GET /api/share/:token` entrega a prévia pública. Token desconhecido,
+      expirado e memória deletada respondem o **mesmo** 404
+      (`Link inválido ou expirado`) — distinguir seria um oráculo de enumeração.
+      Dono errado responde 404 (mesmo critério do export da 7.3).
+- [x] Nível de acesso por memória além de público/privado — estado derivado
+      (`público` → `is_public`; `compartilhado` → `!is_public` + token não nulo +
+      não expirado; `privado` → o resto), sem coluna explícita: qualquer
+      `update` que carregue `isPublic` **limpa o token**, então alternar
+      público/privado nunca ressuscita um link (invariante travada em teste).
+      Feed e detalhe público **nunca selecionam** o token (`memoryColumns` não
+      o inclui); `findById` só o devolve ao dono.
+- [x] Prévia redigida para memória compartilhada (sem dados sensíveis do autor) —
+      `GET /api/share/:token` monta o payload por **whitelist** campo a campo:
+      conteúdo completo da memória + `author { name, image }`; nunca `email`,
+      `userId`, lat/lng, `aiMood`, timestamps ou o próprio token (teste varre a
+      resposta). Página pública `/share/[token]` com `robots: noindex`, estado
+      404 próprio e pessoas/tags como texto (sem navegação para visitante
+      anônimo).
+- [x] Lista de memórias compartilhadas e revogação de acesso —
+      `GET /api/memories/shared` (401 sem sessão, só links ativos) + página
+      `/share` (RequireAuth) com copiar/revogar e estado vazio, entrada por
+      `profile-share-link`. No card, ação "Compartilhhar" (só quando privada)
+      abre dialog com estado do link, Gerar/Renovar, Copiar e Revogar — usa o
+      mesmo `useRevokeShare` da lista.
+
+#### Gates da 7.4
+`pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 8/8 (API 205, schemas 57,
+db 11, auth 3) · `biome check` 0 avisos · Playwright chromium **67/67**
+
+> Obs.: o spec `docs/superpowers/specs/2026-09-29-phase-7-4-sharing-design.md` descreve o
+> preview em `/share/[token]` e a lista em `/share` — rotas paralelas legais (URLs
+> distintas). `music: {...}` na seção 3 do spec são os campos planos
+> `musicTrack/musicArtist/musicUrl/musicCover`, para o preview renderizar como o card.
 
 ### 7.5 Retrospectivas
 - [ ] "Há um ano" na home, com memória do período
