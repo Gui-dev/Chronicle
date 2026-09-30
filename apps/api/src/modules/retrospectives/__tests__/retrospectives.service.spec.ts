@@ -143,7 +143,7 @@ vi.mock('../../memories/memories.service', () => ({
   },
 }))
 
-import { memories, users } from '@chronicle/db'
+import { memories, memoryTags, users } from '@chronicle/db'
 import { retrospectivesService } from '../retrospectives.service'
 
 type OpNode = { op?: string; conds?: unknown[]; col?: unknown; value?: unknown }
@@ -262,5 +262,189 @@ describe('RetrospectivesService.visit', () => {
     expect(stamp.getTime()).toBeGreaterThanOrEqual(before)
     expect(stamp.getTime()).toBeLessThanOrEqual(Date.now())
     expect(flattenOps(update.condition)).toEqual([{ op: 'eq', col: users.id, value: 'user-1' }])
+  })
+})
+
+describe('RetrospectivesService.overview', () => {
+  // Query order is part of the contract: 9 awaits in call order —
+  // 0 memories count, 1 people distinct, 2 places distinct, 3 topTags,
+  // 4 recurrences.people, 5 recurrences.places, 6 themes rows,
+  // 7 years, 8 map places.
+  const seedQueue = (overrides?: {
+    themes?: unknown[]
+    years?: unknown[]
+    mapPlaces?: unknown[]
+  }) => {
+    mocks.state.queue = [
+      [{ count: '4' }],
+      [{ count: '2' }],
+      [{ count: '1' }],
+      [
+        { name: 'família', count: '2' },
+        { name: 'praia', count: '1' },
+      ],
+      [
+        { name: 'Ana', count: '3' },
+        { name: 'Bruno', count: '1' },
+      ],
+      [{ name: 'Recife', count: '2' }],
+      overrides?.themes ?? [{ aiThemes: null }],
+      overrides?.years ?? [{ year: '2026' }],
+      overrides?.mapPlaces ?? [
+        { name: 'Recife', lat: '-8.05000000', lng: '-34.90000000', count: '2' },
+      ],
+    ]
+  }
+
+  const hasPeriodBound = (condition: unknown) =>
+    flattenOps(condition).some((op) => op.op === 'gte' || op.op === 'lt')
+
+  it('defaults to the current UTC year over the whole year', async () => {
+    seedQueue()
+
+    const result = await retrospectivesService.overview('user-1')
+
+    const now = new Date()
+    expect(result.period).toEqual({ year: now.getUTCFullYear(), month: null })
+    const ops = flattenOps(mocks.state.selects[0].condition)
+    expect(ops).toEqual(
+      expect.arrayContaining([
+        {
+          op: 'gte',
+          col: memories.memoryDate,
+          value: new Date(Date.UTC(now.getUTCFullYear(), 0, 1)),
+        },
+        {
+          op: 'lt',
+          col: memories.memoryDate,
+          value: new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1)),
+        },
+        { op: 'eq', col: memories.userId, value: 'user-1' },
+        { op: 'isNull', col: memories.deletedAt },
+      ]),
+    )
+  })
+
+  it('scopes a month as a half-open UTC range', async () => {
+    seedQueue()
+
+    const result = await retrospectivesService.overview('user-1', 2025, 9)
+
+    expect(result.period).toEqual({ year: 2025, month: 9 })
+    const ops = flattenOps(mocks.state.selects[0].condition)
+    expect(ops).toEqual(
+      expect.arrayContaining([
+        { op: 'gte', col: memories.memoryDate, value: new Date(Date.UTC(2025, 8, 1)) },
+        { op: 'lt', col: memories.memoryDate, value: new Date(Date.UTC(2025, 9, 1)) },
+      ]),
+    )
+  })
+
+  it('keeps the period on summary/recurrences but drops it for years and map places', async () => {
+    seedQueue()
+
+    await retrospectivesService.overview('user-1', 2025, 9)
+
+    const selects = mocks.state.selects
+    expect(selects).toHaveLength(9)
+    // 0..6: summary + recurrences + themes are period-scoped
+    for (const index of [0, 1, 2, 3, 4, 5, 6]) {
+      expect(hasPeriodBound(selects[index].condition)).toBe(true)
+    }
+    // 7..8: years and map places are all-time (spec §2.4, §10)
+    expect(hasPeriodBound(selects[7].condition)).toBe(false)
+    expect(hasPeriodBound(selects[8].condition)).toBe(false)
+    // Every query is owner-scoped with the soft-delete filter
+    for (const select of selects) {
+      const ops = flattenOps(select.condition)
+      expect(ops).toEqual(
+        expect.arrayContaining([{ op: 'eq', col: memories.userId, value: 'user-1' }]),
+      )
+      expect(ops).toEqual(expect.arrayContaining([{ op: 'isNull', col: memories.deletedAt }]))
+    }
+    // The two join-based counts go through memory_people / memory_tags
+    expect(mocks.state.joins.map((join) => join.table)).toEqual([
+      'memories',
+      'memories',
+      'memories',
+    ])
+  })
+
+  it('orders top tags count desc name asc (limit 3) and recurrences limit 5', async () => {
+    seedQueue()
+
+    await retrospectivesService.overview('user-1', 2025)
+
+    expect(mocks.state.limits).toEqual([3, 5, 5])
+    const tagOrder = mocks.state.orderBys.find((order) => order.table === 'memoryTags')
+    expect(tagOrder?.args.map((arg) => (arg as { dir: string }).dir)).toEqual(['desc', 'asc'])
+    expect((tagOrder?.args[1] as { expr: unknown }).expr).toBe(memoryTags.name)
+    const peopleOrder = mocks.state.orderBys.find((order) => order.table === 'memoryPeople')
+    expect(peopleOrder?.args.map((arg) => (arg as { dir: string }).dir)).toEqual(['desc', 'asc'])
+    const memoriesOrders = mocks.state.orderBys.filter((order) => order.table === 'memories')
+    expect(memoriesOrders).toHaveLength(2)
+    for (const order of memoriesOrders) {
+      expect(order.args.map((arg) => (arg as { dir: string }).dir)).toEqual(['desc', 'asc'])
+    }
+    // Grouping happens on the name columns
+    expect(mocks.state.groups.map((group) => group.table)).toEqual([
+      'memoryTags',
+      'memoryPeople',
+      'memories',
+      'memories',
+    ])
+  })
+
+  it('flattens aiThemes deterministically, skips nulls and slices to top 5', async () => {
+    seedQueue({
+      themes: [
+        { aiThemes: ['família', 'sol'] },
+        { aiThemes: ['família', 'viagem'] },
+        { aiThemes: ['praia'] },
+        { aiThemes: null },
+        { aiThemes: ['viagem', 'família', 'praia', 'sol'] },
+        { aiThemes: ['luz'] },
+      ],
+    })
+
+    const result = await retrospectivesService.overview('user-1', 2025)
+
+    // família 3, praia 2, sol 2, viagem 2, luz 1 — ties by name asc; sixth
+    // distinct theme (if any) would fall past the slice.
+    expect(result.recurrences.themes).toEqual([
+      { name: 'família', count: 3 },
+      { name: 'praia', count: 2 },
+      { name: 'sol', count: 2 },
+      { name: 'viagem', count: 2 },
+      { name: 'luz', count: 1 },
+    ])
+  })
+
+  it('returns summary numbers, years desc and map places with numeric coords', async () => {
+    seedQueue({
+      years: [{ year: '2024' }, { year: '2026' }, { year: '2024' }],
+    })
+
+    const result = await retrospectivesService.overview('user-1', 2025)
+
+    expect(result.summary).toEqual({
+      memories: 4,
+      people: 2,
+      places: 1,
+      topTags: [
+        { name: 'família', count: 2 },
+        { name: 'praia', count: 1 },
+      ],
+    })
+    expect(result.recurrences.people).toEqual([
+      { name: 'Ana', count: 3 },
+      { name: 'Bruno', count: 1 },
+    ])
+    expect(result.recurrences.places).toEqual([{ name: 'Recife', count: 2 }])
+    // Descending and deduped (spec §5 wants most recent first; §2.4's example
+    // row is illustrative — the selector needs desc).
+    expect(result.years).toEqual([2026, 2024])
+    // Decimal columns are strings in Postgres; the API promises numbers.
+    expect(result.places).toEqual([{ name: 'Recife', lat: -8.05, lng: -34.9, count: 2 }])
   })
 })
