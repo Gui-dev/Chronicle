@@ -50,13 +50,14 @@ function formatUtcDate(dateStr: string): string {
 }
 
 export function SharePreview({ token }: { token: string }) {
-  const { data, isLoading, error } = useQuery<SharePreviewData>({
+  const { data, isLoading, error, refetch } = useQuery<SharePreviewData>({
     queryKey: ['share', token],
     queryFn: async () => {
       const { data } = await api.get<{ data: SharePreviewData }>(`/api/share/${token}`)
       return data
     },
     retry: false,
+    staleTime: 0,
   })
 
   if (isLoading) {
@@ -76,15 +77,25 @@ export function SharePreview({ token }: { token: string }) {
         <p className="mb-8 text-sm text-muted">
           Este link não existe mais ou o prazo de validade acabou.
         </p>
-        <Link href="/">
+        <div className="flex justify-center gap-3">
           <Button
             variant="outline"
+            onClick={() => refetch()}
+            data-testid="share-retry"
             className="border-card text-text hover:border-primary hover:text-primary"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Ir para a timeline
+            Tentar novamente
           </Button>
-        </Link>
+          <Link href="/">
+            <Button
+              variant="outline"
+              className="border-card text-text hover:border-primary hover:text-primary"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Ir para a timeline
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
