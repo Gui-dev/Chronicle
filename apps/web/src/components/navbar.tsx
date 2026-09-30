@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { getInitials } from '@/lib/get-initials'
 import { Button } from '@chronicle/ui'
-import { Disc3, Library, LogOut, Plus, Search, User } from 'lucide-react'
+import { Disc3, History, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -170,6 +170,15 @@ export function Navbar() {
                     >
                       <Library className={menuIconClass} />
                       Minhas Memórias
+                    </Link>
+                    <Link
+                      href="/retrospectivas"
+                      onClick={() => setMenuOpen(false)}
+                      className={menuItemClass}
+                      data-testid="menu-retrospectivas"
+                    >
+                      <History className={menuIconClass} />
+                      Retrospectivas
                     </Link>
                     <Link
                       href="/profile"
