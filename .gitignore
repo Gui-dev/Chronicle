@@ -38,3 +38,6 @@ apps/web/test-results/
 
 # Worktrees do superpowers
 .worktrees/
+
+# Brainstorm local do superpowers (mockups)
+.superpowers/
