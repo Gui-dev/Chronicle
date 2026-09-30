@@ -10,6 +10,8 @@ interface MemoryData {
   content?: string
   memoryDate: string
   locationName?: string
+  locationLat?: number
+  locationLng?: number
   weatherDesc?: string
   people?: string[]
   tags?: string[]
@@ -32,6 +34,8 @@ export async function createMemory(page: Page, data: MemoryData): Promise<string
       memoryDate: data.memoryDate,
       content: data.content,
       locationName: data.locationName,
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
       weatherDesc: data.weatherDesc,
       people: data.people,
       tags: data.tags,

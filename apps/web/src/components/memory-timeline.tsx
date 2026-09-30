@@ -112,7 +112,7 @@ export function MemoryTimeline({
               <div className="my-6 flex items-center gap-3 pl-4">
                 <div className="h-px flex-1 bg-card" />
                 <span className="rounded-full border border-primary/30 bg-card px-3 py-1 font-mono text-xs font-bold text-primary">
-                  ⏳ {formatElapsed(memories[index - 1].memoryDate, memory.memoryDate)}
+                  ⏳ {formatElapsed(memory.memoryDate, memories[index - 1].memoryDate)}
                 </span>
                 <div className="h-px flex-1 bg-card" />
               </div>
