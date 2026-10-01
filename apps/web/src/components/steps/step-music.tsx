@@ -47,7 +47,9 @@ export function StepMusic({ form }: StepMusicProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text">Trilha Sonora</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold text-text">
+          Trilha Sonora
+        </h2>
         <p className="mt-1 text-sm text-muted">Que música estava tocando neste momento?</p>
       </div>
 

@@ -59,7 +59,9 @@ export function StepLocation({ form }: StepLocationProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text">Localização</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold text-text">
+          Localização
+        </h2>
         <p className="mt-1 text-sm text-muted">Onde aconteceu este momento?</p>
       </div>
 

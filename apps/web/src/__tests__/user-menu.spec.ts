@@ -41,7 +41,7 @@ test.describe('Menu do usuário logado', () => {
 
     await open()
     await authenticatedPage.locator('[data-testid="menu-nova"]').click()
-    await authenticatedPage.waitForURL('**/memories/new')
+    await authenticatedPage.waitForURL(/\/memories\/new/)
   })
 
   test('closes on Escape and gives focus back to the toggle', async ({ authenticatedPage }) => {

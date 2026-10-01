@@ -25,7 +25,9 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text">Informações Básicas</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold text-text">
+          Informações Básicas
+        </h2>
         <p className="mt-1 text-sm text-muted">Conte-nos sobre este momento</p>
       </div>
 

@@ -22,7 +22,9 @@ export function StepPeople({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text">Pessoas e Tags</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold text-text">
+          Pessoas e Tags
+        </h2>
         <p className="mt-1 text-sm text-muted">
           Quem estava presente e como categorizar esta memória?
         </p>

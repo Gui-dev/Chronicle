@@ -80,7 +80,9 @@ export function StepPhotos({ photos, onPhotosChange }: StepPhotosProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text">Fotos</h2>
+        <h2 tabIndex={-1} className="text-xl font-semibold text-text">
+          Fotos
+        </h2>
         <p className="mt-1 text-sm text-muted">
           Adicione fotos para tornar esta memória mais especial
         </p>
