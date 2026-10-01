@@ -7,6 +7,7 @@ import type { Memory, PaginatedResponse } from '@/hooks/use-memories'
 import { formatElapsed } from '@/lib/format-elapsed'
 import { Button } from '@chronicle/ui'
 import type { ReactNode } from 'react'
+import { useRef, useState } from 'react'
 
 interface MemoryTimelineProps {
   memories: Memory[]
@@ -68,6 +69,50 @@ export function MemoryTimeline({
   // would fire 20 duplicate session requests.
   const { user } = useAuth()
 
+  const listRef = useRef<HTMLOListElement>(null)
+  const [activeCardIndex, setActiveCardIndex] = useState(0)
+
+  const cardElements = () =>
+    Array.from(listRef.current?.querySelectorAll<HTMLElement>('[data-timeline-card]') ?? [])
+
+  const focusCard = (index: number) => {
+    const cards = cardElements()
+    if (cards.length === 0) return
+    const next = Math.max(0, Math.min(index, cards.length - 1))
+    setActiveCardIndex(next)
+    cards[next].focus()
+  }
+
+  // Roving tabindex: Tab enters the list at the active card, arrows move
+  // card-to-card (spec §1). Inputs keep their own arrow behaviour.
+  const handleListKeyDown = (event: React.KeyboardEvent<HTMLOListElement>) => {
+    if (
+      event.key !== 'ArrowDown' &&
+      event.key !== 'ArrowUp' &&
+      event.key !== 'Home' &&
+      event.key !== 'End'
+    ) {
+      return
+    }
+    const target = event.target as HTMLElement
+    if (
+      target !== event.currentTarget &&
+      (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
+    ) {
+      return
+    }
+    const cards = cardElements()
+    if (cards.length === 0) return
+    event.preventDefault()
+    const focused = document.activeElement
+    const currentIndex = cards.findIndex((card) => card === focused || card.contains(focused))
+    const base = currentIndex === -1 ? activeCardIndex : currentIndex
+    if (event.key === 'ArrowDown') focusCard(base + 1)
+    else if (event.key === 'ArrowUp') focusCard(base - 1)
+    else if (event.key === 'Home') focusCard(0)
+    else focusCard(cards.length - 1)
+  }
+
   if (isLoading) {
     return <TimelineSkeleton />
   }
@@ -97,13 +142,28 @@ export function MemoryTimeline({
     )
   }
 
+  const rovingIndex = memories.length === 0 ? 0 : Math.min(activeCardIndex, memories.length - 1)
+
   return (
     <div className="relative pl-6 sm:pl-10">
       <div className="absolute left-[7px] sm:left-[11px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-primary opacity-80" />
 
-      <div className="space-y-8">
+      <ol
+        ref={listRef}
+        onKeyDown={handleListKeyDown}
+        data-testid="timeline-list"
+        aria-label="Linha do tempo"
+        className="space-y-8"
+      >
         {memories.map((memory, index) => (
-          <div key={memory.id}>
+          <li
+            key={memory.id}
+            data-timeline-card
+            tabIndex={index === rovingIndex ? 0 : -1}
+            onFocus={(event) => {
+              if (event.target === event.currentTarget) setActiveCardIndex(index)
+            }}
+          >
             {(index === 0 ||
               monthKey(memories[index - 1].memoryDate) !== monthKey(memory.memoryDate)) && (
               <TimelineMarker date={memory.memoryDate} />
@@ -118,9 +178,9 @@ export function MemoryTimeline({
               </div>
             )}
             <MemoryCardFull memory={memory} isOwner={user?.id === memory.userId} />
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
 
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-8">
