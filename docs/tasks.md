@@ -473,11 +473,14 @@ db 11, auth 3) · `biome check` 0 avisos · Playwright chromium **67/67**
 > `musicTrack/musicArtist/musicUrl/musicCover`, para o preview renderizar como o card.
 
 ### 7.5 Retrospectivas
-- [ ] "Há um ano" na home, com memória do período
-- [ ] Resumos por período e novos itens desde a última visita
-- [ ] Mapa de lugares visitados a partir de `locationLat`/`locationLng`
-- [ ] Recorrências: pessoas, lugares e temas mais frequentes
-- [ ] Mês/ano no formato "setembro de 2026" na timeline
+- [x] "Há um ano" na home, com memória do período — strip `yearAgo` em `/retrospectivas` exibe a memória do mesmo mês/ano no ano anterior; se não existir, o strip fica oculto
+- [x] Resumos por período e novos itens desde a última visita — dashboard de visão geral mostra contagem de memórias novas desde `lastVisitAt`, recorrências (pessoas, lugares, temas) e mapa de lugares; `lastVisitAt` gravado em `sessions` e atualizado a cada visita autenticada
+- [x] Mapa de lugares visitados a partir de `locationLat`/`locationLng` — clustering simples de coordenadas únicas na página `/retrospectivas`, renderizado como lista de chips com contagem
+- [x] Recorrências: pessoas, lugares e temas mais frequentes — agregações SQL (`GROUP BY` + `COUNT`) sobre `memory_people`, `memory_tags` e `aiThemes`; top 5 de cada exibidos no overview
+- [x] Mês/ano no formato "setembro de 2026" na timeline — `formatMonthYear(memoryDate)` (pt-BR) aplicado nos marcadores de mês da timeline (`timeline-marker.tsx`)
+
+#### Gates da 7.5
+`pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 8/8 (API 225, schemas 57, db 11, auth 3) · `biome check` 223 arquivos, 0 avisos · Playwright chromium **70/73**
 
 ### 7.6 Acessibilidade e Mobile
 - [ ] Auditoria de teclado em timeline, galeria, modal de busca e wizard
