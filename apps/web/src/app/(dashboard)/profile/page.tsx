@@ -214,7 +214,7 @@ export default function ProfilePage() {
             <Link
               href="/privacy"
               data-testid="profile-privacy-link"
-              className="inline-flex items-center gap-2 rounded-lg border border-card px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
+              className="inline-flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
             >
               Privacidade e dados
             </Link>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
             <Link
               href="/trash"
               data-testid="profile-trash-link"
-              className="inline-flex items-center gap-2 rounded-lg border border-card px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
+              className="inline-flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
             >
               Lixeira
             </Link>
@@ -230,7 +230,7 @@ export default function ProfilePage() {
             <Link
               href="/share"
               data-testid="profile-share-link"
-              className="inline-flex items-center gap-2 rounded-lg border border-card px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
+              className="inline-flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm font-medium text-muted transition-all hover:border-primary/40 hover:text-primary"
             >
               <Link2 className="h-4 w-4" />
               Compartilhamentos

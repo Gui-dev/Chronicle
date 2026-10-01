@@ -23,7 +23,7 @@ const MONTH_NAMES = [
 ]
 
 const selectClass =
-  'rounded-lg border border-card bg-card px-3 py-2 text-sm text-text focus:border-primary focus:outline-none'
+  'rounded-lg border border-input bg-card px-3 py-2 text-sm text-text focus:border-primary focus:outline-none'
 
 export default function RetrospectivasPage() {
   return (

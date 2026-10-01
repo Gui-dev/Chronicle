@@ -94,7 +94,7 @@ export default function RetrospectMap({ places }: RetrospectMapProps) {
                 const map = mapRef.current
                 if (map) map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 10))
               }}
-              className="flex w-full items-center justify-between rounded-lg border border-card bg-card px-3 py-2 text-left text-sm text-text transition-colors hover:border-primary hover:text-primary"
+              className="flex w-full items-center justify-between rounded-lg border border-input bg-card px-3 py-2 text-left text-sm text-text transition-colors hover:border-primary hover:text-primary"
             >
               <span className="truncate">
                 {place.name} — {place.count} {place.count === 1 ? 'memória' : 'memórias'}
