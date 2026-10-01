@@ -33,7 +33,7 @@
 | Modify | `apps/web/src/app/globals.css` | palette AA + `--text` |
 | Create | `apps/web/scripts/verify-contrast.mjs` | verificação de ratios (gate) |
 | Modify | `apps/web/package.json` | script `test:contrast` |
-| Modify | `apps/web/src/components/confirm-dialog.tsx` | `bg-red-600` + focus restore |
+| Modify | `apps/web/src/components/confirm-dialog.tsx` | `variant="destructive"` + focus restore |
 | Modify | `packages/ui/src/components/ui/dialog.tsx` | remover acento no X |
 | Modify | steps 0-2, `chip-input`, `search-dialog`, `memory-filters`, edit page | `border-card` → `border-input` em controles |
 | Create | `apps/web/src/__tests__/landmarks.spec.ts` | regressão de landmarks/aria-live |
@@ -249,13 +249,13 @@ Expected: **nenhuma ocorrência em controles de formulário** — as ocorrência
 
 - [ ] **Step 6: Corrigir vermelho do ConfirmDialog e o X do dialog do shadcn**
 
-`apps/web/src/components/confirm-dialog.tsx`, botão de confirmação (white-on-red 3.76:1):
+`apps/web/src/components/confirm-dialog.tsx`, botão de confirmação (white-on-red 3.76:1) — use o token destrutivo (4.83:1) em vez de vermelho hardcoded:
 
 ```tsx
           <Button
             onClick={onConfirm}
             disabled={isPending}
-            className="bg-red-600 text-white hover:bg-red-700"
+            variant="destructive"
           >
 ```
 
@@ -1802,7 +1802,7 @@ Substitua o bloco do §7.6 por (com os números reais observados no Step 1):
 ```markdown
 ### 7.6 Acessibilidade e Mobile
 - [x] Auditoria de teclado em timeline, galeria, modal de busca e wizard — roving tabindex + setas/Home/End na timeline, `Enter` avança o wizard com foco no heading do novo passo, foco/trapping em lightbox, busca, confirmação e share cobertos por E2E
-- [x] Contraste AA em todo o conjunto de cores atual — `--muted-foreground: #8888a8`, `--input`/`--border: #6a6a84`, `--accent-foreground`/`--secondary-foreground: #0a0a0f`, `--destructive: #dc2626`, `--text` definido; bordas de controles `border-card` → `border-input`; confirmação em `bg-red-600`; verificado por `pnpm --filter web test:contrast`
+- [x] Contraste AA em todo o conjunto de cores atual — `--muted-foreground: #8888a8`, `--input`/`--border: #6a6a84`, `--accent-foreground`/`--secondary-foreground: #0a0a0f`, `--destructive: #dc2626`, `--text` definido; bordas de controles `border-card` → `border-input`; confirmação em `variant="destructive"`; `:focus-visible` em `@layer base`; gate ligado ao `pnpm test` (turbo `web#test`); verificado por `pnpm --filter web test:contrast`
 - [x] Gerenciamento de foco em lightbox e dialogs — hook `useDialogFocusRestore` aplicado a Confirm/Share/Search; lightbox (`<dialog>` nativo) coberto por teste de restauração de foco
 - [x] Timeline em coluna única no mobile — comportamento já single-column preservado; teste E2E em 375px garante empilhamento e zero scroll horizontal
 - [x] Wizard em passos menores no mobile — uma rota por passo (`/memories/new/[step]` com `WizardProvider` no layout + rascunho em `sessionStorage`), card `p-4 sm:p-6` e progresso compacto (conectores só em `sm+`)
