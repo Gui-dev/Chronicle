@@ -7,7 +7,7 @@ import type { Memory, PaginatedResponse } from '@/hooks/use-memories'
 import { formatElapsed } from '@/lib/format-elapsed'
 import { Button } from '@chronicle/ui'
 import type { ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface MemoryTimelineProps {
   memories: Memory[]
@@ -72,8 +72,17 @@ export function MemoryTimeline({
   const listRef = useRef<HTMLOListElement>(null)
   const [activeCardIndex, setActiveCardIndex] = useState(0)
 
+  // A new page is a new list: keeping the old index would give the clamped
+  // slot (last card) the tabindex="0" entry point, so Tab would re-enter the
+  // list at an unpredictable card after pagination.
+  // The page is the trigger, not a value the reset reads.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset the roving slot on page change
+  useEffect(() => {
+    setActiveCardIndex(0)
+  }, [pagination?.page])
+
   const cardElements = () =>
-    Array.from(listRef.current?.querySelectorAll<HTMLElement>('[data-timeline-card]') ?? [])
+    Array.from(listRef.current?.querySelectorAll<HTMLElement>('li[data-timeline-card]') ?? [])
 
   const focusCard = (index: number) => {
     const cards = cardElements()
@@ -95,6 +104,10 @@ export function MemoryTimeline({
       return
     }
     const target = event.target as HTMLElement
+    // The photo lightbox is a <dialog> nested inside a card: keys pressed in it
+    // must keep their own meaning instead of moving the roving slot behind the
+    // modal's back.
+    if (target.closest('dialog')) return
     if (
       target !== event.currentTarget &&
       (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
@@ -104,8 +117,7 @@ export function MemoryTimeline({
     const cards = cardElements()
     if (cards.length === 0) return
     event.preventDefault()
-    const focused = document.activeElement
-    const currentIndex = cards.findIndex((card) => card === focused || card.contains(focused))
+    const currentIndex = cards.findIndex((card) => card === target || card.contains(target))
     const base = currentIndex === -1 ? activeCardIndex : currentIndex
     if (event.key === 'ArrowDown') focusCard(base + 1)
     else if (event.key === 'ArrowUp') focusCard(base - 1)
@@ -142,7 +154,7 @@ export function MemoryTimeline({
     )
   }
 
-  const rovingIndex = memories.length === 0 ? 0 : Math.min(activeCardIndex, memories.length - 1)
+  const rovingIndex = Math.min(activeCardIndex, memories.length - 1)
 
   return (
     <div className="relative pl-6 sm:pl-10">
