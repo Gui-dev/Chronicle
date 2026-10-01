@@ -227,7 +227,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                   asChild
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                  className="h-9 w-9 border-input text-muted hover:border-primary hover:text-primary"
                 >
                   <Link
                     href={`/memories/${memory.id}/edit`}
@@ -252,7 +252,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                     }
                     generateNarrative.mutate()
                   }}
-                  className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                  className="h-9 w-9 border-input text-muted hover:border-primary hover:text-primary"
                 >
                   {generateNarrative.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,7 +269,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                     aria-label="Compartilhar link"
                     title="Compartilhar link"
                     onClick={() => setShareOpen(true)}
-                    className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                    className="h-9 w-9 border-input text-muted hover:border-primary hover:text-primary"
                   >
                     <Link2 className="h-4 w-4" />
                   </Button>
@@ -283,7 +283,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                   title={memory.isPublic ? 'Tornar privada' : 'Tornar pública'}
                   disabled={toggleVisibility.isPending}
                   onClick={() => toggleVisibility.mutate(!memory.isPublic)}
-                  className="h-9 w-9 border-card text-muted hover:border-primary hover:text-primary"
+                  className="h-9 w-9 border-input text-muted hover:border-primary hover:text-primary"
                 >
                   {toggleVisibility.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -302,7 +302,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                   title="Deletar"
                   disabled={deleteMemory.isPending}
                   onClick={() => setConfirmOpen(true)}
-                  className="h-9 w-9 border-card text-red-500 hover:border-red-500 hover:text-red-600"
+                  className="h-9 w-9 border-input text-red-500 hover:border-red-500 hover:text-red-600"
                 >
                   {deleteMemory.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

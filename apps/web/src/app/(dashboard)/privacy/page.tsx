@@ -145,7 +145,7 @@ function PrivacyContent() {
                 <Button
                   variant="outline"
                   onClick={() => setConfirmDelete(false)}
-                  className="border-card text-text hover:border-primary hover:text-primary"
+                  className="border-input text-text hover:border-primary hover:text-primary"
                 >
                   Cancelar
                 </Button>

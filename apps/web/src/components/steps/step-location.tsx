@@ -73,7 +73,7 @@ export function StepLocation({ form }: StepLocationProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Digite o nome do local..."
               data-testid="locationInput"
-              className="border-card bg-background pl-10 text-text placeholder:text-muted"
+              className="border-input bg-background pl-10 text-text placeholder:text-muted"
             />
           </div>
         </div>
@@ -91,7 +91,7 @@ export function StepLocation({ form }: StepLocationProps) {
                 key={`${loc.latitude}-${loc.longitude}-${index}`}
                 type="button"
                 onClick={() => selectLocation(loc)}
-                className="w-full cursor-pointer rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
+                className="w-full cursor-pointer rounded-lg border-2 border-input bg-card p-3 text-left transition-all hover:border-primary/30"
               >
                 <p className="font-medium text-text">{loc.name}</p>
                 <p className="text-sm text-muted">

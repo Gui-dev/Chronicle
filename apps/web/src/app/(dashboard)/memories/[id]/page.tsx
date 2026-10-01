@@ -28,7 +28,7 @@ export default function MemoryViewPage() {
         <Link href="/" className="mb-6 inline-block">
           <Button
             variant="outline"
-            className="border-card text-text hover:border-primary hover:text-primary"
+            className="border-input text-text hover:border-primary hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para timeline
@@ -44,7 +44,7 @@ export default function MemoryViewPage() {
       <Link href="/" className="mb-6 inline-block">
         <Button
           variant="outline"
-          className="border-card text-text hover:border-primary hover:text-primary"
+          className="border-input text-text hover:border-primary hover:text-primary"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para timeline

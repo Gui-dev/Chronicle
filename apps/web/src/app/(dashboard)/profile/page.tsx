@@ -148,7 +148,7 @@ export default function ProfilePage() {
                   onClick={handleRemoveAvatar}
                   disabled={busy}
                   data-testid="remove-avatar"
-                  className="inline-flex items-center gap-2 rounded-lg border-card text-text hover:border-red-500 hover:text-red-500"
+                  className="inline-flex items-center gap-2 rounded-lg border-input text-text hover:border-red-500 hover:text-red-500"
                 >
                   {removing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

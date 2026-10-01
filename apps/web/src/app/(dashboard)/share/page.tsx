@@ -90,7 +90,7 @@ function SharedLinksContent() {
                     <Button
                       variant="outline"
                       onClick={() => handleCopy(link)}
-                      className="border-card text-text hover:border-primary hover:text-primary"
+                      className="border-input text-text hover:border-primary hover:text-primary"
                       data-testid={`share-copy-${link.id}`}
                     >
                       <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -100,7 +100,7 @@ function SharedLinksContent() {
                       variant="outline"
                       onClick={() => handleRevoke(link)}
                       disabled={revoke.isPending}
-                      className="border-card text-red-500 hover:border-red-500 hover:text-red-600"
+                      className="border-input text-red-500 hover:border-red-500 hover:text-red-600"
                       data-testid={`share-revoke-${link.id}`}
                     >
                       <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />

@@ -176,7 +176,7 @@ function EditMemoryForm({ id }: { id: string }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título da memória..."
-            className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
           {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
         </div>
@@ -191,7 +191,7 @@ function EditMemoryForm({ id }: { id: string }) {
             onChange={(e) => setContent(e.target.value)}
             placeholder="Descreva sua memória..."
             rows={5}
-            className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -208,7 +208,7 @@ function EditMemoryForm({ id }: { id: string }) {
               type="date"
               value={memoryDate}
               onChange={(e) => setMemoryDate(e.target.value)}
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -227,7 +227,7 @@ function EditMemoryForm({ id }: { id: string }) {
               value={weatherTemp}
               onChange={(e) => setWeatherTemp(e.target.value)}
               placeholder="25"
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -240,7 +240,7 @@ function EditMemoryForm({ id }: { id: string }) {
               value={weatherDesc}
               onChange={(e) => setWeatherDesc(e.target.value)}
               placeholder="Ensolarado, chuvoso..."
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -258,7 +258,7 @@ function EditMemoryForm({ id }: { id: string }) {
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
             placeholder="Nome do local..."
-            className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -274,7 +274,7 @@ function EditMemoryForm({ id }: { id: string }) {
               value={locationLat}
               onChange={(e) => setLocationLat(e.target.value)}
               placeholder="-23.55"
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -288,7 +288,7 @@ function EditMemoryForm({ id }: { id: string }) {
               value={locationLng}
               onChange={(e) => setLocationLng(e.target.value)}
               placeholder="-46.63"
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -306,7 +306,7 @@ function EditMemoryForm({ id }: { id: string }) {
             value={people}
             onChange={(e) => setPeople(e.target.value)}
             placeholder="João, Maria, Pedro..."
-            className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -323,7 +323,7 @@ function EditMemoryForm({ id }: { id: string }) {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="viagem, família, natureza..."
-            className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -348,7 +348,7 @@ function EditMemoryForm({ id }: { id: string }) {
             onClick={() => photoInputRef.current?.click()}
             disabled={uploadPhoto.isPending}
             data-testid="edit-photo-add"
-            className="border-card text-text hover:border-primary hover:text-primary"
+            className="border-input text-text hover:border-primary hover:text-primary"
           >
             {uploadPhoto.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -404,7 +404,7 @@ function EditMemoryForm({ id }: { id: string }) {
                 value={musicTrack}
                 onChange={(e) => setMusicTrack(e.target.value)}
                 placeholder="Nome da música..."
-                className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />
             </div>
             <div>
@@ -417,7 +417,7 @@ function EditMemoryForm({ id }: { id: string }) {
                 value={musicArtist}
                 onChange={(e) => setMusicArtist(e.target.value)}
                 placeholder="Nome do artista..."
-                className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -431,7 +431,7 @@ function EditMemoryForm({ id }: { id: string }) {
               value={musicUrl}
               onChange={(e) => setMusicUrl(e.target.value)}
               placeholder="https://exemplo.com/musica.mp3"
-              className="w-full rounded-lg border border-card bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -454,7 +454,7 @@ function EditMemoryForm({ id }: { id: string }) {
             <Button
               type="button"
               variant="outline"
-              className="border-card text-text hover:border-primary hover:text-primary"
+              className="border-input text-text hover:border-primary hover:text-primary"
             >
               Cancelar
             </Button>

@@ -139,7 +139,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar: #tag @pessoa ano:2026 local:praia"
             data-testid="search-dialog-input"
-            className="h-11 rounded-lg border-2 border-card bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="h-11 rounded-lg border-2 border-input bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 

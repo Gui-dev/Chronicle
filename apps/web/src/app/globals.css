@@ -29,15 +29,16 @@
   --primary: #f0c040;
   --primary-foreground: #0a0a0f;
   --secondary: #ff8c00;
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #0a0a0f;
   --muted: #a0a0b0;
-  --muted-foreground: #666680;
+  --muted-foreground: #8888a8;
   --accent: #ff8c00;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
+  --accent-foreground: #0a0a0f;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #2a2a3e;
-  --input: #2a2a3e;
+  --text: #ffffff;
+  --border: #6a6a84;
+  --input: #6a6a84;
   --ring: #f0c040;
   --radius: 0.5rem;
 }
@@ -62,4 +63,9 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

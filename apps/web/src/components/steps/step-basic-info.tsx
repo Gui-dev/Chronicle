@@ -39,7 +39,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             {...register('title')}
             placeholder="Ex: Pôr do sol na praia"
             data-testid="title"
-            className="border-card bg-background text-text placeholder:text-muted"
+            className="border-input bg-background text-text placeholder:text-muted"
           />
           {errors.title && <p className="text-sm text-red-500">{String(errors.title.message)}</p>}
         </div>
@@ -53,7 +53,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             type="date"
             {...register('memoryDate')}
             data-testid="memoryDate"
-            className="border-card bg-background text-text"
+            className="border-input bg-background text-text"
           />
           {errors.memoryDate && (
             <p className="text-sm text-red-500">{String(errors.memoryDate.message)}</p>
@@ -70,7 +70,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             placeholder="Descreva este momento..."
             data-testid="content"
             rows={4}
-            className="w-full rounded-lg border-2 border-card bg-background px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border-2 border-input bg-background px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -82,7 +82,7 @@ export function StepBasicInfo({ form }: StepBasicInfoProps) {
             id="aiMood"
             {...register('aiMood')}
             data-testid="aiMood"
-            className="h-10 w-full rounded-lg border-2 border-card bg-background px-3 text-text focus:border-primary focus:outline-none"
+            className="h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-text focus:border-primary focus:outline-none"
           >
             <option value="">Deixar a IA decidir</option>
             {MOOD_OPTIONS.map((mood) => (

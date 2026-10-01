@@ -57,7 +57,7 @@ export function ChipInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           data-testid={testId ? `${testId}-input` : undefined}
-          className="flex-1 border-card bg-background text-text placeholder:text-muted"
+          className="flex-1 border-input bg-background text-text placeholder:text-muted"
         />
         <Button
           type="button"
@@ -65,7 +65,7 @@ export function ChipInput({
           onClick={addChip}
           disabled={!inputValue.trim()}
           data-testid={testId ? `${testId}-add` : undefined}
-          className="border-card text-text hover:border-primary hover:text-primary"
+          className="border-input text-text hover:border-primary hover:text-primary"
         >
           Adicionar
         </Button>

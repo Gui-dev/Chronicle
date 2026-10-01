@@ -176,7 +176,7 @@ export function CreateMemoryWizard() {
             <Button
               type="button"
               variant="outline"
-              className="border-card text-text hover:border-primary hover:text-primary"
+              className="border-input text-text hover:border-primary hover:text-primary"
             >
               Cancelar
             </Button>
@@ -188,7 +188,7 @@ export function CreateMemoryWizard() {
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className="inline-flex items-center gap-2 border-card text-text hover:border-primary hover:text-primary"
+              className="inline-flex items-center gap-2 border-input text-text hover:border-primary hover:text-primary"
             >
               <ArrowLeft className="h-4 w-4" />
               Anterior

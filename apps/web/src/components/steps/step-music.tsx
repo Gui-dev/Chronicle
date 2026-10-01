@@ -61,7 +61,7 @@ export function StepMusic({ form }: StepMusicProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Digite nome da música ou artista..."
               data-testid="musicInput"
-              className="border-card bg-background pl-10 text-text placeholder:text-muted"
+              className="border-input bg-background pl-10 text-text placeholder:text-muted"
             />
           </div>
         </div>
@@ -79,7 +79,7 @@ export function StepMusic({ form }: StepMusicProps) {
                 key={`${track.url}-${index}`}
                 type="button"
                 onClick={() => selectTrack(track)}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-card bg-card p-3 text-left transition-all hover:border-primary/30"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-input bg-card p-3 text-left transition-all hover:border-primary/30"
               >
                 {track.cover && (
                   <Image

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:contrast": "node scripts/verify-contrast.mjs"
   },
   "dependencies": {
     "@chronicle/auth": "workspace:*",

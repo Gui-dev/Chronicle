@@ -63,7 +63,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
             onFilterChange('year', e.target.value ? Number(e.target.value) : undefined)
           }
           data-testid="year"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Ano</option>
           {years.map((year) => (
@@ -77,7 +77,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           value={filters.month || ''}
           onChange={(e) => onMonthChange(e.target.value)}
           data-testid="month"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Mês</option>
           {months.map((month) => (
@@ -92,7 +92,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           onChange={(e) => onFilterChange('weather', e.target.value || undefined)}
           placeholder="Clima"
           data-testid="weather"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
 
         <Input
@@ -100,7 +100,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           onChange={(e) => onFilterChange('location', e.target.value || undefined)}
           placeholder="Local"
           data-testid="location"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
 
         <Input
@@ -108,7 +108,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           onChange={(e) => onFilterChange('tag', e.target.value || undefined)}
           placeholder="Tag"
           data-testid="tag"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
 
         <select
@@ -120,7 +120,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
             )
           }
           data-testid="hasArtwork"
-          className="h-10 rounded-lg border-2 border-card bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Artwork</option>
           <option value="true">Com artwork</option>

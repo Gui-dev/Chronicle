@@ -82,14 +82,14 @@ export function SharePreview({ token }: { token: string }) {
             variant="outline"
             onClick={() => refetch()}
             data-testid="share-retry"
-            className="border-card text-text hover:border-primary hover:text-primary"
+            className="border-input text-text hover:border-primary hover:text-primary"
           >
             Tentar novamente
           </Button>
           <Link href="/">
             <Button
               variant="outline"
-              className="border-card text-text hover:border-primary hover:text-primary"
+              className="border-input text-text hover:border-primary hover:text-primary"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Ir para a timeline

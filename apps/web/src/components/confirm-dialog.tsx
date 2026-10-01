@@ -42,14 +42,14 @@ export function ConfirmDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
-            className="border-card text-text hover:border-primary hover:text-primary"
+            className="border-input text-text hover:border-primary hover:text-primary"
           >
             Cancelar
           </Button>
           <Button
             onClick={onConfirm}
             disabled={isPending}
-            className="bg-red-500 text-white hover:bg-red-600"
+            className="bg-red-600 text-white hover:bg-red-700"
           >
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {confirmLabel}

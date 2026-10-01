@@ -79,7 +79,7 @@ export function MemoryTimeline({
         <Button
           variant="outline"
           onClick={onRetry}
-          className="rounded-lg border-card text-text hover:border-primary hover:text-primary"
+          className="rounded-lg border-input text-text hover:border-primary hover:text-primary"
         >
           Tentar novamente
         </Button>
@@ -129,7 +129,7 @@ export function MemoryTimeline({
             size="sm"
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page === 1}
-            className="rounded-lg border-card text-text hover:border-primary hover:text-primary"
+            className="rounded-lg border-input text-text hover:border-primary hover:text-primary"
           >
             Anterior
           </Button>
@@ -141,7 +141,7 @@ export function MemoryTimeline({
             size="sm"
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page === pagination.totalPages}
-            className="rounded-lg border-card text-text hover:border-primary hover:text-primary"
+            className="rounded-lg border-input text-text hover:border-primary hover:text-primary"
           >
             Próxima
           </Button>

@@ -144,7 +144,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
                 onClick={handleCopy}
                 disabled={!token || shareMutation.isPending}
                 data-testid="share-copy"
-                className="border-card text-text hover:border-primary hover:text-primary"
+                className="border-input text-text hover:border-primary hover:text-primary"
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar link
@@ -155,7 +155,7 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
                 onClick={handleRevoke}
                 disabled={!token || revoke.isPending || shareMutation.isPending}
                 data-testid="share-revoke"
-                className="border-card text-red-500 hover:border-red-500 hover:text-red-600"
+                className="border-input text-red-500 hover:border-red-500 hover:text-red-600"
               >
                 {revoke.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
