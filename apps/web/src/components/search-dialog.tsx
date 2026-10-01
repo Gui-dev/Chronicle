@@ -52,6 +52,8 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   // rendered, instead of silently pointing past the end of the list.
   const activeIndex = results.length === 0 ? 0 : Math.min(selectedIndex, results.length - 1)
 
+  const isEmpty = trimmed.length > 0 && !isFetching && results.length === 0
+
   useEffect(() => {
     if (open) return
     setQuery('')
@@ -173,18 +175,29 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           ))}
         </ul>
 
-        {trimmed.length > 0 && !isFetching && results.length === 0 && (
-          <output className="block py-6 text-center text-sm text-muted" data-testid="search-empty">
-            Nenhuma memória encontrada para “{trimmed}”.
-          </output>
-        )}
+        {/* The live regions are mounted from the start and only their content
+            changes: a region that mounts together with its text is not
+            consistently announced by screen readers. */}
+        <output
+          className="block py-6 text-center text-sm text-muted"
+          data-testid="search-empty"
+          hidden={!isEmpty}
+        >
+          {isEmpty ? `Nenhuma memória encontrada para “${trimmed}”.` : null}
+        </output>
 
-        {isFetching && (
-          <output className="flex justify-center py-4" data-testid="search-loading">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span className="sr-only">Buscando memórias…</span>
-          </output>
-        )}
+        <output
+          className="flex justify-center py-4"
+          data-testid="search-loading"
+          hidden={!isFetching}
+        >
+          {isFetching && (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span className="sr-only">Buscando memórias…</span>
+            </>
+          )}
+        </output>
 
         <div className="flex items-center justify-between border-t border-card pt-3">
           <p className="text-xs text-muted">

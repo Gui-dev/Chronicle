@@ -8,7 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header>
+      <header className="sticky top-0 z-50">
         <Navbar />
       </header>
       <main className="flex-1 pb-24">{children}</main>

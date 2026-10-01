@@ -71,7 +71,7 @@ test.describe('Diálogo de busca', () => {
     await input.fill('Consulta')
 
     await expect(authenticatedPage.locator('[data-testid="search-loading"]')).toBeVisible()
-    await expect(authenticatedPage.locator('[data-testid="search-loading"]')).toHaveCount(0)
+    await expect(authenticatedPage.locator('[data-testid="search-loading"]')).toBeHidden()
     await expect(authenticatedPage.locator(`[data-testid="search-result-${alvo}"]`)).toBeVisible()
   })
 

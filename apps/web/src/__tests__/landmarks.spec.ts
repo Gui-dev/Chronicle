@@ -26,6 +26,20 @@ test.describe('Landmarks e regiões ao vivo', () => {
     await expect(page.getByRole('main')).toHaveCount(1)
   })
 
+  test('navbar stays in the viewport after scrolling', async ({ authenticatedPage }) => {
+    for (const memoryDate of ['2026-09-24', '2026-09-18', '2026-09-12', '2026-09-06']) {
+      await createMemory(authenticatedPage, { title: 'Rolagem', memoryDate })
+    }
+    await authenticatedPage.goto('/')
+
+    await authenticatedPage.evaluate(() => window.scrollBy(0, 600))
+    // Proves the page really scrolled — otherwise toBeInViewport would pass
+    // vacuously on a layout too short to leave the viewport.
+    await expect.poll(() => authenticatedPage.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+
+    await expect(authenticatedPage.getByRole('navigation')).toBeInViewport()
+  })
+
   test('search results are announced politely', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/')
     await authenticatedPage.locator('[data-testid="search-button"]').click()

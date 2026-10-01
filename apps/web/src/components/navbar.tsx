@@ -68,7 +68,7 @@ export function Navbar() {
 
   if (isLoading) {
     return (
-      <nav className="sticky top-0 z-50 border-b border-card bg-background/80 backdrop-blur-sm">
+      <nav className="relative z-50 border-b border-card bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-lg border-2 border-primary/50 bg-primary/10" />
@@ -96,7 +96,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-card bg-background/80 backdrop-blur-sm">
+      <nav className="relative z-50 border-b border-card bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
