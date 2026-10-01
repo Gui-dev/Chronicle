@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
       <MemoryFilters filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
 
-      <div id="timeline">
+      <section id="timeline" aria-label="Linha do tempo">
         <MemoryTimeline
           memories={memories}
           pagination={pagination}
@@ -47,7 +47,7 @@ export default function DashboardPage() {
               : 'Entre na sua conta para criar sua primeira memória.'
           }
         />
-      </div>
+      </section>
     </div>
   )
 }

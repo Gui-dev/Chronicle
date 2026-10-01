@@ -145,6 +145,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
         <ul
           ref={listRef}
+          aria-live="polite"
           className="max-h-96 space-y-1 overflow-y-auto"
           data-testid="search-results"
         >
@@ -173,15 +174,16 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         </ul>
 
         {trimmed.length > 0 && !isFetching && results.length === 0 && (
-          <p className="py-6 text-center text-sm text-muted" data-testid="search-empty">
+          <output className="block py-6 text-center text-sm text-muted" data-testid="search-empty">
             Nenhuma memória encontrada para “{trimmed}”.
-          </p>
+          </output>
         )}
 
         {isFetching && (
-          <div className="flex justify-center py-4" data-testid="search-loading">
+          <output className="flex justify-center py-4" data-testid="search-loading">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
+            <span className="sr-only">Buscando memórias…</span>
+          </output>
         )}
 
         <div className="flex items-center justify-between border-t border-card pt-3">

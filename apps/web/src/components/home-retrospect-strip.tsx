@@ -76,6 +76,7 @@ export function HomeRetrospectStrip() {
   return (
     <div
       data-testid="retro-strip"
+      aria-live="polite"
       className="mb-6 flex items-stretch gap-4 rounded-xl border border-card bg-card p-4"
     >
       {showNew && (
@@ -99,7 +100,12 @@ export function HomeRetrospectStrip() {
       {showNew && showYearAgo && <div className="w-px shrink-0 bg-card" aria-hidden="true" />}
 
       {showYearAgo && (
-        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto">
+        <section
+          aria-label="Memórias de um ano atrás"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be focusable for keyboard scrolling
+          tabIndex={0}
+          className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto"
+        >
           {items.map((memory) => (
             <div
               key={memory.id}
@@ -114,7 +120,7 @@ export function HomeRetrospectStrip() {
               </p>
             </div>
           ))}
-        </div>
+        </section>
       )}
     </div>
   )
