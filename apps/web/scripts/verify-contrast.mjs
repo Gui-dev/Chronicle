@@ -7,8 +7,12 @@ const cssPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../src/
 const css = readFileSync(cssPath, 'utf8')
 
 function readVar(name) {
-  const match = css.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))
-  if (!match) throw new Error(`variable ${name} not found in globals.css`)
+  const rootBlock = css.match(/:root\s*\{[^}]*\}/)
+  if (!rootBlock) throw new Error('no :root block found in globals.css')
+  const match = rootBlock[0].match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6}(?![0-9a-fA-F]))`))
+  if (!match) {
+    throw new Error(`no #rrggbb literal found for ${name} in the :root block of globals.css`)
+  }
   return match[1]
 }
 

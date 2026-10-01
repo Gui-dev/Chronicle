@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/verify-contrast.mjs",
     "test:e2e": "playwright test",
     "test:contrast": "node scripts/verify-contrast.mjs"
   },

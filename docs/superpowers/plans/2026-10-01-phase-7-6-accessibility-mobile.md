@@ -241,8 +241,11 @@ perl -pi -e 's/border-card text-/border-input text-/g' \
 
 Verificação:
 
-Run: `grep -rn "border-card bg-background" apps/web/src; grep -rn "border-2 border-card bg-card" apps/web/src; grep -rn "border-card text-" apps/web/src`
-Expected: **nenhuma saída** (0 ocorrências). O restante de `border-card` (Cards, `border-t` divisores, `kbd`, spinners, dropzone) é decorativo e permanece.
+Run: `grep -rn "border-2 border-card bg-card" apps/web/src`
+Expected: **nenhuma saída** (0 ocorrências).
+
+Run: `grep -rn "border-card bg-background" apps/web/src; grep -rn "border-card text-" apps/web/src`
+Expected: **nenhuma ocorrência em controles de formulário** — as ocorrências restantes são decorativas por design (pílulas/tags, `border-b` do navbar, toast, `border-t` do áudio, caixa de URL, caixa de narrativa por IA) e permanecem. O restante de `border-card` (Cards, `border-t` divisores, `kbd`, spinners, dropzone) é decorativo e permanece.
 
 - [ ] **Step 6: Corrigir vermelho do ConfirmDialog e o X do dialog do shadcn**
 

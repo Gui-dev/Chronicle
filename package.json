@@ -10,6 +10,7 @@
     "format": "biome format --write .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:contrast": "pnpm --filter web test:contrast",
     "test:unit": "turbo run test:unit",
     "test:e2e": "turbo run test:e2e",
     "db:generate": "pnpm --filter @chronicle/db db:generate",
