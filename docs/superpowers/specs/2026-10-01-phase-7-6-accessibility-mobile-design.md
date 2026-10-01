@@ -41,11 +41,8 @@ Seis entregas para tornar o Chronicle acessível (WCAG AA) e mobile-first:
 - **Implementação**: Adicionar `tabIndex`, `onKeyDown` no container, gerenciar `activeCardIndex` via estado
 
 ### Galeria (`photo-gallery.tsx`)
-- **Atual**: Tem `ArrowLeft/Right` no lightbox, `Escape` fecha
-- **Gaps**: 
-  - Thumbnails não são focáveis por `Tab`
-  - `Enter/Space` não abre lightbox do thumb focado
-- **Correção**: Adicionar `tabIndex=0`, `role="button"`, `onKeyDown` nos thumbnails
+- **Atual**: thumbnails já são `<button>` com `aria-label` (focáveis nativamente); lightbox tem `ArrowLeft/Right`, `Escape` e restauração de foco no thumbnail
+- **Gaps**: nada estrutural — **cobrir com teste E2E de teclado** (Tab até thumb, Enter abre, Escape fecha e devolve foco)
 
 ### Search Modal (`search-dialog.tsx`)
 - **Atual**: `ArrowUp/Down` nos resultados, `Enter` abre, `Escape` fecha
@@ -64,25 +61,43 @@ Seis entregas para tornar o Chronicle acessível (WCAG AA) e mobile-first:
 
 ## 2. Contraste AA (WCAG AA)
 
-### Cores Atuais (globals.css:24-42)
-| Variável | Valor | Sobre | Ratio | Status |
+### Cores Atuais (globals.css:24-42) — ratios calculados (2026-10-01)
+| Variável / par | Valor | Sobre | Ratio | Status |
 |----------|-------|-------|-------|--------|
-| `--muted` | `#a0a0b0` | `--background` `#0a0a0f` | 6.8:1 | ✓ |
-| `--muted-foreground` | `#666680` | `--card` `#1a1a2e` | 3.8:1 | ✗ |
-| `--card` | `#1a1a2e` | `--background` `#0a0a0f` | 9.3:1 | ✓ |
-| `--border` | `#2a2a3e` | `--card` `#1a1a2e` | 2.3:1 | ✗ (UI) |
-| `--input` | `#2a2a3e` | `--card` `#1a1a2e` | 2.3:1 | ✗ (UI) |
-| `--muted` | `#a0a0b0` | `--background` | 6.8:1 | ✓ |
-| `--primary` | `#f0c040` | `--background` | 8.2:1 | ✓ |
-| `--secondary` | `#ff8c00` | `--background` | 5.1:1 | ✓ |
+| `--muted` | `#a0a0b0` | `--background` `#0a0a0f` | 7.67:1 | ✓ |
+| `--muted` | `#a0a0b0` | `--card` `#1a1a2e` | 6.62:1 | ✓ |
+| `--muted-foreground` | `#666680` | `--card` `#1a1a2e` | 3.07:1 | ✗ texto (precisa 4.5) |
+| `--muted-foreground` | `#666680` | `--background` | 3.55:1 | ✗ texto |
+| `--card` | `#1a1a2e` | `--background` | 1.16:1 | ✓ (decorativo) |
+| `--border` | `#2a2a3e` | `--card` | 1.22:1 | ✗ (só usado como `bg-border` divisor) |
+| `--input` | `#2a2a3e` | `--background` | 1.22:1 | ✗ UI (precisa 3:1) |
+| `border-card` em inputs | `#1a1a2e` | `--background` | 1.16:1 | ✗ UI |
+| `--primary` | `#f0c040` | `--background` | 11.59:1 | ✓ |
+| `--primary` | `#f0c040` | `--card` | 10.01:1 | ✓ |
+| `--secondary` | `#ff8c00` | `--background` | 8.47:1 | ✓ |
+| `--secondary-foreground` | `#ffffff` | `--secondary` `#ff8c00` | 2.33:1 | ✗ texto (variante `secondary` do Button) |
+| `--accent-foreground` | `#ffffff` | `--accent` `#ff8c00` | 2.33:1 | ✗ texto (hover outline/ghost) |
+| `--destructive-foreground` | `#ffffff` | `--destructive` `#ef4444` | 3.76:1 | ✗ texto |
+| `bg-red-500 text-white` (ConfirmDialog) | `#ffffff` on `#ef4444` | — | 3.76:1 | ✗ texto |
+| `text-red-500` erros | `#ef4444` | `--background` | 5.25:1 | ✓ |
+| `text-red-500` erros | `#ef4444` | `--card` | 4.53:1 | ✓ (limítrofe) |
+| `--text` | **indefinida** | — | — | ⚠ `text-text` resolve por herança acidental (`--foreground`) |
 
-### Correções Necessárias
+### Correções Necessárias (globals.css `:root`)
 ```css
-/* globals.css - ajustes para AA */
---muted-foreground: #8a8ab8;  /* 4.5:1 sobre #1a1a2e */
---border: #3a3a4e;            /* 3.1:1 sobre #1a1a2e (UI) */
---input: #3a3a4e;             /* 3.1:1 sobre #1a1a2e (UI) */
+--text: #ffffff;             /* definir de fato; hoje é undefined e só funciona por fallback */
+--muted-foreground: #8888a8;  /* 4.98 sobre card, 5.77 sobre background (≥4.5) */
+--input: #6a6a84;             /* 3.26 sobre card, 3.77 sobre background (≥3) */
+--border: #6a6a84;            /* mesmo valor; é o divisor `bg-border` do menu */
+--accent-foreground: #0a0a0f; /* hover outline/ghost: 8.47 sobre accent (era 2.33) */
+--secondary-foreground: #0a0a0f; /* variante secondary: 8.47 sobre secondary */
+--destructive: #dc2626;       /* white-on-destructive: 4.83 (era 3.76) */
 ```
+
+### Correções fora do `:root`
+- Trocar `border-card` → `border-input` nos **controles de formulário** (inputs, textareas, selects): steps 0–2, chip-input, search dialog, memory-filters, página de edição. `border-card` decorativo (cards, divisores, kbd) permanece.
+- `confirm-dialog.tsx`: `bg-red-500 text-white hover:bg-red-600` → `bg-red-600 text-white hover:bg-red-700` (4.83:1).
+- `globals.css`: regra global `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px }` — elementos customizados (nav search, retro strip, chips, thumbnails de persona) hoje não têm anel de foco visível.
 
 ### Validação
 - Rodar `pnpm build` + verificação visual
@@ -93,58 +108,35 @@ Seis entregas para tornar o Chronicle acessível (WCAG AA) e mobile-first:
 ## 3. Gerenciamento de Foco (Lightbox + Dialogs)
 
 ### PhotoGallery (`photo-gallery.tsx:132-148`)
-- **Status**: ✅ Usa `<dialog>` nativo com `aria-modal="true"`, foco restaurado via `triggerRef` no fechamento
-- **Verificar**: `tabIndex` nos botões de navegação (prev/next) dentro do lightbox
+- **Status**: ✅ Usa `<dialog>` nativo com `aria-modal="true"`, `showModal()` (trapping nativo), foco restaurado via `triggerRef` no fechamento
+- **Ação**: apenas teste E2E de foco (não há código a mudar)
 
 ### SearchDialog (`search-dialog.tsx:101-127`)
-- **Status**: ✅ Radix Dialog com `onOpenAutoFocus` (foca input), `onCloseAutoFocus` (restaura trigger)
-- **Gap**: Botão "Ver todas" não recebe foco via `Tab` se lista vazia
+- **Status**: ✅ Radix Dialog aberto por estado (sem `DialogTrigger`) + `onOpenAutoFocus`/`onCloseAutoFocus` manuais — é o padrão correto
+- **Ação**: extrair para hook compartilhado `useDialogFocusRestore` (DRY)
 
 ### ShareDialog / ConfirmDialog
-- **Verificar**: Ambos usam Radix Dialog? Confirmar `onCloseAutoFocus`
+- **Gap real**: abertos por estado (`open={confirmOpen}`) **sem** `DialogTrigger` e **sem** `onCloseAutoFocus` → Radix só devolve foco para um trigger declarado; aqui o foco cai no `<body>` ao fechar
+- **Ação**: aplicar `useDialogFocusRestore` nos dois
 
 ### Ações
-1. Adicionar `focus-trap` (via `focus-trap-react` ou implementação nativa) em dialogs customizados
-2. Garantir `autoFocus` no primeiro elemento interativo ao abrir
-3. Restaurar foco no elemento trigger ao fechar (já implementado no PhotoGallery e SearchDialog)
+1. Criar `apps/web/src/lib/use-dialog-focus-restore.ts` e aplicar em ConfirmDialog, ShareDialog e SearchDialog
+2. Testar lightbox, busca, confirmação e share: foco entra ao abrir, Tab fica preso, foco volta ao gatilho ao fechar
 
 ---
 
 ## 4. Mobile Timeline - Coluna Única
 
-### Estrutura Atual (`memory-timeline.tsx:52-135`)
-- Container horizontal com linha vertical (`absolute left-[7px] sm:left-[11px]`)
-- Cards lado a lado com marcadores à esquerda
+### Verificação (2026-10-01)
+A timeline **já é coluna única em todas as viewport** (`memory-timeline.tsx` renderiza `space-y-8` vertical com linha à esquerda e `pl-6 sm:pl-10`; não existe variante horizontal). O entregável da 7.6 é, portanto, **garantir e proteger** o comportamento mobile:
 
-### Alterações Mobile-First
-```tsx
-// memory-timeline.tsx - container principal
-<div className="flex flex-col sm:flex-row gap-8 sm:gap-0">
-  {/* Marcadores e cards empilhados verticalmente */}
-  <div className="flex flex-col gap-8 w-full">
-    {memories.map((memory, index) => (
-      <div key={memory.id} className="flex flex-col sm:flex-row gap-4">
-        {/* Marcador acima do card no mobile */}
-        <TimelineMarker date={memory.memoryDate} className="sm:mb-0 sm:mr-4" />
-        <MemoryCardFull memory={memory} isOwner={user?.id === memory.userId} />
-      </div>
-    ))}
-  </div>
-</div>
+1. Teste E2E em viewport 375×812 que falha se houver scroll horizontal (`documentElement.scrollWidth > clientWidth`) nas páginas home, wizard, retrospectivas e busca.
+2. Teste E2E que afirma que os cards empilham (mesmo `x` de bounding box) em 375px.
+3. Correções de overflow encontradas com código exato (título do card `break-words`, progresso do wizard compacto, etc. — ver plano).
 
-// TimelineMarker - remover linha vertical no mobile
-export function TimelineMarker({ date, className }: TimelineMarkerProps) {
-  return (
-    <div data-testid="timeline-marker" className={`text-xs font-semibold uppercase tracking-widest text-muted ${className || ''}`}>
-      {formatMonthYear(date)}
-    </div>
-  )
-}
-```
-
-### CSS Responsivo
-- Mobile (`<640px`): `flex-col`, marcadores acima dos cards, sem linha vertical
-- Tablet+ (`≥640px`): `flex-row`, layout atual com linha vertical
+### CSS responsivo (mantido)
+- Mobile (`<640px`): marcadores acima dos cards, `pl-6`, linha vertical continua.
+- `≥640px`: `pl-10`, layout atual inalterado.
 
 ---
 
@@ -161,16 +153,15 @@ export function TimelineMarker({ date, className }: TimelineMarkerProps) {
 ```
 
 ### Implementação
-1. **Nova pasta**: `apps/web/src/app/(dashboard)/memories/new/[step]/page.tsx`
-2. **Estado compartilhado**: `sessionStorage` com chave `wizard-form-data`
-   - Salva a cada `onChange` / `handleNext`
-   - Carrega no `useEffect` inicial de cada página
-3. **Progress Indicator**: Componente compartilhado (`WizardProgress`) no topo de cada página
-4. **Navegação**: 
-   - `Anterior` → `router.push(\`/memories/new/${step-1}\`)`
-   - `Próximo` → valida step atual → `router.push(\`/memories/new/${step+1}\`)`
-   - Último step → `Submit` cria memória
-4. **Code Splitting**: Cada página importa apenas seu step component
+1. **Nova rota**: `apps/web/src/app/(dashboard)/memories/new/[step]/page.tsx` (padrão `useParams` client, como `memories/[id]/page.tsx`); `page.tsx` vira `redirect('/memories/new/0')`
+2. **Estado compartilhado**: `WizardProvider` no **layout** `memories/new/layout.tsx`
+   - O layout do App Router persiste entre navegações irmãs (`/new/0` → `/new/1`), então contexto (form do react-hook-form, `photos: File[]`, `people`, `tags`) sobrevive aos cliques Próximo/Anterior e ao botão Voltar do navegador
+   - Reload duro: escalar/people/tags restaurados via `sessionStorage`; **`File[]` não é serializável — fotos são perdidas em reload** (limitação documentada)
+3. **`currentStep` vem da URL** (`useParams` no provider) — fonte única de verdade, sem estado duplicado
+4. **Progress Indicator + botões**: `WizardShell` consome o contexto e continua visível em todas as páginas (o indicador fica no layout)
+5. **Code Splitting**: cada página importa apenas o seu step component
+6. **Teclado**: `Enter` em campo de texto avança (com validação); foco vai para o heading (`h2 tabIndex={-1}`) a cada troca de página
+7. **Mobile "passos menores"**: uma página = um passo; Card `p-4 sm:p-6`; progresso compacto no mobile (conectores `hidden sm:block`)
 
 ### Vantagens
 - Histórico do navegador funciona (Voltar/Avançar)
@@ -182,14 +173,14 @@ export function TimelineMarker({ date, className }: TimelineMarkerProps) {
 
 ## 6. Landmarks + aria-live
 
-### Landmarks Semânticos
-| Página/Componente | Landmark Faltando | Ação |
-|-------------------|-------------------|------|
-| `layout.tsx` | `<header>`, `<main>`, `<footer>` | Adicionar wrappers |
-| `navbar.tsx` | `<nav>` (já tem `nav` mas sem `role`) | Confirmar `role="navigation"` |
-| `memory-timeline.tsx` | `<main>` no container | Adicionar |
-| `search-dialog.tsx` | `<dialog>` já tem `role="dialog"` | ✓ |
-| `photo-gallery.tsx` | `<dialog>` já tem `role="dialog"` | ✓ |
+### Landmarks Semânticos (verificado no código)
+| Página/Componente | Situação atual | Ação |
+|-------------------|----------------|------|
+| `app/layout.tsx` | `<html lang="pt-BR">` ✓, sem header/main de nível raiz | manter (o layout `(dashboard)` cobre) |
+| `(dashboard)/layout.tsx` | tem `<main>` ✓; `<Navbar>` sem `<header>` | envolver Navbar em `<header>` |
+| `(auth)/layout.tsx` | só `<div>` | trocar por `<main>` |
+| home `(dashboard)/page.tsx` | `<div id="timeline">` sem landmark | virar `<section id="timeline" aria-label="Linha do tempo">` |
+| `navbar.tsx` | `<nav>` ✓ | manter |
 
 ### aria-live Regions
 | Conteúdo Dinâmico | Região | Politeness | Implementação |
