@@ -157,6 +157,6 @@ Dentro do dropdown existente (`navbar.tsx`), **após os itens de navegação e a
 
 ## 8. Riscos Conhecidos
 
-1. **Flash inicial para usuários de sistema light:** o script do next-themes é renderizado onde o provider está (início do `body`); o paint do `body` pode ocorrer antes do script em conexões muito lentas — aceito como comportamento padrão da lib; se provar-se problemático, mover o provider para o `layout.tsx` (um client boundary a mais).
+1. **Flash inicial para usuários de sistema light:** o script do next-themes é renderizado onde o provider está (início do `body`, verificado por curl — é o primeiro elemento a executar); o paint do `body` pode ocorrer antes do script em conexões muito lentas — aceito como comportamento padrão da lib. Mover o provider para o `layout.tsx` **não** mudaria a posição (já é o primeiro filho de `<body>`); a única mitigação real seria um script duplicado no `<head>`, que não vale o custo de bifurcar a lógica da lib.
 2. **Hex literal no futuro:** qualquer novo hex fora dos blocos foge do gate — mantidos os 16 hexes atuais + os do bloco light, todos sob validação.
 3. **`--muted` dual-use:** é texto (127 usos) e fundo (2 usos: fallback do avatar, dot da galeria). O valor light `#6e6e85` serve os dois; se algum uso visual ficar estranho, corrigir o componente (não o token).
