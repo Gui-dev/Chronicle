@@ -63,6 +63,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
             onFilterChange('year', e.target.value ? Number(e.target.value) : undefined)
           }
           data-testid="year"
+          aria-label="Filtrar por ano"
           className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Ano</option>
@@ -77,6 +78,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
           value={filters.month || ''}
           onChange={(e) => onMonthChange(e.target.value)}
           data-testid="month"
+          aria-label="Filtrar por mês"
           className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Mês</option>
@@ -120,6 +122,7 @@ export function MemoryFilters({ filters, onFilterChange, onReset }: MemoryFilter
             )
           }
           data-testid="hasArtwork"
+          aria-label="Filtrar por artwork"
           className="h-10 rounded-lg border-2 border-input bg-card px-3 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Artwork</option>

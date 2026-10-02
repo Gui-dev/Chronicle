@@ -47,6 +47,7 @@ export default function LoginPage() {
         <div className="mb-8 flex flex-col items-center gap-4">
           <Link
             href="/"
+            aria-label="Voltar"
             className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -110,7 +111,7 @@ export default function LoginPage() {
             Não tem uma conta?{' '}
             <Link
               href="/register"
-              className="text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+              className="text-primary underline underline-offset-2 hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
             >
               Registrar
             </Link>
