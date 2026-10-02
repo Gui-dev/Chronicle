@@ -8,6 +8,11 @@ async function focusIsInsideDialog(page: import('@playwright/test').Page) {
   )
 }
 
+/** Retrying wrapper: a single evaluate() snapshot would flake on timing drift. */
+async function expectFocusInsideDialog(page: import('@playwright/test').Page) {
+  await expect.poll(() => focusIsInsideDialog(page)).toBe(true)
+}
+
 test.describe('Gerenciamento de foco', () => {
   test('confirm dialog gives focus back to the delete button', async ({ authenticatedPage }) => {
     await createMemory(authenticatedPage, {
@@ -21,7 +26,7 @@ test.describe('Gerenciamento de foco', () => {
 
     const dialog = authenticatedPage.getByRole('dialog')
     await expect(dialog).toBeVisible()
-    expect(await focusIsInsideDialog(authenticatedPage)).toBe(true)
+    await expectFocusInsideDialog(authenticatedPage)
 
     await authenticatedPage.keyboard.press('Escape')
     await expect(authenticatedPage.getByRole('dialog')).toHaveCount(0)
@@ -42,7 +47,7 @@ test.describe('Gerenciamento de foco', () => {
     await share.click()
 
     await expect(authenticatedPage.getByRole('dialog')).toBeVisible()
-    expect(await focusIsInsideDialog(authenticatedPage)).toBe(true)
+    await expectFocusInsideDialog(authenticatedPage)
 
     await authenticatedPage.keyboard.press('Escape')
     await expect(authenticatedPage.getByRole('dialog')).toHaveCount(0)
@@ -63,7 +68,7 @@ test.describe('Gerenciamento de foco', () => {
     for (let i = 0; i < 12; i++) {
       await authenticatedPage.keyboard.press('Tab')
     }
-    expect(await focusIsInsideDialog(authenticatedPage)).toBe(true)
+    await expectFocusInsideDialog(authenticatedPage)
 
     await authenticatedPage.keyboard.press('Escape')
     await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toHaveCount(0)
@@ -83,10 +88,42 @@ test.describe('Gerenciamento de foco', () => {
     await thumb.click()
 
     await expect(authenticatedPage.locator('[data-testid="lightbox"]')).toBeVisible()
-    expect(await focusIsInsideDialog(authenticatedPage)).toBe(true)
+    await expectFocusInsideDialog(authenticatedPage)
 
     await authenticatedPage.keyboard.press('Escape')
     await expect(authenticatedPage.locator('[data-testid="lightbox"]')).toHaveCount(0)
     await expect(thumb).toBeFocused()
+  })
+
+  test('deleting a card hands focus to the timeline instead of body', async ({
+    authenticatedPage,
+  }) => {
+    const memoryId = await createMemory(authenticatedPage, {
+      title: 'Foco pós-deletar',
+      memoryDate: '2026-09-24',
+    })
+    await authenticatedPage.goto('/')
+
+    const card = authenticatedPage.locator(`[data-testid="memory-card-${memoryId}"]`)
+    await expect(card).toBeVisible()
+    await card.locator('[data-testid="card-delete"]').click()
+
+    const dialog = authenticatedPage.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Deletar', exact: true }).click()
+
+    await expect(authenticatedPage.locator(`[data-testid="memory-card-${memoryId}"]`)).toHaveCount(
+      0,
+    )
+    await expect(authenticatedPage.getByRole('dialog')).toHaveCount(0)
+
+    // The card the dialog used to restore focus to is gone. Focus must land on
+    // something that outlived it — never <body>, where the next Tab would
+    // restart from the top of the document.
+    await expect
+      .poll(() =>
+        authenticatedPage.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? 'none'),
+      )
+      .toMatch(/^(li|ol|section|main)$/)
   })
 })

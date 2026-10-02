@@ -1,9 +1,9 @@
 'use client'
 
+import { useDialogFocusRestore } from '@/hooks/use-dialog-focus-restore'
 import type { Memory } from '@/hooks/use-memories'
 import { useRevokeShare } from '@/hooks/use-revoke-share'
 import { api } from '@/lib/api-client'
-import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
 import {
   Button,
   Dialog,

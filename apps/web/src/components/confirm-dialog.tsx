@@ -1,6 +1,6 @@
 'use client'
 
-import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
+import { useDialogFocusRestore } from '@/hooks/use-dialog-focus-restore'
 import {
   Dialog,
   DialogContent,

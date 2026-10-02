@@ -30,7 +30,10 @@ export default function DashboardPage() {
 
       <MemoryFilters filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
 
-      <section id="timeline" aria-label="Linha do tempo">
+      {/* tabIndex -1: programmatic-focus target when focus has nowhere else to
+          go (e.g. the last card was deleted behind a dialog). Skip-target
+          pattern — not tab-reachable, invisible to the accessibility tree. */}
+      <section id="timeline" aria-label="Linha do tempo" tabIndex={-1}>
         <MemoryTimeline
           memories={memories}
           pagination={pagination}

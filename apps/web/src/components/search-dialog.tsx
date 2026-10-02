@@ -1,8 +1,8 @@
 'use client'
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useDialogFocusRestore } from '@/hooks/use-dialog-focus-restore'
 import { useMemories } from '@/hooks/use-memories'
-import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, Input } from '@chronicle/ui'
 import { Loader2, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -119,7 +119,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         className="max-w-2xl border-card bg-card text-text"
         data-testid="search-dialog"
         // Fires before Radix moves focus, which is the only moment
-        // `document.activeElement` still names the element the user left. React's
+        // `document.activeElement` still names the element the user left (Radix
+        // can skip this handler when focus is already inside the container — not
+        // here: focus arrives from the navbar button). React's
         // `autoFocus` would fire in the commit phase, ahead of this event, and
         // both this snapshot and Radix's own would then point at this dialog's
         // input — so the input is focused here instead. The hook takes the
