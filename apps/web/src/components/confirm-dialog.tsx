@@ -1,5 +1,6 @@
 'use client'
 
+import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
 import {
   Dialog,
   DialogContent,
@@ -30,9 +31,15 @@ export function ConfirmDialog({
   onConfirm,
   isPending = false,
 }: ConfirmDialogProps) {
+  const focusRestore = useDialogFocusRestore()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-card bg-card sm:max-w-md">
+      <DialogContent
+        className="border-card bg-card sm:max-w-md"
+        onOpenAutoFocus={focusRestore.onOpenAutoFocus}
+        onCloseAutoFocus={focusRestore.onCloseAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle className="text-text">{title}</DialogTitle>
           <DialogDescription className="text-muted">{description}</DialogDescription>

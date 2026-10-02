@@ -2,6 +2,7 @@
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useMemories } from '@/hooks/use-memories'
+import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, Input } from '@chronicle/ui'
 import { Loader2, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -33,7 +34,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const router = useRouter()
   const listRef = useRef<HTMLUListElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const triggerRef = useRef<HTMLElement | null>(null)
+  const focusRestore = useDialogFocusRestore()
 
   const trimmed = debouncedQuery.trim()
   // `enabled` keeps a keystroke from firing a request for an empty or
@@ -121,26 +122,15 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         // `document.activeElement` still names the element the user left. React's
         // `autoFocus` would fire in the commit phase, ahead of this event, and
         // both this snapshot and Radix's own would then point at this dialog's
-        // input — so the input is focused here instead.
+        // input — so the input is focused here instead. The hook takes the
+        // snapshot; the default is prevented so focus lands on the input and
+        // `onCloseAutoFocus` can hand it back to the navbar button.
         onOpenAutoFocus={(event) => {
-          triggerRef.current =
-            document.activeElement instanceof HTMLElement ? document.activeElement : null
+          focusRestore.onOpenAutoFocus(event)
           event.preventDefault()
           inputRef.current?.focus()
         }}
-        // Radix only returns focus to a `DialogTrigger`, and this dialog is
-        // opened from state, so `triggerRef` inside Radix is null and nothing
-        // would restore focus: the page would be left focused on `body`.
-        // Preventing the default also stops Radix from re-focusing the stale
-        // input it snapshotted. This event is dispatched in a `setTimeout`
-        // after the content leaves the DOM, so the page is no longer inert by
-        // the time we hand focus back.
-        onCloseAutoFocus={(event) => {
-          event.preventDefault()
-          const trigger = triggerRef.current
-          triggerRef.current = null
-          if (trigger?.isConnected) trigger.focus()
-        }}
+        onCloseAutoFocus={focusRestore.onCloseAutoFocus}
       >
         <DialogTitle className="sr-only">Buscar memórias</DialogTitle>
         <DialogDescription className="sr-only">

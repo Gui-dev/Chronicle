@@ -3,6 +3,7 @@
 import type { Memory } from '@/hooks/use-memories'
 import { useRevokeShare } from '@/hooks/use-revoke-share'
 import { api } from '@/lib/api-client'
+import { useDialogFocusRestore } from '@/lib/use-dialog-focus-restore'
 import {
   Button,
   Dialog,
@@ -31,6 +32,7 @@ function formatDate(iso: string): string {
 export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) {
   const queryClient = useQueryClient()
   const revoke = useRevokeShare()
+  const focusRestore = useDialogFocusRestore()
 
   // Same query key as useMemory: opening the dialog reuses a cached detail
   // read instead of fetching a second copy of the memory.
@@ -86,7 +88,11 @@ export function ShareDialog({ memoryId, open, onOpenChange }: ShareDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-card bg-card sm:max-w-md">
+      <DialogContent
+        className="border-card bg-card sm:max-w-md"
+        onOpenAutoFocus={focusRestore.onOpenAutoFocus}
+        onCloseAutoFocus={focusRestore.onCloseAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle className="text-text">Compartilhar memória</DialogTitle>
           <DialogDescription className="text-muted">
