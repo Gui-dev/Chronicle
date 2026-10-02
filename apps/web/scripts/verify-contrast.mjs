@@ -11,6 +11,7 @@ const css = readFileSync(cssPath, 'utf8')
 const blocks = {
   dark: css.match(/:root\s*\{[^}]*\}/)?.[0],
   light: css.match(/:root\[data-theme=['"]light['"]\]\s*\{[^}]*\}/)?.[0],
+  purple: css.match(/:root\[data-theme=['"]purple['"]\]\s*\{[^}]*\}/)?.[0],
 }
 
 function readVar(theme, name) {
