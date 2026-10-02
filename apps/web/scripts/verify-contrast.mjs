@@ -6,12 +6,21 @@ import { fileURLToPath } from 'node:url'
 const cssPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../src/app/globals.css')
 const css = readFileSync(cssPath, 'utf8')
 
-function readVar(name) {
-  const rootBlock = css.match(/:root\s*\{[^}]*\}/)
-  if (!rootBlock) throw new Error('no :root block found in globals.css')
-  const match = rootBlock[0].match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6}(?![0-9a-fA-F]))`))
+// The plain `:root` selector never matches the light block: after `:root`
+// comes `[`, not `{`.
+const blocks = {
+  dark: css.match(/:root\s*\{[^}]*\}/)?.[0],
+  light: css.match(/:root\[data-theme=['"]light['"]\]\s*\{[^}]*\}/)?.[0],
+}
+
+function readVar(theme, name) {
+  const block = blocks[theme]
+  if (!block) throw new Error(`no palette block found in globals.css for theme "${theme}"`)
+  const match = block.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6}(?![0-9a-fA-F]))`))
   if (!match) {
-    throw new Error(`no #rrggbb literal found for ${name} in the :root block of globals.css`)
+    throw new Error(
+      `no #rrggbb literal found for ${name} in the ${theme} palette block of globals.css`,
+    )
   }
   return match[1]
 }
@@ -45,7 +54,6 @@ const names = [
   '--destructive',
   '--destructive-foreground',
 ]
-const palette = Object.fromEntries(names.map((name) => [name, readVar(name)]))
 
 const checks = [
   ['--muted-foreground text on --card', '--muted-foreground', '--card', 4.5],
@@ -67,11 +75,14 @@ const checks = [
 ]
 
 let failed = 0
-for (const [label, fg, bg, min] of checks) {
-  const ratio = contrast(palette[fg], palette[bg])
-  const ok = ratio >= min
-  if (!ok) failed++
-  console.log(`${ok ? 'PASS' : 'FAIL'} ${ratio.toFixed(2)}:1 (min ${min}) — ${label}`)
+for (const theme of Object.keys(blocks)) {
+  const palette = Object.fromEntries(names.map((name) => [name, readVar(theme, name)]))
+  for (const [label, fg, bg, min] of checks) {
+    const ratio = contrast(palette[fg], palette[bg])
+    const ok = ratio >= min
+    if (!ok) failed++
+    console.log(`${ok ? 'PASS' : 'FAIL'} ${ratio.toFixed(2)}:1 (min ${min}) — [${theme}] ${label}`)
+  }
 }
 
 if (failed > 0) {

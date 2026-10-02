@@ -41,6 +41,32 @@
   --input: #6a6a84;
   --ring: #f0c040;
   --radius: 0.5rem;
+  --glow-rgb: 240, 192, 64;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #faf8f4;
+  --foreground: #14141f;
+  --card: #ffffff;
+  --card-foreground: #14141f;
+  --primary: #8a6d00;
+  --primary-foreground: #ffffff;
+  --secondary: #c2410c;
+  --secondary-foreground: #ffffff;
+  --muted: #6e6e85;
+  --muted-foreground: #5f5f78;
+  --accent: #ff8c00;
+  --accent-foreground: #0a0a0f;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --text: #14141f;
+  --border: #948e82;
+  --input: #8f897d;
+  --ring: #8a6d00;
+  --radius: 0.5rem;
+  --glow-rgb: 154, 109, 0;
+  color-scheme: light;
 }
 
 body {
