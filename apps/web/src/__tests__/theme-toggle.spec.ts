@@ -159,4 +159,14 @@ test.describe('Tema — sistema', () => {
     await authenticatedPage.emulateMedia({ colorScheme: 'light' })
     await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'dark')
   })
+
+  test('a manual purple choice beats the system preference', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/')
+    await authenticatedPage.locator('[data-testid="user-menu-toggle"]').click()
+    await authenticatedPage.getByTestId('menu-theme-purple').click()
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'purple')
+
+    await authenticatedPage.emulateMedia({ colorScheme: 'light' })
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'purple')
+  })
 })
