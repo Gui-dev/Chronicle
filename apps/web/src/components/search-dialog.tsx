@@ -38,12 +38,16 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const trimmed = debouncedQuery.trim()
   // `enabled` keeps a keystroke from firing a request for an empty or
   // prefix-only query; `limit` is a preview, the full result set lives on /search.
-  // `scope` keeps this query's key off the timeline's: both sides hash to
+  // Only the empty term collides with the timeline: both sides hash to
   // `{page:1, limit:20}` while `search` is undefined, and a disabled query
-  // still reads the cache — the dialog would render the timeline's rows.
+  // still reads the cache. A term already makes the key distinct — and shared
+  // with /search — so scoping it too would cost a duplicate fetch on "Ver todas".
   const { data, isFetching } = useMemories(
     { page: 1, limit: 20, search: trimmed || undefined },
-    { enabled: open && trimmed.length > 0, scope: 'search-dialog' },
+    {
+      enabled: open && trimmed.length > 0,
+      scope: trimmed.length > 0 ? undefined : 'search-dialog',
+    },
   )
 
   // Nothing is a result until a query is actually running: the empty-query

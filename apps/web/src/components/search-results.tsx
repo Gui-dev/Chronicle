@@ -88,9 +88,23 @@ export function SearchResults({ query }: SearchResultsProps) {
   const page = pagination.query === query ? pagination.page : 1
 
   const filters: MemoryFiltersInput = { page, limit: PAGE_SIZE, search: query || undefined }
-  const { data, isLoading, error, refetch } = useMemories(filters, {
-    enabled: query.trim().length > 0,
+  const hasQuery = query.trim().length > 0
+  const {
+    data: liveData,
+    isLoading,
+    error,
+    refetch,
+  } = useMemories(filters, {
+    enabled: hasQuery,
+    // With no `search` the key would hash to the timeline's `{page, limit}`
+    // entry; scoping keeps this page off that cache. A term already makes the
+    // key distinct, so the scope is only needed for the empty case.
+    scope: hasQuery ? undefined : 'search-page',
   })
+
+  // A disabled query still reads its cache: with no query there is nothing to
+  // show, so the timeline's rows must never surface here as results.
+  const data = hasQuery ? liveData : undefined
 
   const meta = data?.searchMeta ?? null
   const chips = meta ? buildChips(meta) : []

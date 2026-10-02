@@ -167,6 +167,41 @@ test.describe('Página de busca', () => {
     expect(requests).toEqual([])
   })
 
+  test('an empty query reached from the dashboard shows no cached timeline rows', async ({
+    authenticatedPage,
+  }) => {
+    const alvo = await createMemory(authenticatedPage, {
+      title: 'Festa Junina da Vila',
+      memoryDate: '2026-06-24',
+    })
+
+    // The dashboard fills the cache entry an empty `/search` query hashes to
+    // — `{page, limit}` with no `search`. The reload also puts `alvo` in that
+    // cache and hydrates the navbar, so Ctrl+K below is never a no-op.
+    await authenticatedPage.goto('/')
+    await expect(authenticatedPage.locator(`[data-memory-id="${alvo}"]`)).toBeVisible()
+
+    // Same-load, client-side: "Ver todas" is a router.push, so /search inherits
+    // the QueryClient that holds the timeline's rows. A full page load would
+    // swap in a fresh client and hide the collision entirely.
+    await authenticatedPage.keyboard.press('Control+k')
+    await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toBeVisible()
+    await authenticatedPage.fill('[data-testid="search-dialog-input"]', 'Festa')
+    await authenticatedPage.locator('[data-testid="search-see-all"]').click()
+    await expect(authenticatedPage).toHaveURL(/\/search\?q=Festa$/)
+    await expect(authenticatedPage.locator(`[data-memory-id="${alvo}"]`)).toBeVisible()
+
+    // Removing the last chip empties the query. The disabled fetch that
+    // follows must show nothing — not the timeline's cached rows and total
+    // masquerading as results.
+    await authenticatedPage.locator('[data-testid="search-chip-festa"]').click()
+    await expect(authenticatedPage).toHaveURL(/\/search\?q=$/)
+
+    await expect(authenticatedPage.locator('[data-memory-id]')).toHaveCount(0)
+    await expect(authenticatedPage.locator('[data-testid="search-count"]')).toHaveCount(0)
+    await expect(authenticatedPage.getByText('Nenhuma memória encontrada')).toBeVisible()
+  })
+
   test('removing one of two identical chips drops a single occurrence', async ({
     authenticatedPage,
   }) => {
