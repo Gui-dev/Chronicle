@@ -18,6 +18,7 @@ export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -35,7 +36,30 @@ export function Navbar() {
       if (event.key === 'Escape') {
         setMenuOpen(false)
         triggerRef.current?.focus()
+        return
       }
+      if (
+        event.key !== 'ArrowDown' &&
+        event.key !== 'ArrowUp' &&
+        event.key !== 'Home' &&
+        event.key !== 'End'
+      ) {
+        return
+      }
+      event.preventDefault()
+      const items = Array.from(
+        menuRef.current?.querySelectorAll<HTMLElement>(
+          '[role="menuitem"], [role="menuitemradio"]',
+        ) ?? [],
+      )
+      if (items.length === 0) return
+      const current = items.indexOf(document.activeElement as HTMLElement)
+      let next: number
+      if (event.key === 'Home') next = 0
+      else if (event.key === 'End') next = items.length - 1
+      else if (event.key === 'ArrowDown') next = current < 0 ? 0 : (current + 1) % items.length
+      else next = current < 0 ? items.length - 1 : (current - 1 + items.length) % items.length
+      items[next]?.focus()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -172,6 +196,7 @@ export function Navbar() {
 
                 {menuOpen && (
                   <div
+                    ref={menuRef}
                     aria-label="Menu do usuário"
                     role="menu"
                     className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
@@ -217,30 +242,35 @@ export function Navbar() {
                       Nova Memória
                     </Link>
                     <div className="my-1 h-px bg-border" aria-hidden="true" />
-                    <span className="block px-4 pt-1 pb-1 text-xs text-muted" aria-hidden="true">
-                      Tema
-                    </span>
-                    {themeOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={mounted ? theme === option.value : undefined}
-                        aria-label={`Tema: ${option.label}`}
-                        onClick={() => {
-                          setTheme(option.value)
-                          setMenuOpen(false)
-                          triggerRef.current?.focus()
-                        }}
-                        className={menuItemClass}
-                        data-testid={option.testId}
-                      >
-                        <span className={`${menuIconClass} grid place-items-center`}>
-                          {mounted && theme === option.value ? <Check className="h-4 w-4" /> : null}
-                        </span>
-                        {option.label}
-                      </button>
-                    ))}
+                    {/* biome-ignore lint/a11y/useSemanticElements: fieldset groups form controls; this groups menu theme choices */}
+                    <div role="group" aria-label="Tema">
+                      <span className="block px-4 pt-1 pb-1 text-xs text-muted" aria-hidden="true">
+                        Tema
+                      </span>
+                      {themeOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={mounted ? theme === option.value : undefined}
+                          aria-label={`Tema: ${option.label}`}
+                          onClick={() => {
+                            setTheme(option.value)
+                            setMenuOpen(false)
+                            triggerRef.current?.focus()
+                          }}
+                          className={menuItemClass}
+                          data-testid={option.testId}
+                        >
+                          <span className={`${menuIconClass} grid place-items-center`}>
+                            {mounted && theme === option.value ? (
+                              <Check className="h-4 w-4" />
+                            ) : null}
+                          </span>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                     <div className="my-1 h-px bg-border" aria-hidden="true" />
                     <button
                       type="button"

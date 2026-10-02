@@ -59,4 +59,20 @@ test.describe('Tema', () => {
       'rgb(250, 248, 244)',
     )
   })
+
+  test('arrow keys rove focus through the open menu', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/')
+    const toggle = authenticatedPage.locator(TOGGLE)
+    await toggle.click()
+    await toggle.press('ArrowDown')
+    await expect(authenticatedPage.getByTestId('menu-my-memories')).toBeFocused()
+    await authenticatedPage.keyboard.press('ArrowUp')
+    await expect(authenticatedPage.getByTestId('menu-sair')).toBeFocused()
+    await authenticatedPage.keyboard.press('Home')
+    await expect(authenticatedPage.getByTestId('menu-my-memories')).toBeFocused()
+    await authenticatedPage.keyboard.press('End')
+    await expect(authenticatedPage.getByTestId('menu-sair')).toBeFocused()
+    await authenticatedPage.keyboard.press('Escape')
+    await expect(toggle).toBeFocused()
+  })
 })
