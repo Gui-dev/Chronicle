@@ -69,6 +69,30 @@
   color-scheme: light;
 }
 
+:root[data-theme="purple"] {
+  --background: #0d0714;
+  --foreground: #e2e8f0;
+  --card: #160d26;
+  --card-foreground: #e2e8f0;
+  --primary: #a855f7;
+  --primary-foreground: #0d0714;
+  --secondary: #22c55e;
+  --secondary-foreground: #0d0714;
+  --muted: #6d5a8a;
+  --muted-foreground: #a895c4;
+  --accent: #22c55e;
+  --accent-foreground: #0d0714;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --text: #e2e8f0;
+  --border: #3d2a5c;
+  --input: #3d2a5c;
+  --ring: #a855f7;
+  --radius: 0.5rem;
+  --glow-rgb: 168, 85, 247;
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
