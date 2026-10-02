@@ -129,6 +129,7 @@ export function Navbar() {
     { value: 'system', label: 'Sistema', testId: 'menu-theme-system' },
     { value: 'dark', label: 'Escuro', testId: 'menu-theme-dark' },
     { value: 'light', label: 'Claro', testId: 'menu-theme-light' },
+    { value: 'purple', label: 'Roxo', testId: 'menu-theme-purple' },
   ] as const
 
   return (
