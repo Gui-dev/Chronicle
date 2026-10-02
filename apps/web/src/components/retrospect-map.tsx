@@ -15,9 +15,20 @@ interface RetrospectMapProps {
   places: MapPlace[]
 }
 
+function buildMarkerHtml(): string {
+  const styles = getComputedStyle(document.documentElement)
+  const primary = styles.getPropertyValue('--primary').trim()
+  const background = styles.getPropertyValue('--background').trim()
+  const glowRgb = styles.getPropertyValue('--glow-rgb').trim()
+  return `<span style="display:block;width:14px;height:14px;border-radius:50%;background:${primary};border:2px solid ${background};box-shadow:0 0 6px rgba(${glowRgb},0.8)"></span>`
+}
+
 export default function RetrospectMap({ places }: RetrospectMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<LeafletNamespace.Map | null>(null)
+  const markersRef = useRef<LeafletNamespace.Marker[]>([])
+  const leafletRef = useRef<typeof import('leaflet') | null>(null)
+  const observerRef = useRef<MutationObserver | null>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -31,6 +42,7 @@ export default function RetrospectMap({ places }: RetrospectMapProps) {
       if (disposed || !containerRef.current) return
 
       map = L.map(containerRef.current)
+      leafletRef.current = L
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
@@ -40,18 +52,20 @@ export default function RetrospectMap({ places }: RetrospectMapProps) {
 
       const icon = L.divIcon({
         className: '',
-        html: '<span style="display:block;width:14px;height:14px;border-radius:50%;background:#f0c040;border:2px solid #0a0a0f;box-shadow:0 0 6px rgba(240,192,64,0.8)"></span>',
+        html: buildMarkerHtml(),
         iconSize: [14, 14],
         iconAnchor: [7, 7],
       })
 
+      const markers: LeafletNamespace.Marker[] = []
       for (const place of places) {
-        L.marker([place.lat, place.lng], { icon })
-          .addTo(map)
-          .bindTooltip(
-            `${place.name} — ${place.count} ${place.count === 1 ? 'memória' : 'memórias'}`,
-          )
+        const marker = L.marker([place.lat, place.lng], { icon }).addTo(map)
+        marker.bindTooltip(
+          `${place.name} — ${place.count} ${place.count === 1 ? 'memória' : 'memórias'}`,
+        )
+        markers.push(marker)
       }
+      markersRef.current = markers
 
       if (places.length === 1) {
         map.setView([places[0].lat, places[0].lng], 10)
@@ -74,8 +88,30 @@ export default function RetrospectMap({ places }: RetrospectMapProps) {
       disposed = true
       map?.remove()
       mapRef.current = null
+      markersRef.current = []
     }
   }, [places])
+
+  useEffect(() => {
+    const html = document.documentElement
+    const observer = new MutationObserver(() => {
+      const L = leafletRef.current
+      if (!L || markersRef.current.length === 0) return
+      const icon = L.divIcon({
+        className: '',
+        html: buildMarkerHtml(),
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      })
+      for (const marker of markersRef.current) marker.setIcon(icon)
+    })
+    observer.observe(html, { attributes: true, attributeFilter: ['data-theme'] })
+    observerRef.current = observer
+    return () => {
+      observer.disconnect()
+      observerRef.current = null
+    }
+  }, [])
 
   return (
     <div className="space-y-4">

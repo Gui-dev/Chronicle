@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test'
 import { test } from './fixtures'
+import { createMemory } from './helpers'
 
 const TOGGLE = '[data-testid="user-menu-toggle"]'
 
@@ -74,5 +75,34 @@ test.describe('Tema', () => {
     await expect(authenticatedPage.getByTestId('menu-sair')).toBeFocused()
     await authenticatedPage.keyboard.press('Escape')
     await expect(toggle).toBeFocused()
+  })
+})
+
+test.describe('Tema — marcador do mapa', () => {
+  test.use({ colorScheme: 'dark' })
+
+  test('map marker follows the selected theme', async ({ authenticatedPage }) => {
+    const now = new Date()
+    const year = now.getUTCFullYear()
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0')
+    await createMemory(authenticatedPage, {
+      title: 'Marcador para o tema',
+      memoryDate: `${year}-${month}-15`,
+      locationName: 'Recife',
+      locationLat: -8.05,
+      locationLng: -34.9,
+    })
+
+    await authenticatedPage.goto('/retrospectivas')
+    const marker = authenticatedPage.locator('.leaflet-marker-icon span').first()
+    await expect(marker).toBeVisible()
+    // System preference is dark, so the marker starts on the dark gold.
+    await expect(marker).toHaveCSS('background-color', 'rgb(240, 192, 64)')
+
+    await authenticatedPage.getByTestId('user-menu-toggle').click()
+    await authenticatedPage.getByTestId('menu-theme-light').click()
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'light')
+
+    await expect(marker).toHaveCSS('background-color', 'rgb(117, 91, 0)')
   })
 })
