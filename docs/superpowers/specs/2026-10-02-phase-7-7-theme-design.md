@@ -64,7 +64,7 @@ enableSystem
 
 ## 2. Paleta Light (quente)
 
-`:root[data-theme='light'] { … }` — todas as 16 checagens do gate calculadas em 2026-10-02 e **todas passam**:
+`:root[data-theme='light'] { … }` — todas as 20 checagens do gate calculadas em 2026-10-02 e **todas passam**:
 
 | Token | Valor | Ratio verificado |
 |---|---|---|
@@ -73,10 +73,10 @@ enableSystem
 | `--card` | `#ffffff` | `--text` 18.27:1 |
 | `--card-foreground` | `#14141f` | — |
 | `--text` | `#14141f` | — |
-| `--primary` | `#8a6d00` (dourado escurecido) | 4.64:1 bg · 4.92:1 card |
-| `--primary-foreground` | `#ffffff` | 4.92:1 sobre primary |
-| `--secondary` | `#c2410c` (laranja escurecido) | 4.88:1 sobre bg |
-| `--secondary-foreground` | `#ffffff` | 5.18:1 sobre secondary |
+| `--primary` | `#755b00` (dourado escurecido) | 6.09:1 bg · 6.46:1 card |
+| `--primary-foreground` | `#ffffff` | 6.46:1 sobre primary |
+| `--secondary` | `#b83d0a` (laranja escurecido) | 5.34:1 sobre bg |
+| `--secondary-foreground` | `#ffffff` | 5.66:1 sobre secondary |
 | `--muted` | `#6e6e85` (texto legível) | 4.68:1 bg · 4.96:1 card |
 | `--muted-foreground` | `#5f5f78` | 5.83:1 bg · 6.19:1 card |
 | `--accent` | `#ff8c00` (mantido) | — |
@@ -84,15 +84,15 @@ enableSystem
 | `--destructive` / `--destructive-foreground` | `#dc2626` / `#ffffff` (mantidos) | 4.83:1 |
 | `--border` | `#948e82` | 3.26:1 vs card (gate) · 3.07:1 vs bg (não gateado) |
 | `--input` | `#8f897d` | 3.48:1 vs card · 3.28:1 vs bg |
-| `--ring` | `#8a6d00` (foco acompanha o primary) | — |
+| `--ring` | `#755b00` (foco acompanha o primary) | — |
 | `--radius` | `0.5rem` (compartilhado) | — |
-| `--glow-rgb` | `154,109,0` (componentes RGB do dourado escurecido; ver §3) | — |
+| `--glow-rgb` | `117,91,0` (componentes RGB do dourado escurecido; ver §3) | — |
 
 Os valores são ancorados nos ratios acima; a implementação ajusta fino para dar margem se alguma checagem ficar apertada (critério: ≥4.5 com folga nos textos; nos pares de borda gateados, ≥3.2). **Critério de aceite: o gate estendido (§4) passa com as duas paletas.**
 
 ## 3. Exceções (o que foge dos tokens)
 
-1. **Glows dourados** — 19 usos em 7 arquivos (navbar 5, register 4, login 4, memory-card 3, my-memories 2, profile 1) com **opacidades 0.8/0.5/0.4/0.15/0.1 e raios 8px/20px**. Como as variações são intencionais, tokeniza-se **só a cor**: novo token `--glow-rgb` (`240,192,64` no dark, `154,109,0` no light) e as classes mantêm opacidade/raio, ex.: `drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]` e `shadow-[0_0_20px_rgba(var(--glow-rgb),0.1)]` — visual dark idêntico ao atual. Verificação visual no light: se o âmbar sujar o fundo claro, trocar o valor light por neutro (`100,95,80`) mantendo as opacidades.
+1. **Glows dourados** — 19 usos em 7 arquivos (navbar 5, register 4, login 4, memory-card 3, my-memories 2, profile 1) com **opacidades 0.8/0.5/0.4/0.15/0.1 e raios 8px/20px**. Como as variações são intencionais, tokeniza-se **só a cor**: novo token `--glow-rgb` (`240,192,64` no dark, `117,91,0` no light) e as classes mantêm opacidade/raio, ex.: `drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]` e `shadow-[0_0_20px_rgba(var(--glow-rgb),0.1)]` — visual dark idêntico ao atual. Verificação visual no light: se o âmbar sujar o fundo claro, trocar o valor light por neutro (`100,95,80`) mantendo as opacidades.
 2. **Marcador Leaflet** (`retrospect-map.tsx:43`) — string HTML inline com `background:#f0c040; border:2px solid #0a0a0f; box-shadow:0 0 6px rgba(240,192,64,0.8)` (a borda é a cor de fundo da página). Passa a montar o estilo lendo `--primary`, `--background` e `--glow-rgb` via `getComputedStyle(document.documentElement)`, e a re-monta quando `resolvedTheme` muda (refs de markers; `marker.setIcon`).
 3. **`AvatarFallback`** (`packages/ui/src/components/ui/avatar.tsx:37`) — hoje `bg-muted` sem cor de texto (no dark, iniciais herdam `--foreground` branco sobre `#a0a0b0` ≈ 2.15:1). Ganha `text-background`: no dark `#0a0a0f` sobre `#a0a0b0` = **7.67:1**; no light `#faf8f4` sobre `#6e6e85` = **4.68:1**.
 4. **Que herda sozinho (sem código):** scrollbar (globals.css L51–66), `:focus-visible` (L68–73), `body`, Toaster (`toastOptions` usa classes de token), todos os componentes (579 usos por token).
@@ -103,7 +103,7 @@ Os valores são ancorados nos ratios acima; a implementação ajusta fino para d
 
 - Extrair **ambos** os blocos: `:root { … }` e `:root[data-theme='light'] { … }` (cada bloco sem chaves aninhadas — regex atual `[^}]*` continua válida por bloco).
 - `readVar(name, block)` parametrizado; lançar erro claro se um token faltar em um dos blocos.
-- Rodar as **mesmas 16 checagens em cada paleta** (32 no total); qualquer falha → `exit(1)` com o nome da paleta na linha.
+- Rodar as **mesmas 20 checagens em cada paleta** (40 no total); qualquer falha → `exit(1)` com o nome da paleta na linha.
 - Continua sendo o script `test`/`test:contrast` do `apps/web` — coberto pelo `pnpm test`.
 
 ## 5. UI no Menu do Usuário
@@ -132,7 +132,7 @@ Dentro do dropdown existente (`navbar.tsx`), **após os itens de navegação e a
 
 ### Gate/estáticos
 
-- `pnpm --filter web test:contrast` (estendido) — 32 checagens passando.
+- `pnpm --filter web test:contrast` (estendido) — 40 checagens passando.
 - `a11y.spec.ts` — os 5 scans continuam verdes no tema claro (executar pelo menos a home/login com `colorScheme: 'light'` no contexto).
 
 ### Regressão
