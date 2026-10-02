@@ -77,7 +77,7 @@ export default function RegisterPage() {
               data-testid="register-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="h-10 rounded-lg border-2 border-primary/80 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               required
             />
           </div>
@@ -93,7 +93,7 @@ export default function RegisterPage() {
               data-testid="register-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="h-10 rounded-lg border-2 border-primary/80 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               required
             />
           </div>
@@ -109,7 +109,7 @@ export default function RegisterPage() {
               data-testid="register-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-10 rounded-lg border-2 border-primary/50 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="h-10 rounded-lg border-2 border-primary/80 bg-card px-3 py-2 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               required
             />
           </div>

@@ -106,3 +106,25 @@ test.describe('Tema — marcador do mapa', () => {
     await expect(marker).toHaveCSS('background-color', 'rgb(117, 91, 0)')
   })
 })
+
+test.describe('Tema — sistema', () => {
+  test.use({ colorScheme: 'light' })
+
+  test('follows the system preference and reacts to changes', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  })
+
+  test('a manual choice beats the system preference', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/')
+    await authenticatedPage.locator('[data-testid="user-menu-toggle"]').click()
+    await authenticatedPage.getByTestId('menu-theme-dark').click()
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'dark')
+
+    await authenticatedPage.emulateMedia({ colorScheme: 'light' })
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'dark')
+  })
+})

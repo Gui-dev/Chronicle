@@ -166,18 +166,18 @@ export function SharePreview({ token }: { token: string }) {
 
           <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
             {memory.weatherDesc && (
-              <span className="rounded-xl border border-card bg-background px-3 py-1.5 text-amber-300">
+              <span className="rounded-xl border border-card bg-background px-3 py-1.5 text-primary">
                 {memory.weatherIcon || '🌤'} {memory.weatherDesc}
               </span>
             )}
             {memory.locationName && (
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 {memory.locationName}
               </span>
             )}
             {memory.people.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-muted-foreground">
                 <Users className="h-3 w-3" />
                 {memory.people.map((person) => person.name).join(', ')}
               </span>
@@ -205,7 +205,7 @@ export function SharePreview({ token }: { token: string }) {
 
           {memory.aiNarrative && (
             <div className="border-t border-card/60 pt-4">
-              <p className="font-serif text-sm leading-relaxed italic text-gray-300">
+              <p className="font-serif text-sm leading-relaxed italic text-card-foreground">
                 {memory.aiNarrative}
               </p>
             </div>

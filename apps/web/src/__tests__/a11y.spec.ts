@@ -82,3 +82,20 @@ test.describe('axe WCAG 2.1 AA', () => {
     expect(await scan(page), 'axe violations on register').toBe('')
   })
 })
+
+test.describe('axe WCAG 2.1 AA — light theme', () => {
+  test.use({ colorScheme: 'light' })
+
+  test('home has no violations', async ({ authenticatedPage }) => {
+    await createMemory(authenticatedPage, {
+      title: 'Memória para auditoria no claro',
+      memoryDate: '2026-09-24',
+      locationName: 'São Paulo',
+    })
+    await authenticatedPage.goto('/')
+    await expect(authenticatedPage.locator('html')).toHaveAttribute('data-theme', 'light')
+    await expect(authenticatedPage.locator('[data-memory-id]').first()).toBeVisible()
+
+    expect(await scan(authenticatedPage), 'axe violations on home (light)').toBe('')
+  })
+})

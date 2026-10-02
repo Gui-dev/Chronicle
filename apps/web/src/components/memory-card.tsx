@@ -317,19 +317,19 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
 
         <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
           {memory.weatherTemp && (
-            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-amber-300">
+            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-primary">
               {memory.weatherIcon || '🌤'} {memory.weatherTemp}°C
               {memory.weatherDesc ? ` ${memory.weatherDesc}` : ''}
             </span>
           )}
           {memory.locationName && (
-            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
+            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {memory.locationName}
             </span>
           )}
           {memory.people.length > 0 && (
-            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-gray-300">
+            <span className="flex items-center gap-1.5 rounded-xl border border-card bg-background px-3 py-1.5 text-muted-foreground">
               <Users className="h-3 w-3" />
               {memory.people.map((p) => (
                 <button
@@ -405,7 +405,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
                 id={`narrative-panel-${memory.id}`}
                 className="mt-4 rounded-2xl border border-card bg-background/40 p-5"
               >
-                <p className="font-serif text-sm leading-relaxed italic text-gray-300">
+                <p className="font-serif text-sm leading-relaxed italic text-card-foreground">
                   {memory.aiNarrative}
                 </p>
 
