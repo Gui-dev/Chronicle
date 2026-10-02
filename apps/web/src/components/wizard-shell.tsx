@@ -102,7 +102,7 @@ export function WizardShell({ children }: { children: ReactNode }) {
               : ''}
           </span>
 
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 flex flex-wrap justify-between gap-y-2">
             <Link href="/" prefetch={false}>
               <Button
                 type="button"

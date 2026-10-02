@@ -116,7 +116,7 @@ function OverviewBody({ overview }: { overview: OverviewResponse }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         {empty ? (
           <div
             data-testid="retro-empty"
@@ -188,7 +188,7 @@ function OverviewBody({ overview }: { overview: OverviewResponse }) {
         )}
       </div>
 
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         {overview.places.length > 0 ? (
           <RetrospectMap places={overview.places} />
         ) : (
@@ -225,7 +225,7 @@ function RecurrenceCard({
   note?: string
 }) {
   return (
-    <div data-testid={testid} className="rounded-xl border border-card bg-card p-4">
+    <div data-testid={testid} className="min-w-0 rounded-xl border border-card bg-card p-4">
       <p className="text-xs font-semibold uppercase tracking-widest text-muted">{title}</p>
       {items.length === 0 ? (
         <p className="mt-2 text-sm text-muted">Sem dados no período</p>

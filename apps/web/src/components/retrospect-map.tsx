@@ -96,7 +96,7 @@ export default function RetrospectMap({ places }: RetrospectMapProps) {
               }}
               className="flex w-full items-center justify-between rounded-lg border border-input bg-card px-3 py-2 text-left text-sm text-text transition-colors hover:border-primary hover:text-primary"
             >
-              <span className="truncate">
+              <span className="min-w-0 truncate">
                 {place.name} — {place.count} {place.count === 1 ? 'memória' : 'memórias'}
               </span>
             </button>
