@@ -7,6 +7,18 @@ test.use({ viewport: { width: 375, height: 812 } })
 async function expectNoHorizontalScroll(page: Page, url: string) {
   await page.goto(url)
   await page.waitForLoadState('networkidle')
+
+  // goto follows redirects, so a renamed route or expired session would land
+  // on /login or a soft-404 with no overflow and pass silently. Assert after
+  // networkidle so client-side redirects (Next redirect() in a page) count
+  // too; compare pathname+search (not host) so a same-path auth redirect
+  // still passes — the content check below is what matters there.
+  const landed = new URL(page.url())
+  const intended = new URL(url, 'http://localhost')
+  expect(`${landed.pathname}${landed.search}`, `landed on the wrong page for ${url}`).toBe(
+    `${intended.pathname}${intended.search}`,
+  )
+
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
@@ -24,6 +36,12 @@ test.describe('Mobile 375px', () => {
       locationName: 'Praia do Rosa, Florianópolis, Santa Catarina, Brasil',
       people: ['Alice', 'Bob'],
       tags: ['viagem', 'praia', 'familia', 'amigos', 'verao'],
+    })
+    // Space-separated words wrap anywhere; this URL-shaped title is one
+    // unbroken token, the only shape that exercises h2 word-breaking.
+    await createMemory(authenticatedPage, {
+      title: `https://example.com/${'a'.repeat(110)}`,
+      memoryDate: '2026-09-25',
     })
 
     for (const url of [
@@ -51,8 +69,6 @@ test.describe('Mobile 375px', () => {
       elements.map((element) => element.getBoundingClientRect().x),
     )
     expect(xs.length).toBeGreaterThanOrEqual(2)
-    for (const x of xs) {
-      expect(x).toBe(xs[0])
-    }
+    expect(new Set(xs).size, 'cards must share one x').toBe(1)
   })
 })

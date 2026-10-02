@@ -180,7 +180,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-text group-hover:text-primary transition-colors">
+            <h2 className="text-2xl font-bold break-words text-text group-hover:text-primary transition-colors">
               &ldquo;{memory.title}&rdquo;
             </h2>
             {memory.content && (
