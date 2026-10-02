@@ -49,6 +49,25 @@ test.describe('Diálogo de busca', () => {
     await expect(authenticatedPage.locator('[data-testid^="search-result-"]')).toHaveCount(1)
   })
 
+  test('shows no result rows before typing, even with memories on the timeline', async ({
+    authenticatedPage,
+  }) => {
+    const festa = await createMemory(authenticatedPage, {
+      title: 'Festa Junina da Vila',
+      memoryDate: '2026-06-24',
+    })
+
+    await gotoHydrated(authenticatedPage, festa)
+
+    await openSearchDialog(authenticatedPage)
+
+    // With an empty query there is nothing to show. The dialog's query key
+    // must not collide with the timeline's cached unfiltered key: a disabled
+    // query still reads the cache, and the timeline's rows (other users'
+    // public memories included) would render as if they were results.
+    await expect(authenticatedPage.locator('[data-testid^="search-result-"]')).toHaveCount(0)
+  })
+
   test('shows the loading state while the query is in flight', async ({ authenticatedPage }) => {
     const alvo = await createMemory(authenticatedPage, {
       title: 'Consulta Pendente',

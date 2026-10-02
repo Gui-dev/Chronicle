@@ -38,13 +38,21 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const trimmed = debouncedQuery.trim()
   // `enabled` keeps a keystroke from firing a request for an empty or
   // prefix-only query; `limit` is a preview, the full result set lives on /search.
+  // `scope` keeps this query's key off the timeline's: both sides hash to
+  // `{page:1, limit:20}` while `search` is undefined, and a disabled query
+  // still reads the cache — the dialog would render the timeline's rows.
   const { data, isFetching } = useMemories(
     { page: 1, limit: 20, search: trimmed || undefined },
-    { enabled: open && trimmed.length > 0 },
+    { enabled: open && trimmed.length > 0, scope: 'search-dialog' },
   )
 
-  const results = (data?.data as SearchResultRow[] | undefined) ?? EMPTY_RESULTS
-  const total = data?.pagination.total ?? 0
+  // Nothing is a result until a query is actually running: the empty-query
+  // cache entry (however it got there) must not paint rows.
+  const results =
+    trimmed.length > 0
+      ? ((data?.data as SearchResultRow[] | undefined) ?? EMPTY_RESULTS)
+      : EMPTY_RESULTS
+  const total = trimmed.length > 0 ? (data?.pagination.total ?? 0) : 0
 
   // The result set can shrink under a live index — a refetch that matches
   // fewer rows, or a list the user just cleared. Clamping on read keeps the

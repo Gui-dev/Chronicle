@@ -85,9 +85,16 @@ function buildQueryString(filters: MemoryFiltersInput): string {
   return params.toString()
 }
 
-export function useMemories(filters: MemoryFiltersInput, options?: { enabled?: boolean }) {
+export function useMemories(
+  filters: MemoryFiltersInput,
+  options?: { enabled?: boolean; scope?: string },
+) {
   return useQuery<PaginatedResponse>({
-    queryKey: ['memories', filters],
+    // `scope` disambiguates consumers that would otherwise hash to the same
+    // key: a disabled query still reads the cache, so two callers sharing
+    // `{page, limit}` with `search: undefined` would render each other's data.
+    // It is appended only when given, so existing callers' keys are untouched.
+    queryKey: options?.scope ? ['memories', filters, options.scope] : ['memories', filters],
     queryFn: async () => {
       const queryString = buildQueryString(filters)
       const endpoint = `/api/memories${queryString ? `?${queryString}` : ''}`
