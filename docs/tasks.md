@@ -506,3 +506,13 @@ db 11, auth 3) · `biome check` 0 avisos · Playwright chromium **67/67**
 `pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 9/9 (API 225, schemas 57, db 11, auth 3) · `pnpm --filter web test:contrast` pass (40 checagens) · `biome check` 235 arquivos, 0 avisos · Playwright chromium **113/113**
 
 (Observação de checklist manual — fora dos gates automatizados: NVDA/VoiceOver anunciando o grupo "Tema" e o rádio marcado, troca de tema com lightbox/dialog aberto, toque em dispositivo real; `docs/superpowers/specs/2026-10-02-phase-7-7-theme-design.md` tem o checklist completo.)
+
+### 7.7 Tema Dark/Light (+ Roxo)
+- [x] Seletor de tema no menu do usuário — itens Sistema/Escuro/Claro/**Roxo** com `role="menuitemradio"`/`aria-checked`, seleção fecha o menu e devolve foco ao toggle; roles `menu`/`menuitem` no dropdown existente
+- [x] next-themes com `data-theme` resolvido (`defaultTheme="system"`), persistência por dispositivo via localStorage
+- [x] Paleta light quente AA (`:root[data-theme='light']`) + paleta roxa dark (`:root[data-theme='purple']`) — gate de contraste estendido valida 20 checagens em cada paleta (60 total)
+- [x] Exceções por token — glows dourados/roxos via `--glow-rgb` (19 classes), marcador do mapa Leaflet lê `--primary`/`--background`/`--glow-rgb` e re-estiliza na troca; `AvatarFallback` com `text-background`
+- [x] Cobertura E2E nos dois temas — troca, persistência, `aria-checked`, sistema (incl. mudança ao vivo), marcador do mapa e axe na home sob `colorScheme: 'light'`
+
+#### Gates da 7.7 (com Roxo)
+`pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 9/9 (API 225, schemas 57, db 11, auth 3) · `pnpm --filter web test:contrast` pass (60 checagens) · `biome check` 235 arquivos, 0 avisos · Playwright chromium **115/115**
