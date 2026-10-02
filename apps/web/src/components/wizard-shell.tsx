@@ -4,7 +4,9 @@ import { WIZARD_STEPS, WIZARD_STEP_COUNT, useWizard } from '@/components/wizard-
 import { Button, Card } from '@chronicle/ui'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 
 export function WizardShell({ children }: { children: ReactNode }) {
   const {
@@ -18,6 +20,7 @@ export function WizardShell({ children }: { children: ReactNode }) {
     onSubmit,
   } = useWizard()
   const { handleSubmit } = form
+  const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Every step page mounts fresh: hand focus to the step heading so keyboard
@@ -82,7 +85,15 @@ export function WizardShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
+        <form
+          onSubmit={handleSubmit(onSubmit, () => {
+            // The submit button lives on the last step, but the invalid fields
+            // can be on any of them — say so, and go look at the first one.
+            toast.error('Preencha os campos obrigatórios')
+            if (currentStep !== 0) router.push('/memories/new/0')
+          })}
+          onKeyDown={handleKeyDown}
+        >
           {children}
 
           <span aria-live="assertive" aria-atomic="true" className="sr-only">

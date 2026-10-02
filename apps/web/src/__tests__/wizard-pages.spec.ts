@@ -60,4 +60,24 @@ test.describe('Wizard em páginas separadas', () => {
     await authenticatedPage.goto('/memories/new/9')
     await expect(authenticatedPage.getByText('404')).toBeVisible()
   })
+
+  test('validation failures block Próximo and surface on submit', async ({ authenticatedPage }) => {
+    // Próximo on step 0: an empty title keeps the URL put and shows the field error.
+    await authenticatedPage.goto('/memories/new/0')
+    await authenticatedPage.fill('[data-testid="memoryDate"]', '2026-09-24')
+    await authenticatedPage.getByRole('button', { name: 'Próximo' }).click()
+
+    await expect(authenticatedPage).toHaveURL(/\/memories\/new\/0$/)
+    await expect(authenticatedPage.locator('p.text-red-500')).toContainText(
+      'String must contain at least 1 character(s)',
+    )
+
+    // Submit from a URL-landed later step: without the onInvalid handler this
+    // click would do nothing — no toast, no trip back to step 0.
+    await authenticatedPage.goto('/memories/new/4')
+    await authenticatedPage.getByTestId('submit-memory').click()
+
+    await expect(authenticatedPage.locator('text=Preencha os campos obrigatórios')).toBeVisible()
+    await expect(authenticatedPage).toHaveURL(/\/memories\/new\/0$/)
+  })
 })

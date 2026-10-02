@@ -60,7 +60,6 @@ interface WizardContextValue {
   isCreating: boolean
   isUploading: boolean
   progress: { current: number; total: number } | null
-  validateStep: () => Promise<boolean>
   handleNext: () => Promise<void>
   handlePrevious: () => void
   onSubmit: (data: CreateMemoryInput) => Promise<void>
@@ -139,7 +138,14 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         tags: tags.length > 0 ? tags : undefined,
       }
 
-      const result = await createMemory.mutateAsync(memoryData)
+      let result: Awaited<ReturnType<typeof createMemory.mutateAsync>>
+      try {
+        result = await createMemory.mutateAsync(memoryData)
+      } catch {
+        // Keep the draft: a failed create must not lose what the user typed.
+        toast.error('Não foi possível criar a memória. Tente novamente.')
+        return
+      }
 
       if (photos.length > 0 && result?.data?.id) {
         const memoryId = result.data.id
@@ -171,7 +177,6 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     isCreating: createMemory.isPending,
     isUploading,
     progress,
-    validateStep,
     handleNext,
     handlePrevious,
     onSubmit,
