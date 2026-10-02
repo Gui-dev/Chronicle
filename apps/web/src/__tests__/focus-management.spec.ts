@@ -124,6 +124,6 @@ test.describe('Gerenciamento de foco', () => {
       .poll(() =>
         authenticatedPage.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? 'none'),
       )
-      .toMatch(/^(li|ol|section|main)$/)
+      .toMatch(/^(li|section|main)$/)
   })
 })
