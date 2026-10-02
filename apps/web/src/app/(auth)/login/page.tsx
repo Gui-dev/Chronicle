@@ -48,12 +48,12 @@ export default function LoginPage() {
           <Link
             href="/"
             aria-label="Voltar"
-            className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]" />
           </div>
           <h1 className="text-2xl font-bold text-text">Entrar no Chronicle</h1>
           <p className="text-sm text-muted">Acesse sua conta para continuar</p>
@@ -98,7 +98,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="h-10 w-full rounded-lg bg-primary font-medium text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            className="h-10 w-full rounded-lg bg-primary font-medium text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
             disabled={isLoading}
             data-testid="login-button"
           >
@@ -111,7 +111,7 @@ export default function LoginPage() {
             Não tem uma conta?{' '}
             <Link
               href="/register"
-              className="text-primary underline underline-offset-2 hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+              className="text-primary underline underline-offset-2 hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
             >
               Registrar
             </Link>

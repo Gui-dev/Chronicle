@@ -156,7 +156,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
 
   return (
     <article className="relative group" data-testid={`memory-card-${memory.id}`}>
-      <div className="absolute -left-6 sm:-left-8.75 top-6 h-5 w-5 rounded-full border-4 border-background bg-primary shadow-[0_0_8px_rgba(240,192,64,0.5)] z-10" />
+      <div className="absolute -left-6 sm:-left-8.75 top-6 h-5 w-5 rounded-full border-4 border-background bg-primary shadow-[0_0_8px_rgba(var(--glow-rgb),0.5)] z-10" />
 
       <div className="mb-3 flex items-center gap-3">
         <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-bold text-primary">
@@ -176,7 +176,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
 
       <div
         data-memory-id={memory.id}
-        className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 shadow-lg transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(240,192,64,0.1)] sm:p-8"
+        className="space-y-6 rounded-3xl border border-card/80 bg-card p-6 shadow-lg transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(var(--glow-rgb),0.1)] sm:p-8"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex-1">
@@ -192,7 +192,7 @@ export function MemoryCardFull({ memory, isOwner }: MemoryCardFullProps) {
 
           <div className="flex flex-wrap items-start gap-3">
             {memory.musicTrack && (
-              <div className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-background p-3 transition-all hover:bg-card group/music shadow-[0_0_8px_rgba(240,192,64,0.15)]">
+              <div className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-background p-3 transition-all hover:bg-card group/music shadow-[0_0_8px_rgba(var(--glow-rgb),0.15)]">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary transition-transform group-hover/music:scale-105">
                   <Music className="h-5 w-5" />
                 </div>

@@ -100,7 +100,7 @@ export function Navbar() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-              <Disc3 className="h-4 w-4 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+              <Disc3 className="h-4 w-4 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]" />
             </div>
             <span className="text-xl font-bold text-text">Chronicle</span>
           </Link>
@@ -112,7 +112,7 @@ export function Navbar() {
                 setMenuOpen(false)
                 setSearchOpen(true)
               }}
-              className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+              className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
               aria-label="Buscar"
               data-testid="search-button"
             >
@@ -121,7 +121,7 @@ export function Navbar() {
 
             {isAuthenticated && (
               <Link href="/memories/new" className="hidden sm:block" data-testid="nav-nova">
-                <Button className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+                <Button className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]">
                   <Plus className="h-4 w-4" />
                   Nova Memória
                 </Button>
@@ -133,7 +133,7 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((open) => !open)}
-                  className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-primary/30 transition-all hover:border-primary hover:shadow-[0_0_8px_rgba(240,192,64,0.4)]"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-primary/30 transition-all hover:border-primary hover:shadow-[0_0_8px_rgba(var(--glow-rgb),0.4)]"
                   aria-label="Menu do usuário"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
@@ -216,7 +216,7 @@ export function Navbar() {
               <Link
                 href="/login"
                 prefetch={false}
-                className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)] sm:px-4"
+                className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)] sm:px-4"
               >
                 Entrar
               </Link>

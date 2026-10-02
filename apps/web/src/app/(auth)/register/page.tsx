@@ -50,12 +50,12 @@ export default function RegisterPage() {
           <Link
             href="/"
             aria-label="Voltar"
-            className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            className="absolute left-4 top-4 text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-primary/50 bg-primary/10">
-            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]" />
+            <Disc3 className="h-6 w-6 animate-[spin_4s_linear_infinite] text-primary drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]" />
           </div>
           <h1 className="text-2xl font-bold text-text">Criar Conta</h1>
           <p className="text-sm text-muted">Comece a registrar suas memórias</p>
@@ -116,7 +116,7 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            className="h-10 w-full rounded-lg bg-primary font-medium text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+            className="h-10 w-full rounded-lg bg-primary font-medium text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
             disabled={isLoading}
             data-testid="register-button"
           >
@@ -129,7 +129,7 @@ export default function RegisterPage() {
             Já tem uma conta?{' '}
             <Link
               href="/login"
-              className="text-primary underline underline-offset-2 hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]"
+              className="text-primary underline underline-offset-2 hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
             >
               Entrar
             </Link>

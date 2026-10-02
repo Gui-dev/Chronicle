@@ -25,7 +25,7 @@ export default function MyMemoriesPage() {
             <p className="mt-2 text-muted">Tudo o que você já registrou</p>
           </div>
           <Link href="/memories/new">
-            <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+            <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]">
               <Plus className="h-5 w-5" />
               Nova Memória
             </Button>
@@ -45,7 +45,7 @@ export default function MyMemoriesPage() {
           emptyDescription="Crie sua primeira memória para começar!"
           emptyAction={
             <Link href="/memories/new" className="mt-4">
-              <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(240,192,64,0.8)]">
+              <Button className="inline-flex items-center gap-2 rounded-lg bg-primary text-background hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]">
                 <Plus className="h-5 w-5" />
                 Nova Memória
               </Button>
