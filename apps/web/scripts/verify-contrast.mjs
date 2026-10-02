@@ -39,12 +39,14 @@ function contrast(a, b) {
 
 const names = [
   '--background',
+  '--foreground',
   '--card',
   '--text',
   '--muted',
   '--muted-foreground',
   '--input',
   '--border',
+  '--ring',
   '--primary',
   '--primary-foreground',
   '--secondary',
@@ -72,6 +74,10 @@ const checks = [
   ['--input border vs --background (UI 3:1)', '--input', '--background', 3],
   ['--input border vs --card (UI 3:1)', '--input', '--card', 3],
   ['--border vs --card (UI 3:1)', '--border', '--card', 3],
+  ['--foreground on --background (body)', '--foreground', '--background', 4.5],
+  ['--background on --primary (buttons)', '--background', '--primary', 4.5],
+  ['--ring vs --background (UI 3:1)', '--ring', '--background', 3],
+  ['--border vs --background (UI 3:1)', '--border', '--background', 3],
 ]
 
 let failed = 0
