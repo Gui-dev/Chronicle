@@ -473,19 +473,24 @@ db 11, auth 3) · `biome check` 0 avisos · Playwright chromium **67/67**
 > `musicTrack/musicArtist/musicUrl/musicCover`, para o preview renderizar como o card.
 
 ### 7.5 Retrospectivas
-- [x] "Há um ano" na home, com memória do período — strip `yearAgo` em `/retrospectivas` exibe a memória do mesmo mês/ano no ano anterior; se não existir, o strip fica oculto
-- [x] Resumos por período e novos itens desde a última visita — dashboard de visão geral mostra contagem de memórias novas desde `lastVisitAt`, recorrências (pessoas, lugares, temas) e mapa de lugares; `lastVisitAt` gravado em `sessions` e atualizado a cada visita autenticada
-- [x] Mapa de lugares visitados a partir de `locationLat`/`locationLng` — clustering simples de coordenadas únicas na página `/retrospectivas`, renderizado como lista de chips com contagem
-- [x] Recorrências: pessoas, lugares e temas mais frequentes — agregações SQL (`GROUP BY` + `COUNT`) sobre `memory_people`, `memory_tags` e `aiThemes`; top 5 de cada exibidos no overview
-- [x] Mês/ano no formato "setembro de 2026" na timeline — `formatMonthYear(memoryDate)` (pt-BR) aplicado nos marcadores de mês da timeline (`timeline-marker.tsx`)
+- [x] "Há um ano" na home, com memória do período — faixa `HomeRetrospectStrip` na home exibe memórias do mesmo mês/ano do ano anterior (janela em UTC); se não existir, a faixa fica oculta
+- [x] Resumos por período e novos itens desde a última visita — `/retrospectivas` mostra contagem de memórias novas desde `lastVisitAt`, recorrências (pessoas, lugares, temas) e mapa de lugares; `lastVisitAt` gravado na tabela `users` e atualizado a cada visita autenticada via `POST /visit`
+- [x] Mapa de lugares visitados a partir de `locationLat`/`locationLng` — mapa Leaflet com marcadores e clusters na página `/retrospectivas`
+- [x] Recorrências: pessoas, lugares e temas mais frequentes — agregações SQL (`GROUP BY` + `COUNT`) sobre pessoas, tags e temas das memórias; top 5 de cada exibidos no overview
+- [x] Mês/ano no formato "setembro de 2026" na timeline — marcadores em UTC (`getUTCMonth`/`getUTCFullYear`) em `timeline-marker.tsx`
 
 #### Gates da 7.5
 `pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 8/8 (API 225, schemas 57, db 11, auth 3) · `biome check` 223 arquivos, 0 avisos · Playwright chromium **70/73**
 
 ### 7.6 Acessibilidade e Mobile
-- [ ] Auditoria de teclado em timeline, galeria, modal de busca e wizard
-- [ ] Contraste AA em todo o conjunto de cores atual
-- [ ] Gerenciamento de foco em lightbox e dialogs
-- [ ] Timeline em coluna única no mobile
-- [ ] Wizard em passos menores no mobile
-- [ ] Landmarks e `aria-live` para resultados de busca e estado de upload
+- [x] Auditoria de teclado em timeline, galeria, modal de busca e wizard — roving tabindex + setas/Home/End na timeline, `Enter` avança o wizard com foco no heading do novo passo, foco/trapping em lightbox, busca, confirmação e share cobertos por E2E
+- [x] Contraste AA em todo o conjunto de cores atual — `--muted-foreground: #8888a8`, `--input`/`--border: #6a6a84`, `--accent-foreground`/`--secondary-foreground: #0a0a0f`, `--destructive: #dc2626`, `--text` definido; bordas de controles `border-card` → `border-input`; confirmação em `variant="destructive"`; `:focus-visible` em `@layer base`; gate ligado ao `pnpm test` (turbo `web#test`); verificado por `pnpm --filter web test:contrast`
+- [x] Gerenciamento de foco em lightbox e dialogs — hook `useDialogFocusRestore` aplicado a Confirm/Share/Search; lightbox (`<dialog>` nativo) coberto por teste de restauração de foco
+- [x] Timeline em coluna única no mobile — comportamento já single-column preservado; teste E2E em 375px garante empilhamento e zero scroll horizontal
+- [x] Wizard em passos menores no mobile — uma rota por passo (`/memories/new/[step]` com `WizardProvider` no layout + rascunho em `sessionStorage`), card `p-4 sm:p-6` e progresso compacto (conectores só em `sm+`)
+- [x] Landmarks e `aria-live` para resultados de busca e estado de upload — `<header>`/`<main>`/`<section id="timeline">`, `aria-live="polite"` na lista de busca, `role="status"` em vazio/loading, `aria-live="assertive"` no progresso de upload, região de rolagem do strip focável
+
+#### Gates da 7.6
+`pnpm build` 6/6 · `pnpm typecheck --force` 10/10 · `pnpm test` 9/9 (API 225, schemas 57, db 11, auth 3) · `pnpm --filter web test:contrast` pass · `biome check` 234 arquivos, 0 avisos · Playwright chromium **104/104**
+
+(Observação de checklist manual — continuar valendo, fora dos gates automatizados: NVDA/VoiceOver na timeline e no wizard, e toque em dispositivo real; `docs/superpowers/specs/2026-10-01-phase-7-6-accessibility-mobile-design.md` tem o checklist completo.)
