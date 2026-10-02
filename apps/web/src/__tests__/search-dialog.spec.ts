@@ -1,6 +1,6 @@
 import { type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
-import { createMemory } from './helpers'
+import { createMemory, recordMemoryRequests } from './helpers'
 
 /** Opens the dialog from the navbar and returns its input. */
 async function openSearchDialog(page: Page): Promise<ReturnType<Page['locator']>> {
@@ -175,6 +175,40 @@ test.describe('Diálogo de busca', () => {
     await authenticatedPage.locator('[data-testid="search-see-all"]').click()
     await authenticatedPage.waitForURL('**/search?q=Zarigato')
     await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toHaveCount(0)
+  })
+
+  test('"Ver todas" serves /search from the dialog results with no second request', async ({
+    authenticatedPage,
+  }) => {
+    const alvo = await createMemory(authenticatedPage, {
+      title: 'Festa Junina da Vila',
+      memoryDate: '2026-06-24',
+    })
+
+    await gotoHydrated(authenticatedPage, alvo)
+
+    const input = await openSearchDialog(authenticatedPage)
+    await input.fill('Festa')
+    await expect(authenticatedPage.locator(`[data-testid="search-result-${alvo}"]`)).toBeVisible()
+
+    // The dialog's own fetch for the term has settled above, so counted from
+    // here is only what the transition itself issues. For a non-empty term
+    // the dialog and /search share one query key: the entry the dialog just
+    // filled must serve the page, because a scope on the term's key would
+    // split the entries and buy this transition a duplicate fetch.
+    const requests = recordMemoryRequests(authenticatedPage)
+    await authenticatedPage.locator('[data-testid="search-see-all"]').click()
+
+    await expect(authenticatedPage).toHaveURL(/\/search\?q=Festa$/)
+    await expect(
+      authenticatedPage.getByRole('heading', { name: 'Busca', exact: true }),
+    ).toBeVisible()
+    await expect(authenticatedPage.locator(`[data-memory-id="${alvo}"]`)).toBeVisible()
+    // A late background fetch would land after the paint the assertions above
+    // settle on, so the window stays open until the page has been quiet.
+    await authenticatedPage.waitForTimeout(750)
+
+    expect(requests).toEqual([])
   })
 })
 

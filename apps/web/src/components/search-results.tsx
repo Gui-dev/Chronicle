@@ -103,7 +103,11 @@ export function SearchResults({ query }: SearchResultsProps) {
   })
 
   // A disabled query still reads its cache: with no query there is nothing to
-  // show, so the timeline's rows must never surface here as results.
+  // show, so the timeline's rows must never surface here as results. The mask
+  // covers only what `data` drives — rows, count, chips. `error` and
+  // `isLoading` pass through untouched, and it is the scope above that keeps
+  // them inert for the empty key: the mask alone would leave them wired to
+  // the timeline's entry.
   const data = hasQuery ? liveData : undefined
 
   const meta = data?.searchMeta ?? null

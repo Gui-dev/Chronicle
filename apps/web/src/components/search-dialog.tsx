@@ -51,7 +51,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   )
 
   // Nothing is a result until a query is actually running: the empty-query
-  // cache entry (however it got there) must not paint rows.
+  // cache entry (however it got there) must not paint rows. These guards only
+  // cover what renders — the scope above is what shields `isFetching` (the
+  // spinner) and every other cache read from the timeline's entry.
   const results =
     trimmed.length > 0
       ? ((data?.data as SearchResultRow[] | undefined) ?? EMPTY_RESULTS)
