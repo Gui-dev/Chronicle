@@ -5,7 +5,8 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from '@/lib/auth-client'
 import { getInitials } from '@/lib/get-initials'
 import { Button } from '@chronicle/ui'
-import { Disc3, History, Library, LogOut, Plus, Search, User } from 'lucide-react'
+import { Check, Disc3, History, Library, LogOut, Plus, Search, User } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -17,6 +18,12 @@ export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (user?.image) setAvatarFailed(false)
@@ -94,6 +101,12 @@ export function Navbar() {
     'flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-text transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50'
   const menuIconClass = 'h-4 w-4 shrink-0'
 
+  const themeOptions = [
+    { value: 'system', label: 'Sistema', testId: 'menu-theme-system' },
+    { value: 'dark', label: 'Escuro', testId: 'menu-theme-dark' },
+    { value: 'light', label: 'Claro', testId: 'menu-theme-light' },
+  ] as const
+
   return (
     <>
       <nav className="relative z-50 border-b border-card bg-background/80 backdrop-blur-sm">
@@ -160,10 +173,12 @@ export function Navbar() {
                 {menuOpen && (
                   <div
                     aria-label="Menu do usuário"
+                    role="menu"
                     className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-card bg-card py-1 shadow-lg"
                   >
                     <Link
                       href="/my-memories"
+                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-my-memories"
@@ -173,6 +188,7 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/retrospectivas"
+                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-retrospectivas"
@@ -182,6 +198,7 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/profile"
+                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-profile"
@@ -191,6 +208,7 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/memories/new"
+                      role="menuitem"
                       onClick={() => setMenuOpen(false)}
                       className={menuItemClass}
                       data-testid="menu-nova"
@@ -199,8 +217,34 @@ export function Navbar() {
                       Nova Memória
                     </Link>
                     <div className="my-1 h-px bg-border" aria-hidden="true" />
+                    <span className="block px-4 pt-1 pb-1 text-xs text-muted" aria-hidden="true">
+                      Tema
+                    </span>
+                    {themeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={mounted ? theme === option.value : undefined}
+                        aria-label={`Tema: ${option.label}`}
+                        onClick={() => {
+                          setTheme(option.value)
+                          setMenuOpen(false)
+                          triggerRef.current?.focus()
+                        }}
+                        className={menuItemClass}
+                        data-testid={option.testId}
+                      >
+                        <span className={`${menuIconClass} grid place-items-center`}>
+                          {mounted && theme === option.value ? <Check className="h-4 w-4" /> : null}
+                        </span>
+                        {option.label}
+                      </button>
+                    ))}
+                    <div className="my-1 h-px bg-border" aria-hidden="true" />
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={handleSignOut}
                       disabled={signingOut}
                       className={menuItemClass}
