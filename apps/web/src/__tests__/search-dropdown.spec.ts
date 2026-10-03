@@ -26,9 +26,17 @@ test.describe('Search Dropdown', () => {
     const input = authenticatedPage.locator('[data-testid="navbar-search-input"]')
     await input.click()
     await input.fill('praia')
+    // Wait for debounce and search to complete
+    await authenticatedPage.waitForTimeout(1000)
 
-    await expect(authenticatedPage.locator('[data-testid="search-dropdown"]')).toBeVisible()
-    await expect(authenticatedPage.locator('[data-testid^="search-result-"]').first()).toBeVisible()
+    // Wait for search results to appear
+    await expect
+      .poll(async () => {
+        const results = authenticatedPage.locator('[data-testid^="search-result-"]')
+        return await results.first().isVisible()
+      })
+      .toBeTruthy()
+
     // Should show max 5 results
     const results = authenticatedPage.locator('[data-testid^="search-result-"]')
     const count = await results.count()

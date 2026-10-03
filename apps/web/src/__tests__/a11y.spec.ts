@@ -1,4 +1,4 @@
-// Axe WCAG 2.1 AA scans for the plan's 4 surfaces: home, search dialog, wizard
+// Axe WCAG 2.1 AA scans for the plan's 4 surfaces: home, search dropdown, wizard
 // step 0 and login (plus register, added when the audit caught it shipping the
 // same violations as login). The dialog scan intentionally scopes to
 // [role="dialog"] — the page behind it is covered by the home scan, and Radix's
@@ -46,19 +46,18 @@ test.describe('axe WCAG 2.1 AA', () => {
     expect(await scan(authenticatedPage), 'axe violations on home').toBe('')
   })
 
-  test('open search dialog has no violations', async ({ authenticatedPage }) => {
+  test('open search dropdown has no violations', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/')
-    await authenticatedPage.locator('[data-testid="search-button"]').click()
-    await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toBeVisible()
-    await authenticatedPage.fill('[data-testid="search-dialog-input"]', 'inexistente zzzz')
+    const input = authenticatedPage.locator('[data-testid="navbar-search-input"]')
+    await input.click()
+    await input.fill('inexistente zzzz')
+
+    await expect(authenticatedPage.locator('[data-testid="search-dropdown"]')).toBeVisible()
     await expect(authenticatedPage.locator('[data-testid="search-empty"]')).toBeVisible()
-    // Guards the scan against matching nothing: an empty axe context reports
-    // zero violations, so the toBeVisible wait above is not enough on its own.
-    await expect(authenticatedPage.locator('[role="dialog"]')).toHaveCount(1)
 
     expect(
-      await scan(authenticatedPage, '[role="dialog"]'),
-      'axe violations on search dialog',
+      await scan(authenticatedPage, '[data-testid="search-dropdown"]'),
+      'axe violations on search dropdown',
     ).toBe('')
   })
 

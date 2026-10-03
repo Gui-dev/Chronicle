@@ -175,19 +175,14 @@ test.describe('Página de busca', () => {
       memoryDate: '2026-06-24',
     })
 
-    // The dashboard fills the cache entry an empty `/search` query hashes to
-    // — `{page, limit}` with no `search`. The reload also puts `alvo` in that
-    // cache and hydrates the navbar, so Ctrl+K below is never a no-op.
     await authenticatedPage.goto('/')
     await expect(authenticatedPage.locator(`[data-memory-id="${alvo}"]`)).toBeVisible()
 
-    // Same-load, client-side: "Ver todas" is a router.push, so /search inherits
-    // the QueryClient that holds the timeline's rows. A full page load would
-    // swap in a fresh client and hide the collision entirely.
-    await authenticatedPage.keyboard.press('Control+k')
-    await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toBeVisible()
-    await authenticatedPage.fill('[data-testid="search-dialog-input"]', 'Festa')
-    await authenticatedPage.locator('[data-testid="search-see-all"]').click()
+    const input = authenticatedPage.locator('[data-testid="navbar-search-input"]')
+    await input.click()
+    await input.fill('Festa')
+
+    await authenticatedPage.getByTestId('search-see-all').click()
     await expect(authenticatedPage).toHaveURL(/\/search\?q=Festa$/)
     await expect(authenticatedPage.locator(`[data-memory-id="${alvo}"]`)).toBeVisible()
 

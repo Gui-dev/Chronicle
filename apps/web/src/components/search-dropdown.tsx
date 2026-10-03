@@ -105,19 +105,13 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
   if (!isOpen) return null
 
   return (
-    <>
+    <div data-testid="search-dropdown">
       <ul ref={listRef} aria-live="polite" className="space-y-1 p-2 overflow-y-auto">
         {isFetching && (
           <li className="flex justify-center py-4 text-muted">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             <span className="sr-only">Buscando memórias…</span>
           </li>
-        )}
-
-        {trimmed.length > 0 && !isFetching && results.length === 0 && (
-          <output className="py-4 text-center text-sm text-muted" data-testid="search-empty">
-            Nenhuma memória encontrada para "{trimmed}".
-          </output>
         )}
 
         {results.map((memory, index) => (
@@ -145,6 +139,12 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
         ))}
       </ul>
 
+      {trimmed.length > 0 && !isFetching && results.length === 0 && (
+        <output className="py-4 text-center text-sm text-muted" data-testid="search-empty">
+          Nenhuma memória encontrada para "{trimmed}".
+        </output>
+      )}
+
       {trimmed.length > 0 && (
         <div className="border-t border-border px-2 py-2">
           <button
@@ -160,6 +160,6 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }

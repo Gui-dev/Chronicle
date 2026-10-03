@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { signOut } from '@/lib/auth-client'
 import { getInitials } from '@/lib/get-initials'
-import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@chronicle/ui'
+import { Button, Input } from '@chronicle/ui'
 import { Check, Disc3, History, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
@@ -69,38 +69,6 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [menuOpen])
 
-  // Registered unconditionally, outside the dialog: a listener mounted with the
-  // dialog could only ever close it, never open it.
-  useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        setMenuOpen(false)
-        setSearchOpen(true)
-        return
-      }
-      if (event.key === '/' && !searchOpen) {
-        // Never steal the slash from a control the user is working in. SELECT is
-        // here next to the text fields because the timeline's year/month filters
-        // are native selects: they are not typed into, but they do own the
-        // keyboard, and Chromium runs its own type-ahead on them.
-        const target = event.target
-        const typing =
-          target instanceof HTMLElement &&
-          (target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.tagName === 'SELECT' ||
-            target.isContentEditable)
-        if (!typing) {
-          event.preventDefault()
-          setSearchOpen(true)
-        }
-      }
-    }
-    window.addEventListener('keydown', handleShortcut)
-    return () => window.removeEventListener('keydown', handleShortcut)
-  }, [searchOpen])
-
   if (isLoading) {
     return (
       <nav className="relative z-50 border-b border-card bg-background/80 backdrop-blur-sm">
@@ -148,45 +116,49 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-              <PopoverTrigger asChild>
-                <div className="relative flex-1 max-w-xs">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                  <Input
-                    ref={searchInputRef}
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    onFocus={() => {
-                      setMenuOpen(false)
-                      setSearchOpen(true)
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && searchQuery.trim()) {
-                        event.preventDefault()
-                        setSearchOpen(false)
-                        window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
-                      }
-                    }}
-                    placeholder="Buscar memórias…"
-                    data-testid="navbar-search-input"
-                    className="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent
-                data-testid="search-dropdown"
-                className="w-80 max-h-80 p-0 border-border bg-card shadow-xl"
-                sideOffset={4}
-                align="start"
-              >
+            <div className="relative flex-1 max-w-xs">
+              <label htmlFor="navbar-search" className="sr-only">
+                Buscar memórias
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted pointer-events-none" />
+                <Input
+                  ref={searchInputRef}
+                  id="navbar-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => {
+                    setMenuOpen(false)
+                    setSearchOpen(true)
+                  }}
+                  onBlur={(e) => {
+                    const relatedTarget = e.relatedTarget as HTMLElement | null
+                    if (relatedTarget?.closest('[data-testid="search-dropdown"]')) return
+                    setTimeout(() => setSearchOpen(false), 500)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && searchQuery.trim()) {
+                      event.preventDefault()
+                      setSearchOpen(false)
+                      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+                    }
+                  }}
+                  placeholder="Buscar: #tag @pessoa ano:2026 local:praia"
+                  data-testid="navbar-search-input"
+                  className="w-full h-10 rounded-lg border-2 bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  role="combobox"
+                  aria-expanded={searchOpen}
+                  aria-controls="search-dropdown"
+                  aria-autocomplete="list"
+                />
                 <SearchDropdown
                   debouncedQuery={debouncedQuery}
                   isOpen={searchOpen}
                   onClose={() => setSearchOpen(false)}
                 />
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
 
             {isAuthenticated && (
               <Link href="/memories/new" className="hidden sm:block" data-testid="nav-nova">
