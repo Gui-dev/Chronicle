@@ -146,7 +146,7 @@ export function Navbar() {
                   }}
                   placeholder="Buscar: #tag @pessoa ano:2026 local:praia"
                   data-testid="navbar-search-input"
-                  className="w-full h-10 rounded-lg border-2 bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full h-10 rounded-lg border bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   role="combobox"
                   aria-expanded={searchOpen}
                   aria-controls="search-dropdown"

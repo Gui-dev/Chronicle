@@ -1,7 +1,6 @@
 'use client'
 
 import { HomeRetrospectStrip } from '@/components/home-retrospect-strip'
-import { MemoryFilters } from '@/components/memory-filters'
 import { MemoryTimeline } from '@/components/memory-timeline'
 import { useAuth } from '@/hooks/use-auth'
 import { useFilters } from '@/hooks/use-filters'
@@ -9,7 +8,7 @@ import { useMemories } from '@/hooks/use-memories'
 
 export default function DashboardPage() {
   const { isAuthenticated } = useAuth()
-  const { filters, setFilter, resetFilters, setPage } = useFilters()
+  const { filters, setPage } = useFilters()
   const { data, isLoading, error, refetch } = useMemories(filters)
 
   const memories = data?.data || []
@@ -27,8 +26,6 @@ export default function DashboardPage() {
       </div>
 
       {isAuthenticated && <HomeRetrospectStrip />}
-
-      <MemoryFilters filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
 
       {/* tabIndex -1: programmatic-focus target when focus has nowhere else to
           go (e.g. the last card was deleted behind a dialog). Skip-target

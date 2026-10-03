@@ -105,61 +105,63 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
   if (!isOpen) return null
 
   return (
-    <div data-testid="search-dropdown">
-      <ul ref={listRef} aria-live="polite" className="space-y-1 p-2 overflow-y-auto">
-        {isFetching && (
-          <li className="flex justify-center py-4 text-muted">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span className="sr-only">Buscando memórias…</span>
-          </li>
+    <div data-testid="search-dropdown" className="absolute top-full left-0 right-0 mt-1 z-50">
+      <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+        <ul ref={listRef} aria-live="polite" className="space-y-1 p-2 overflow-y-auto">
+          {isFetching && (
+            <li className="flex justify-center py-4 text-muted">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="sr-only">Buscando memórias…</span>
+            </li>
+          )}
+
+          {results.map((memory, index) => (
+            <li key={memory.id}>
+              <button
+                type="button"
+                aria-selected={index === activeIndex}
+                onClick={() => {
+                  router.push(`/memories/${memory.id}`)
+                  onClose()
+                }}
+                onMouseEnter={() => setSelectedIndex(index)}
+                data-testid={`search-result-${memory.id}`}
+                className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                  index === activeIndex ? 'bg-primary/10' : 'hover:bg-primary/5'
+                }`}
+              >
+                <span className="block truncate text-sm font-medium text-text">{memory.title}</span>
+                <span className="block text-xs text-muted">
+                  {new Date(memory.memoryDate).toLocaleDateString('pt-BR')}
+                  {memory.locationName ? ` · ${memory.locationName}` : ''}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        {trimmed.length > 0 && !isFetching && results.length === 0 && (
+          <output className="py-4 text-center text-sm text-muted" data-testid="search-empty">
+            Nenhuma memória encontrada para "{trimmed}".
+          </output>
         )}
 
-        {results.map((memory, index) => (
-          <li key={memory.id}>
+        {trimmed.length > 0 && (
+          <div className="border-t border-border px-2 py-2">
             <button
               type="button"
-              aria-selected={index === activeIndex}
               onClick={() => {
-                router.push(`/memories/${memory.id}`)
+                router.push(`/search?q=${encodeURIComponent(trimmed)}`)
                 onClose()
               }}
-              onMouseEnter={() => setSelectedIndex(index)}
-              data-testid={`search-result-${memory.id}`}
-              className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                index === activeIndex ? 'bg-primary/10' : 'hover:bg-primary/5'
-              }`}
+              data-testid="search-see-all"
+              className="w-full text-xs font-medium text-primary hover:underline text-left"
             >
-              <span className="block truncate text-sm font-medium text-text">{memory.title}</span>
-              <span className="block text-xs text-muted">
-                {new Date(memory.memoryDate).toLocaleDateString('pt-BR')}
-                {memory.locationName ? ` · ${memory.locationName}` : ''}
-              </span>
+              Ver todas as {total} memórias
             </button>
-          </li>
-        ))}
-      </ul>
-
-      {trimmed.length > 0 && !isFetching && results.length === 0 && (
-        <output className="py-4 text-center text-sm text-muted" data-testid="search-empty">
-          Nenhuma memória encontrada para "{trimmed}".
-        </output>
-      )}
-
-      {trimmed.length > 0 && (
-        <div className="border-t border-border px-2 py-2">
-          <button
-            type="button"
-            onClick={() => {
-              router.push(`/search?q=${encodeURIComponent(trimmed)}`)
-              onClose()
-            }}
-            data-testid="search-see-all"
-            className="w-full text-xs font-medium text-primary hover:underline text-left"
-          >
-            Ver todas as {total} memórias
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
