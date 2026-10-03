@@ -60,6 +60,14 @@ test.describe('Search Dropdown', () => {
     await input.click()
     await input.fill('praia')
 
+    // Wait for search results to appear (debounced query)
+    await expect
+      .poll(async () => {
+        const results = authenticatedPage.locator('[data-testid^="search-result-"]')
+        return await results.count()
+      })
+      .toBeGreaterThan(0)
+
     await authenticatedPage.keyboard.press('ArrowDown')
     await expect(
       authenticatedPage.locator('[data-testid^="search-result-"]').first(),

@@ -38,16 +38,18 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
       : EMPTY_RESULTS
   const total = trimmed.length > 0 ? (data?.pagination.total ?? 0) : 0
 
-  const activeIndex =
-    results.length === 0 ? -1 : Math.min(Math.max(selectedIndex, 0), results.length - 1)
+  // Only >= 0 when user explicitly selects via keyboard/mouse
+  // Stays -1 while user is typing, so focus stays on input
+  const activeIndex = selectedIndex
 
   // Scroll selected item into view
   useEffect(() => {
+    if (activeIndex < 0) return
     const node = listRef.current?.children[activeIndex]
     if (node instanceof HTMLElement) node.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
-  // Focus the selected item when selection changes
+  // Focus the selected item when selection changes (only on explicit user action)
   useLayoutEffect(() => {
     if (!isOpen || results.length === 0 || activeIndex < 0) return
     const list = listRef.current

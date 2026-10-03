@@ -74,9 +74,9 @@
   --foreground: #e2e8f0;
   --card: #160d26;
   --card-foreground: #e2e8f0;
-  --primary: #a855f7;
+  --primary: #22c55e;
   --primary-foreground: #0d0714;
-  --secondary: #22c55e;
+  --secondary: #a855f7;
   --secondary-foreground: #0d0714;
   --muted: #a895c4;
   --muted-foreground: #c4b5d6;
@@ -87,9 +87,9 @@
   --text: #e2e8f0;
   --border: #7c6a9a;
   --input: #7c6a9a;
-  --ring: #a855f7;
+  --ring: #22c55e;
   --radius: 0.5rem;
-  --glow-rgb: 168, 85, 247;
+  --glow-rgb: 34, 197, 94;
   color-scheme: dark;
 }
 

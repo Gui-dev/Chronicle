@@ -116,7 +116,7 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative flex-1 max-w-md sm:max-w-lg">
               <label htmlFor="navbar-search" className="sr-only">
                 Buscar memórias
               </label>
