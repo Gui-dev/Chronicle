@@ -115,12 +115,12 @@ export function Navbar() {
             <span className="text-xl font-bold text-text">Chronicle</span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-lg sm:max-w-2xl lg:max-w-3xl">
+          <div className="flex items-center gap-4 ">
+            <div className="relative flex-1 max-w-xl sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
               <label htmlFor="navbar-search" className="sr-only">
                 Buscar memórias
               </label>
-              <div className="relative">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted pointer-events-none" />
                 <Input
                   ref={searchInputRef}
