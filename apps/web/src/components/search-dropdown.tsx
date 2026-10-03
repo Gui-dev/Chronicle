@@ -3,7 +3,7 @@
 import { useMemories } from '@/hooks/use-memories'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 interface SearchDropdownProps {
   debouncedQuery: string
@@ -20,7 +20,7 @@ const EMPTY_RESULTS: Array<{
 
 export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdownProps) {
   const router = useRouter()
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const listRef = useRef<HTMLUListElement>(null)
 
   const trimmed = debouncedQuery.trim()
@@ -38,7 +38,8 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
       : EMPTY_RESULTS
   const total = trimmed.length > 0 ? (data?.pagination.total ?? 0) : 0
 
-  const activeIndex = results.length === 0 ? 0 : Math.min(selectedIndex, results.length - 1)
+  const activeIndex =
+    results.length === 0 ? -1 : Math.min(Math.max(selectedIndex, 0), results.length - 1)
 
   // Scroll selected item into view
   useEffect(() => {
@@ -46,19 +47,31 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
     if (node instanceof HTMLElement) node.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
+  // Focus the selected item when selection changes
+  useLayoutEffect(() => {
+    if (!isOpen || results.length === 0 || activeIndex < 0) return
+    const list = listRef.current
+    if (list) {
+      const buttons = list.querySelectorAll('button[data-testid^="search-result-"]')
+      ;(buttons[activeIndex] as HTMLElement)?.focus()
+    }
+  }, [activeIndex, isOpen, results.length])
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowDown' && results.length > 0) {
         event.preventDefault()
-        setSelectedIndex((index) => (index + 1) % results.length)
+        const next = selectedIndex < 0 ? 0 : (selectedIndex + 1) % results.length
+        setSelectedIndex(next)
       }
       if (event.key === 'ArrowUp' && results.length > 0) {
         event.preventDefault()
-        setSelectedIndex((index) => (index - 1 + results.length) % results.length)
+        const next = selectedIndex <= 0 ? results.length - 1 : selectedIndex - 1
+        setSelectedIndex(next)
       }
-      if (event.key === 'Enter' && results[activeIndex]) {
+      if (event.key === 'Enter' && activeIndex >= 0 && results[activeIndex]) {
         event.preventDefault()
         router.push(`/memories/${results[activeIndex].id}`)
         onClose()
@@ -70,7 +83,7 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, results, activeIndex, onClose, router])
+  }, [isOpen, results, activeIndex, onClose, router, selectedIndex])
 
   // Close on outside click (handled by Popover) but also on blur with delay
   useEffect(() => {
@@ -102,9 +115,9 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
         )}
 
         {trimmed.length > 0 && !isFetching && results.length === 0 && (
-          <li className="py-4 text-center text-sm text-muted">
+          <output className="py-4 text-center text-sm text-muted" data-testid="search-empty">
             Nenhuma memória encontrada para "{trimmed}".
-          </li>
+          </output>
         )}
 
         {results.map((memory, index) => (

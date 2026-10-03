@@ -54,27 +54,6 @@ test.describe('Gerenciamento de foco', () => {
     await expect(share).toBeFocused()
   })
 
-  test('search dialog focuses the input and returns focus to the navbar button', async ({
-    authenticatedPage,
-  }) => {
-    await authenticatedPage.goto('/')
-
-    const trigger = authenticatedPage.locator('[data-testid="search-button"]')
-    await trigger.click()
-
-    await expect(authenticatedPage.locator('[data-testid="search-dialog-input"]')).toBeFocused()
-
-    // focus stays trapped while tabbing through the dialog
-    for (let i = 0; i < 12; i++) {
-      await authenticatedPage.keyboard.press('Tab')
-    }
-    await expectFocusInsideDialog(authenticatedPage)
-
-    await authenticatedPage.keyboard.press('Escape')
-    await expect(authenticatedPage.locator('[data-testid="search-dialog"]')).toHaveCount(0)
-    await expect(trigger).toBeFocused()
-  })
-
   test('lightbox gives focus back to the thumbnail', async ({ authenticatedPage }) => {
     const memoryId = await createMemory(authenticatedPage, {
       title: 'Foco da galeria',

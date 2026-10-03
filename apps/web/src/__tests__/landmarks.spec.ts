@@ -43,11 +43,13 @@ test.describe('Landmarks e regiões ao vivo', () => {
   test('search results are announced politely', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/')
     await authenticatedPage.locator('[data-testid="search-button"]').click()
+    const input = authenticatedPage.locator('[data-testid="navbar-search-input"]')
+    await input.click()
 
-    const results = authenticatedPage.locator('[data-testid="search-results"]')
+    const results = authenticatedPage.locator('[data-testid="search-dropdown"]')
     await expect(results).toHaveAttribute('aria-live', 'polite')
 
-    await authenticatedPage.fill('[data-testid="search-dialog-input"]', 'zzzznadaexiste')
+    await input.fill('zzzznadaexiste')
     await expect(authenticatedPage.locator('[data-testid="search-empty"]')).toHaveRole('status')
   })
 
