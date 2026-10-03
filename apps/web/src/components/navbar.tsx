@@ -1,10 +1,11 @@
 'use client'
 
-import { SearchDialog } from '@/components/search-dialog'
+import { SearchDropdown } from '@/components/search-dropdown'
 import { useAuth } from '@/hooks/use-auth'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { signOut } from '@/lib/auth-client'
 import { getInitials } from '@/lib/get-initials'
-import { Button } from '@chronicle/ui'
+import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@chronicle/ui'
 import { Check, Disc3, History, Library, LogOut, Plus, Search, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
@@ -16,9 +17,12 @@ export function Navbar() {
   const [signingOut, setSigningOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedQuery = useDebouncedValue(searchQuery, 300)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -144,18 +148,45 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false)
-                setSearchOpen(true)
-              }}
-              className="cursor-pointer text-muted transition-all hover:text-primary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]"
-              aria-label="Buscar"
-              data-testid="search-button"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative flex-1 max-w-xs">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <Input
+                    ref={searchInputRef}
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onFocus={() => {
+                      setMenuOpen(false)
+                      setSearchOpen(true)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && searchQuery.trim()) {
+                        event.preventDefault()
+                        setSearchOpen(false)
+                        window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+                      }
+                    }}
+                    placeholder="Buscar memórias…"
+                    data-testid="navbar-search-input"
+                    className="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent
+                data-testid="search-dropdown"
+                className="w-80 max-h-80 p-0 border-border bg-card shadow-xl"
+                sideOffset={4}
+                align="start"
+              >
+                <SearchDropdown
+                  debouncedQuery={debouncedQuery}
+                  isOpen={searchOpen}
+                  onClose={() => setSearchOpen(false)}
+                />
+              </PopoverContent>
+            </Popover>
 
             {isAuthenticated && (
               <Link href="/memories/new" className="hidden sm:block" data-testid="nav-nova">
@@ -310,8 +341,6 @@ export function Navbar() {
           data-testid="user-menu-overlay"
         />
       )}
-
-      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   )
 }
