@@ -104,7 +104,7 @@ export function SearchDropdown({ debouncedQuery, isOpen, onClose }: SearchDropdo
     return () => input?.removeEventListener('blur', handleBlur)
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || trimmed.length === 0) return null
 
   return (
     <div data-testid="search-dropdown" className="absolute top-full left-0 right-0 mt-1 z-50">
