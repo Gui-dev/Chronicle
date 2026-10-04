@@ -115,7 +115,7 @@ export function Navbar() {
             <span className="text-xl font-bold text-text">Chronicle</span>
           </Link>
 
-          <div className="flex items-center gap-4 ">
+          <div className="flex-1 flex items-center gap-4 ">
             <div className="relative flex-1 max-w-xl sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
               <label htmlFor="navbar-search" className="sr-only">
                 Buscar memórias
