@@ -116,7 +116,7 @@ export function Navbar() {
           </Link>
 
           <div className="flex-1 flex items-center justify-center px-4">
-            <div className="relative w-2xl max-w-2 sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
+            <div className="relative w-full max-w-xl sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
               <label htmlFor="navbar-search" className="sr-only">
                 Buscar memórias
               </label>
@@ -146,7 +146,7 @@ export function Navbar() {
                   }}
                   placeholder="Buscar: #tag @pessoa ano:2026 local:praia"
                   data-testid="navbar-search-input"
-                  className="w-full h-10 rounded-lg border bg-background pl-10 pr-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full h-10 rounded-lg border bg-background pl-10 pr-4 text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   role="combobox"
                   aria-expanded={searchOpen}
                   aria-controls="search-dropdown"
