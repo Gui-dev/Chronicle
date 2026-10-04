@@ -115,7 +115,7 @@ export function Navbar() {
             <span className="text-xl font-bold text-text">Chronicle</span>
           </Link>
 
-          <div className="flex-1 flex items-center justify-end gap-4 ">
+          <div className="flex-1 flex items-center justify-center gap-4">
             <div className="relative flex-1 max-w-xl sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
               <label htmlFor="navbar-search" className="sr-only">
                 Buscar memórias
@@ -159,7 +159,9 @@ export function Navbar() {
                 />
               </div>
             </div>
+          </div>
 
+          <div className="flex items-center gap-4">
             {isAuthenticated && (
               <Link href="/memories/new" className="hidden sm:block" data-testid="nav-nova">
                 <Button className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-background transition-all hover:bg-secondary hover:drop-shadow-[0_0_8px_rgba(var(--glow-rgb),0.8)]">
