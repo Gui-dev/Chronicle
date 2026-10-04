@@ -2,12 +2,26 @@
 
 import { RequireAuth } from '@/components/require-auth'
 import { WizardProvider } from '@/components/wizard-provider'
+import { useEffect } from 'react'
 
 export default function NewMemoryLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Workaround for Next.js 16+ performance.measure negative timestamp bug
+  // See: https://github.com/vercel/next.js/issues/...
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      try {
+        performance.clearMarks()
+        performance.clearMeasures()
+      } catch {
+        // Ignore errors in performance API
+      }
+    }
+  }, [])
+
   return (
     <RequireAuth>
       <WizardProvider>
